@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <ImageButton android:id="@+id/ib_close"
+        android:background="@null"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:src="@drawable/ic_close"
+        android:visibility="gone"/>
+        
+    <TextView android:id="@+id/tv_choiceItemNumber"
+        style="@style/small_header_text"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:text="@string/item_number1"
+        />
+    
+    <EditText
+        android:id="@+id/et_choice_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/tv_choiceItemNumber"
+        android:ems="10"
+        android:inputType="textCapWords"
+        android:hint="@string/choice_name" >
+
+        <requestFocus />
+    </EditText>
+
+    <EditText
+        android:id="@+id/et_choice_vr_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/et_choice_name"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:hint="@string/voice_keyword" />
+
+    <CheckBox
+        android:id="@+id/check_enable_image"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/et_choice_vr_text"
+        android:layout_centerHorizontal="true"
+        android:text="@string/use_artwork"
+        android:visibility="gone" />
+
+</RelativeLayout>

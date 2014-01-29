@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="10dip"
+    android:layout_marginRight="10dip"
+    android:orientation="vertical"
+    android:paddingLeft="20dip"
+    android:paddingRight="20dip" >
+    
+    <TextView 
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="@string/language"/>
+
+    <Spinner android:id="@+id/spin_changeRegistration_language" 
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"/>
+    
+    <TextView 
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dip"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:text="@string/hmi_language"/>
+
+    <Spinner android:id="@+id/spin_changeRegistration_hmiLanguage" 
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"/>
+    
+</LinearLayout>

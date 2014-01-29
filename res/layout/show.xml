@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dip" >
+
+        
+        <TextView
+            android:id="@+id/tv_metadataLines"
+            style="@style/small_header_text"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/metadata_lines"
+            />
+        
+        <EditText
+            android:id="@+id/et_show1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/tv_metadataLines"
+            android:layout_toRightOf="@+id/check_show1"
+            android:hint="@string/metadata_line1"
+            android:ems="10" >
+
+            <requestFocus />
+        </EditText>
+
+        <EditText
+            android:id="@+id/et_show2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/et_show1"
+            android:layout_toRightOf="@+id/check_show2"
+            android:hint="@string/metadata_line2"
+            android:ems="10"/>
+
+        <EditText
+            android:id="@+id/et_show3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/et_show2"
+            android:layout_toRightOf="@+id/check_show3"
+            android:hint="@string/metadata_line3"
+            android:ems="10"/>
+
+        <EditText
+            android:id="@+id/et_show4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/et_show3"
+            android:layout_toRightOf="@+id/check_show4"
+            android:hint="@string/metadata_line4"
+            android:ems="10"/>
+
+        <CheckBox
+            android:id="@+id/check_show1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/et_show1"
+            android:layout_alignParentLeft="true"
+            android:checked="true" />
+
+        <CheckBox
+            android:id="@+id/check_show2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@+id/et_show2"
+            android:layout_alignBottom="@+id/et_show2"
+            android:layout_toLeftOf="@+id/et_show1"
+            android:checked="true" />
+
+        <CheckBox
+            android:id="@+id/check_show3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/et_show3"
+            android:layout_alignParentLeft="true"
+            android:checked="false" />
+
+        <CheckBox
+            android:id="@+id/check_show4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/et_show4"
+            android:layout_alignParentLeft="true"
+            android:checked="false" />
+        
+        <TextView
+            android:id="@+id/tv_textAlignment"
+            style="@style/small_header_text"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/et_show4"
+            android:text="@string/text_alignment"
+            />
+
+        <Spinner
+            android:id="@+id/spin_textAlignment"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/tv_textAlignment"
+            android:layout_below="@+id/tv_textAlignment" />
+        
+        <TextView
+            android:id="@+id/tv_statusBar"
+            style="@style/small_header_text"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/spin_textAlignment"
+            android:text="@string/status_bar"
+            />
+
+        <CheckBox
+            android:id="@+id/check_statusBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/et_statusBar"
+            android:layout_alignParentLeft="true"
+            android:checked="false" />
+
+        <EditText
+            android:id="@+id/et_statusBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/tv_statusBar"
+            android:layout_toRightOf="@+id/check_statusBar"
+            android:hint="@string/status_bar"
+            android:ems="10"/>
+        
+        <TextView
+            android:id="@+id/tv_media"
+            style="@style/small_header_text"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/et_statusBar"
+            android:text="@string/media"
+            />
+
+        <CheckBox
+            android:id="@+id/check_mediaTrack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/et_mediaTrack"
+            android:layout_alignParentLeft="true"
+            android:checked="false" />
+
+        <EditText
+            android:id="@+id/et_mediaTrack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/tv_media"
+            android:layout_toRightOf="@+id/check_mediaTrack"
+            android:hint="@string/media_track"
+            android:ems="10"/>
+
+        <CheckBox
+            android:id="@+id/check_mediaClock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/et_mediaClockMins"
+            android:layout_alignParentLeft="true"
+            android:checked="false" />
+        
+        <TextView
+            android:id="@+id/tv_mediaClock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/check_mediaClock"
+            android:layout_alignBaseline="@+id/check_mediaClock"
+            android:layout_below="@+id/et_mediaTrack"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:layout_margin="10dip"
+            android:text="@string/clock"
+            />
+
+        <EditText
+            android:id="@+id/et_mediaClockMins"
+            android:layout_width="70dip"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/et_mediaTrack"
+            android:layout_toRightOf="@+id/tv_mediaClock"
+            android:maxLength="2"
+            android:hint="@string/clock_mins"
+            android:inputType="number"
+            android:ems="10"/>
+        
+        <TextView
+            android:id="@+id/tv_mediaClockColon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/et_mediaClockMins"
+            android:layout_alignBaseline="@+id/et_mediaClockMins"
+            android:layout_below="@+id/et_mediaTrack"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:layout_margin="10dip"
+            android:text="@string/colon"
+            />
+
+        <EditText
+            android:id="@+id/et_mediaClockSecs"
+            android:layout_width="70dip"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/et_mediaTrack"
+            android:layout_toRightOf="@+id/tv_mediaClockColon"
+            android:maxLength="2"
+            android:hint="@string/clock_secs"
+            android:inputType="number"
+            android:ems="10"/>
+        
+<!--         TODO - Include Graphics and include custom presets -->
+        
+    </RelativeLayout>
+
+</ScrollView>

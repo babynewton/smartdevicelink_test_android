@@ -1,0 +1,395 @@
+package com.livio.sdltester;
+
+
+import java.util.Collections;
+import java.util.List;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import com.livio.sdl.SdlFunctionBank;
+import com.livio.sdl.SdlFunctionBankManager;
+import com.livio.sdl.enums.EnumClickListener;
+import com.livio.sdl.enums.SdlCommand;
+import com.livio.sdl.services.SdlService;
+import com.livio.sdltester.dialogs.AddCommandDialog;
+import com.livio.sdltester.dialogs.AddSubMenuDialog;
+import com.livio.sdltester.dialogs.BaseAlertDialog;
+import com.livio.sdltester.dialogs.ButtonSubscriptionDialog;
+import com.livio.sdltester.dialogs.ChangeRegistrationDialog;
+import com.livio.sdltester.dialogs.ConnectingDialog;
+import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
+import com.livio.sdltester.dialogs.SdlAlertDialog;
+import com.livio.sdltester.dialogs.SdlConnectionDialog;
+import com.livio.sdltester.dialogs.SendMessageDialog;
+import com.livio.sdltester.dialogs.ShowDialog;
+import com.livio.sdltester.dialogs.SpeakDialog;
+import com.livio.sdltester.utils.UpCounter;
+import com.smartdevicelink.proxy.rpc.AddSubMenu;
+import com.smartdevicelink.proxy.rpc.Show;
+import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
+
+
+public class MainActivity extends Activity implements OnClickListener, EnumClickListener{
+	
+	private ListView commandList;
+	private UpCounter idGenerator = new UpCounter();
+	
+	/* Messenger for communicating with service. */
+    Messenger serviceMsgr = null;
+    
+    /* Flag indicating whether we have called bind on the service. */
+    boolean isBound = false, isConnected = false;
+
+	private ConnectingDialog connectingDialog;
+	private int connectionAttempts = 3;
+	
+    /*
+     * Target we publish for clients to send messages to IncomingHandler.
+     */
+    final Messenger mMessenger = new Messenger(new IncomingHandler());
+    
+	@SuppressLint("HandlerLeak")
+	private class IncomingHandler extends Handler{
+		@Override
+		public void handleMessage(Message msg) {
+			switch(msg.what){
+			case SdlService.ClientMessages.SDL_CONNECTED:
+				isConnected = true;
+				if(connectingDialog != null && connectingDialog.isShowing()){
+					connectingDialog.dismiss();
+				}
+				break;
+			case SdlService.ClientMessages.SDL_DISCONNECTED:
+				isConnected = false;
+				break;
+			default:
+				break;
+			}
+			super.handleMessage(msg);
+		}
+    }
+	
+	private void sendMessageToService(Message msg){
+		try {
+			serviceMsgr.send(msg);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+	}
+    
+    /*
+     * Class for interacting with the main interface of the service.
+     */
+    private final ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            serviceMsgr = new Messenger(service);
+
+            Message msg = Message.obtain(null, SdlService.ServiceMessages.REGISTER_CLIENT);
+            msg.replyTo = mMessenger;
+            sendMessageToService(msg);
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // process crashed - make sure nobody can use messenger instance.
+            serviceMsgr = null;
+        }
+    };
+    
+    void doBindService() {
+    	if(!isBound){
+	   		bindService(new Intent(MainActivity.this, SdlService.class), mConnection, Context.BIND_AUTO_CREATE);
+	        isBound = true;
+    	}
+    }
+
+    void doUnbindService() {
+        if (isBound) {
+            if (serviceMsgr != null) {
+                Message msg = Message.obtain(null, SdlService.ServiceMessages.UNREGISTER_CLIENT);
+                msg.replyTo = mMessenger;
+                sendMessageToService(msg);
+            }
+
+            // Detach our existing connection.
+            unbindService(mConnection);
+            isBound = false;
+        }
+    }
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main);
+
+		SdlService.setDebug(true);
+		
+		initViews();
+		doBindService();
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		if(!isConnected){
+			showSdlConnectionDialog();
+		}
+		super.onResume();
+	}
+
+	private void initViews(){		
+		findViewById(R.id.btn_main_playPause).setOnClickListener(this);
+		findViewById(R.id.btn_main_sendMessage).setOnClickListener(this);
+		
+		commandList = (ListView) findViewById(R.id.list_main_commandList);
+		
+		//TODO - worry about populating this command list later. - MRB
+		ArrayAdapter<String> worthlessAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+		worthlessAdapter.add("Worthless Item 1");
+		worthlessAdapter.add("Worthless Item 2");
+		worthlessAdapter.add("Worthless Item 3");
+		worthlessAdapter.add("Worthless Item 4");
+		worthlessAdapter.add("Worthless Item 5");
+		worthlessAdapter.add("Worthless Item 6");
+		worthlessAdapter.add("Worthless Item 7");
+		worthlessAdapter.add("Worthless Item 8");
+		worthlessAdapter.add("Worthless Item 9");
+		worthlessAdapter.add("Worthless Item 10");
+		commandList.setAdapter(worthlessAdapter);
+	}
+
+	@Override
+	protected void onDestroy() {
+		doUnbindService();
+		super.onDestroy();
+	}
+
+	@Override
+	public void onClick(View v) {
+		final int ID = v.getId();
+		
+		if(ID == R.id.btn_main_playPause){
+//			ProxyService.getInstance().playPauseAnnoyingRepetitiveAudio();//TODO
+		}
+		else if(ID == R.id.btn_main_sendMessage){
+			new SendMessageDialog(this, this).show();
+		}
+	}
+	
+	private void showSdlConnectionDialog(){
+		//TODO - save & load IP addresses from memory
+		BaseAlertDialog connectionDialog = new SdlConnectionDialog(this);
+		connectionDialog.setCancelable(false);
+		connectionDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				if(resultData == null){
+					connectionAttempts--;
+					if(connectionAttempts != 0){
+						Toast.makeText(MainActivity.this, "Invalid IP - try again", Toast.LENGTH_SHORT).show();
+						showSdlConnectionDialog();
+					}
+					else{
+						Toast.makeText(MainActivity.this, "Too many attempts - goodbye", Toast.LENGTH_SHORT).show();
+						finish();
+					}
+				}
+				else{
+					connectingDialog = new ConnectingDialog(MainActivity.this);
+					connectingDialog.show();
+					
+					Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
+                    msg.obj = resultData;
+                	sendMessageToService(msg);
+				}
+			}
+		});
+		connectionDialog.show();
+	}
+	
+	/*
+	 * This really sucks...
+	 * 
+	 * Figure out which command we're looking at and launch the appropriate dialog.
+	 */
+	private void showCommandDialog(SdlCommand command){
+		if(command == null){
+			throw new IllegalArgumentException(getResources().getString(R.string.not_an_sdl_command));
+		}
+		
+		switch(command){
+		case ALERT:
+			createAlertDialog();
+			break;
+		case SPEAK:
+			createSpeakDialog();
+			break;
+		case SHOW:
+			createShowDialog();
+			break;
+		case SUBSCRIBE_BUTTON:
+			createButtonSubscribeDialog();
+			break;
+		case ADD_COMMAND:
+			createAddCommandDialog();
+			break;
+		case ADD_SUBMENU:
+			createAddSubmenuDialog();
+			break;
+		case CREATE_INTERACTION_CHOICE_SET:
+			createInteractionChoiceSetDialog();
+			break;
+		case CHANGE_REGISTRATION:
+			createChangeRegistrationDialog();
+			break;
+		case DELETE_COMMAND:
+		case DELETE_SUB_MENU:
+		case SET_GLOBAL_PROPERTIES:
+		case RESET_GLOBAL_PROPERTIES:
+		case SET_MEDIA_CLOCK_TIMER:
+		case DELETE_INTERACTION_CHOICE_SET:
+		case PERFORM_INTERACTION:
+		case ENCODED_SYNC_PDATA:
+		case SLIDER:
+		case SCROLLABLE_MESSAGE:
+		case PUT_FILE:
+		case DELETE_FILE:
+		case LIST_FILES:
+		case SET_APP_ICON:
+		case PERFORM_AUDIO_PASSTHRU:
+		case END_AUDIO_PASSTHRU:
+		case SUBSCRIBE_VEHICLE_DATA:
+		case UNSUBSCRIBE_VEHICLE_DATA:
+		case GET_VEHICLE_DATA:
+		case READ_DIDS:
+		case GET_DTCS:
+		case SHOW_CONSTANT_TBT:
+		case UPDATE_TURN_LIST:
+		case ALERT_MANEUVER:
+		case DIAL_NUMBER:
+			Toast.makeText(this, getResources().getString(R.string.not_implemented), Toast.LENGTH_SHORT).show();
+			break;
+		default:
+			break;
+		}
+	}
+	
+	private void createAlertDialog(){
+		BaseAlertDialog alertDialog = new SdlAlertDialog(this);
+		alertDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				// TODO Auto-generated method stub
+			}
+		});
+		alertDialog.show();
+	}
+	
+	private void createSpeakDialog(){
+		BaseAlertDialog speakDialog = new SpeakDialog(this);
+		speakDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				// TODO Auto-generated method stub
+			}
+		});
+		speakDialog.show();
+	}
+	
+	private void createShowDialog(){
+		BaseAlertDialog showDialog = new ShowDialog(this);
+		showDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				// TODO Auto-generated method stub
+			}
+		});
+		showDialog.show();
+	}
+	
+	private void createButtonSubscribeDialog(){
+		BaseAlertDialog buttonSubscribeDialog = new ButtonSubscriptionDialog(this);
+		buttonSubscribeDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				// TODO Auto-generated method stub
+			}
+		});
+		buttonSubscribeDialog.show();
+	}
+	
+	private void createAddCommandDialog(){
+		List<SdlFunctionBank> allBanks = SdlFunctionBankManager.getInstance().getAllBanks();
+		Collections.sort(allBanks, new SdlFunctionBank.IdComparator());
+		
+		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks);
+		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				// TODO Auto-generated method stub
+			}
+		});
+		addCommandDialog.show();
+	}
+	
+	private void createAddSubmenuDialog(){
+		BaseAlertDialog submenuDialog = new AddSubMenuDialog(this);
+		submenuDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				AddSubMenu result = (AddSubMenu) resultData;
+				result.setMenuID(idGenerator.next());
+				
+//				SdlFunctionBankManager.getInstance().addBank(submenuName, new SdlFunctionBank(submenuName, idGenerator.next()));
+			}
+		});
+		submenuDialog.show();
+	}
+	
+	private void createInteractionChoiceSetDialog(){
+		BaseAlertDialog createInteractionChoiceSetDialog = new CreateInteractionChoiceSetDialog(this);
+		createInteractionChoiceSetDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				// TODO Auto-generated method stub
+			}
+		});
+		createInteractionChoiceSetDialog.show();
+	}
+	
+	private void createChangeRegistrationDialog(){
+		BaseAlertDialog changeRegistrationDialog = new ChangeRegistrationDialog(this);
+		changeRegistrationDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				// TODO Auto-generated method stub
+			}
+		});
+		changeRegistrationDialog.show();
+	}
+
+	@Override
+	public <E extends Enum<E>> void OnEnumItemClicked(E selection) {
+		showCommandDialog((SdlCommand) selection);
+	}
+
+}
