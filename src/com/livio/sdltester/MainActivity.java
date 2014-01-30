@@ -17,7 +17,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -46,10 +45,9 @@ import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.RPCResponse;
 import com.smartdevicelink.proxy.rpc.AddCommand;
 import com.smartdevicelink.proxy.rpc.AddSubMenu;
-import com.smartdevicelink.proxy.rpc.Show;
 
 
-public class MainActivity extends Activity implements OnClickListener, EnumClickListener{
+public class MainActivity extends Activity{
 	
 	private ListView commandList;
 	private UpCounter idGenerator = new UpCounter();
@@ -62,8 +60,6 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 
 	private ConnectingDialog connectingDialog;
 	private int connectionAttempts = 3;
-	
-	private boolean appHasForeground = false;
 	
 	private ArrayAdapter<RPCMessage> listViewAdapter;
 	
@@ -78,7 +74,6 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		public void handleMessage(Message msg) {
 			switch(msg.what){
 			case SdlService.ClientMessages.SDL_CONNECTED:
-				appHasForeground = true;
 				isConnected = true;
 				if(connectingDialog != null && connectingDialog.isShowing()){
 					connectingDialog.dismiss();
@@ -189,8 +184,18 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 	}
 
 	private void initViews(){		
-		findViewById(R.id.btn_main_playPause).setOnClickListener(this);
-		findViewById(R.id.btn_main_sendMessage).setOnClickListener(this);
+		findViewById(R.id.btn_main_sendMessage).setOnClickListener(
+			new View.OnClickListener() {
+				@Override
+				public void onClick(View v) {
+					new SendMessageDialog(MainActivity.this, new EnumClickListener() {
+						@Override
+						public <E extends Enum<E>> void OnEnumItemClicked(E selection) {
+							showCommandDialog((SdlCommand) selection);
+						}
+				}).show();
+			}
+		});
 		
 		commandList = (ListView) findViewById(R.id.list_main_commandList);
 		listViewAdapter = new ArrayAdapter<RPCMessage>(this, android.R.layout.simple_list_item_1);
@@ -199,24 +204,13 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 
 	@Override
 	protected void onDestroy() {
+		sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.DISCONNECT));
 		doUnbindService();
 		super.onDestroy();
 	}
-
-	@Override
-	public void onClick(View v) {
-		final int ID = v.getId();
-		
-		if(ID == R.id.btn_main_playPause){
-//			ProxyService.getInstance().playPauseAnnoyingRepetitiveAudio();//TODO
-		}
-		else if(ID == R.id.btn_main_sendMessage){
-			new SendMessageDialog(this, this).show();
-		}
-	}
 	
 	private void onForegroundStateReceived(boolean foregroundState){
-		this.appHasForeground = foregroundState;
+		// TODO
 	}
 	
 	private void onMessageResponseReceived(RPCResponse response){
@@ -341,7 +335,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		alertDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				// TODO Auto-generated method stub
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		alertDialog.show();
@@ -352,7 +346,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		speakDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				// TODO Auto-generated method stub
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		speakDialog.show();
@@ -363,7 +357,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		showDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				sendSdlMessageToService((Show) resultData);
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		showDialog.show();
@@ -374,7 +368,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		buttonSubscribeDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				// TODO Auto-generated method stub
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		buttonSubscribeDialog.show();
@@ -388,7 +382,8 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				sendSdlMessageToService((AddCommand) resultData);
+				((AddCommand) resultData).setCmdID(idGenerator.next());
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		addCommandDialog.show();
@@ -399,10 +394,8 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		submenuDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				AddSubMenu result = (AddSubMenu) resultData;
-				result.setMenuID(idGenerator.next());
-				
-//				SdlFunctionBankManager.getInstance().addBank(submenuName, new SdlFunctionBank(submenuName, idGenerator.next()));
+				((AddSubMenu) resultData).setMenuID(idGenerator.next());
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		submenuDialog.show();
@@ -413,7 +406,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		createInteractionChoiceSetDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				// TODO Auto-generated method stub
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		createInteractionChoiceSetDialog.show();
@@ -424,15 +417,10 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		changeRegistrationDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				// TODO Auto-generated method stub
+				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
 		changeRegistrationDialog.show();
-	}
-
-	@Override
-	public <E extends Enum<E>> void OnEnumItemClicked(E selection) {
-		showCommandDialog((SdlCommand) selection);
 	}
 
 }

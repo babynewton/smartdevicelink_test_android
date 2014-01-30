@@ -32,50 +32,58 @@ public class ShowDialog extends BaseAlertDialog{
 		createDialog();
 	}
 	
-	private final OnCheckedChangeListener checkListener = new OnCheckedChangeListener() {
-		@Override
-		public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-			if(buttonView.equals(check_show1)){
-				et_show1.setEnabled(isChecked);
-			}
-			else if(buttonView.equals(check_show2)){
-				et_show2.setEnabled(isChecked);
-			}
-			else if(buttonView.equals(check_show3)){
-				et_show3.setEnabled(isChecked);
-			}
-			else if(buttonView.equals(check_show4)){
-				et_show4.setEnabled(isChecked);
-			}
-			else if(buttonView.equals(check_statusBar)){
-				et_statusBar.setEnabled(isChecked);
-			}
-			else if(buttonView.equals(check_mediaTrack)){
-				et_mediaTrack.setEnabled(isChecked);
-			}
-			else if(buttonView.equals(check_mediaClock)){
-				et_mediaClockMins.setEnabled(isChecked);
-				et_mediaClockSecs.setEnabled(isChecked);
-			}
-		}
-	};
-	
 	@Override
 	protected void findViews(View view){
 		check_show1 = (CheckBox) view.findViewById(R.id.check_show1);
-		check_show1.setOnCheckedChangeListener(checkListener);
+		check_show1.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_show1.setEnabled(isChecked);
+			}
+		});
 		check_show2 = (CheckBox) view.findViewById(R.id.check_show2);
-		check_show2.setOnCheckedChangeListener(checkListener);
+		check_show2.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_show2.setEnabled(isChecked);
+			}
+		});
 		check_show3 = (CheckBox) view.findViewById(R.id.check_show3);
-		check_show3.setOnCheckedChangeListener(checkListener);
+		check_show3.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_show3.setEnabled(isChecked);
+			}
+		});
 		check_show4 = (CheckBox) view.findViewById(R.id.check_show4);
-		check_show4.setOnCheckedChangeListener(checkListener);
+		check_show4.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_show4.setEnabled(isChecked);
+			}
+		});
 		check_statusBar = (CheckBox) view.findViewById(R.id.check_statusBar);
-		check_statusBar.setOnCheckedChangeListener(checkListener);
+		check_statusBar.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_statusBar.setEnabled(isChecked);
+			}
+		});
 		check_mediaTrack = (CheckBox) view.findViewById(R.id.check_mediaTrack);
-		check_mediaTrack.setOnCheckedChangeListener(checkListener);
+		check_mediaTrack.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_mediaTrack.setEnabled(isChecked);
+			}
+		});
 		check_mediaClock = (CheckBox) view.findViewById(R.id.check_mediaClock);
-		check_mediaClock.setOnCheckedChangeListener(checkListener);
+		check_mediaClock.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_mediaClockMins.setEnabled(isChecked);
+				et_mediaClockSecs.setEnabled(isChecked);
+			}
+		});
 		
 		et_show1 = (EditText) view.findViewById(R.id.et_show1);
 		et_show1.setEnabled(check_show1.isChecked());

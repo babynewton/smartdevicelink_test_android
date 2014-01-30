@@ -107,7 +107,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	/*********** Instance variables ***********/
 	protected List<Messenger> clients = null; // list of bound clients
 	
-	protected UpCounter commandIdGenerator; // id generator for button & menu ids
 	protected UpCounter correlationIdGenerator; // id generator for correlation ids
 	protected boolean appHasForeground = false; // tracks app's foreground state
 	protected boolean appIsLoaded = false; // set to true once the app gets its first HMI update
@@ -180,8 +179,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onCreate() {
 		log("onCreate called");
-		commandIdGenerator = new UpCounter();
-		correlationIdGenerator = new UpCounter();
+		correlationIdGenerator = new UpCounter(100);
 		super.onCreate();
 	}
 
@@ -236,8 +234,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 			} catch (SmartDeviceLinkException e) {
 				e.printStackTrace();
 			}
-			
-			sdlProxy = null;
 		}
 		
 		sdlProxy = null;
