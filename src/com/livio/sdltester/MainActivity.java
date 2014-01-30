@@ -22,6 +22,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.livio.sdl.IpAddress;
 import com.livio.sdl.SdlFunctionBank;
 import com.livio.sdl.SdlFunctionBankManager;
 import com.livio.sdl.enums.EnumClickListener;
@@ -40,9 +41,12 @@ import com.livio.sdltester.dialogs.SendMessageDialog;
 import com.livio.sdltester.dialogs.ShowDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
 import com.livio.sdltester.utils.UpCounter;
+import com.smartdevicelink.proxy.RPCMessage;
+import com.smartdevicelink.proxy.RPCRequest;
+import com.smartdevicelink.proxy.RPCResponse;
+import com.smartdevicelink.proxy.rpc.AddCommand;
 import com.smartdevicelink.proxy.rpc.AddSubMenu;
 import com.smartdevicelink.proxy.rpc.Show;
-import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
 
 
 public class MainActivity extends Activity implements OnClickListener, EnumClickListener{
@@ -59,6 +63,10 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 	private ConnectingDialog connectingDialog;
 	private int connectionAttempts = 3;
 	
+	private boolean appHasForeground = false;
+	
+	private ArrayAdapter<RPCMessage> listViewAdapter;
+	
     /*
      * Target we publish for clients to send messages to IncomingHandler.
      */
@@ -70,6 +78,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		public void handleMessage(Message msg) {
 			switch(msg.what){
 			case SdlService.ClientMessages.SDL_CONNECTED:
+				appHasForeground = true;
 				isConnected = true;
 				if(connectingDialog != null && connectingDialog.isShowing()){
 					connectingDialog.dismiss();
@@ -77,6 +86,12 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 				break;
 			case SdlService.ClientMessages.SDL_DISCONNECTED:
 				isConnected = false;
+				break;
+			case SdlService.ClientMessages.ON_FOREGROUND_STATE:
+				onForegroundStateReceived( (Boolean) msg.obj);
+				break;
+			case SdlService.ClientMessages.ON_MESSAGE_RESULT:
+				onMessageResponseReceived((RPCResponse) msg.obj);
 				break;
 			default:
 				break;
@@ -91,6 +106,23 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void sendSdlMessageToService(RPCRequest request){
+		Message msg = Message.obtain(null, SdlService.ServiceMessages.SEND_MESSAGE);
+		msg.obj = request;
+		sendMessageToService(msg);
+		logSdlMessageSent(request);
+	}
+	
+	private void logSdlMessageSent(RPCRequest request){
+		listViewAdapter.add(request);
+		listViewAdapter.notifyDataSetChanged();
+	}
+	
+	private void logSdlMessageReceived(RPCResponse response){
+		listViewAdapter.add(response);
+		listViewAdapter.notifyDataSetChanged();
 	}
     
     /*
@@ -161,20 +193,8 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		findViewById(R.id.btn_main_sendMessage).setOnClickListener(this);
 		
 		commandList = (ListView) findViewById(R.id.list_main_commandList);
-		
-		//TODO - worry about populating this command list later. - MRB
-		ArrayAdapter<String> worthlessAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-		worthlessAdapter.add("Worthless Item 1");
-		worthlessAdapter.add("Worthless Item 2");
-		worthlessAdapter.add("Worthless Item 3");
-		worthlessAdapter.add("Worthless Item 4");
-		worthlessAdapter.add("Worthless Item 5");
-		worthlessAdapter.add("Worthless Item 6");
-		worthlessAdapter.add("Worthless Item 7");
-		worthlessAdapter.add("Worthless Item 8");
-		worthlessAdapter.add("Worthless Item 9");
-		worthlessAdapter.add("Worthless Item 10");
-		commandList.setAdapter(worthlessAdapter);
+		listViewAdapter = new ArrayAdapter<RPCMessage>(this, android.R.layout.simple_list_item_1);
+		commandList.setAdapter(listViewAdapter);
 	}
 
 	@Override
@@ -195,9 +215,28 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		}
 	}
 	
+	private void onForegroundStateReceived(boolean foregroundState){
+		this.appHasForeground = foregroundState;
+	}
+	
+	private void onMessageResponseReceived(RPCResponse response){
+		// TODO
+		logSdlMessageReceived(response);
+	}
+	
 	private void showSdlConnectionDialog(){
 		//TODO - save & load IP addresses from memory
-		BaseAlertDialog connectionDialog = new SdlConnectionDialog(this);
+		String savedIpAddress = MyApplicationPreferences.restoreIpAddress(MainActivity.this);
+		String savedTcpPort = MyApplicationPreferences.restoreTcpPort(MainActivity.this);
+		
+		BaseAlertDialog connectionDialog;
+		if(savedIpAddress != null && savedTcpPort != null){
+			connectionDialog = new SdlConnectionDialog(this, savedIpAddress, savedTcpPort);
+		}
+		else{
+			connectionDialog = new SdlConnectionDialog(this);
+		}
+		
 		connectionDialog.setCancelable(false);
 		connectionDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
@@ -214,6 +253,10 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 					}
 				}
 				else{
+					IpAddress ipAddress = (IpAddress) resultData;
+					MyApplicationPreferences.saveIpAddress(MainActivity.this, ipAddress.getIpAddress());
+					MyApplicationPreferences.saveTcpPort(MainActivity.this, ipAddress.getTcpPort());
+					
 					connectingDialog = new ConnectingDialog(MainActivity.this);
 					connectingDialog.show();
 					
@@ -320,7 +363,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		showDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				// TODO Auto-generated method stub
+				sendSdlMessageToService((Show) resultData);
 			}
 		});
 		showDialog.show();
@@ -345,7 +388,7 @@ public class MainActivity extends Activity implements OnClickListener, EnumClick
 		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				// TODO Auto-generated method stub
+				sendSdlMessageToService((AddCommand) resultData);
 			}
 		});
 		addCommandDialog.show();

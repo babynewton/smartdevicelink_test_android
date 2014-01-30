@@ -110,7 +110,9 @@ public class AddCommandDialog extends BaseAlertDialog implements OnCheckedChange
 					AddCommand result = new AddCommand();
 					MenuParams menuParams = new MenuParams();
 					menuParams.setMenuName(commandName);
-					menuParams.setParentID(parentBank.getId());
+					if(parentBank != null){
+						menuParams.setParentID(parentBank.getId());
+					}
 					result.setMenuParams(menuParams);
 					
 					Vector<String> vrCommands = new Vector<String>(1);

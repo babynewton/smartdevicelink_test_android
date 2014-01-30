@@ -2,24 +2,33 @@ package com.livio.sdltester.utils;
 
 public class UpCounter {
 
-	private int start = 0;
+	private final int START;
 	private int current;
 	
 	public UpCounter(){
-		this.current = start;
+		this.START = 0;
+		this.current = START;
 	}
 	
 	public UpCounter(int start){
-		this.start = start;
+		this.START = start;
 		this.current = start;
 	}
 	
 	public void reset(){
-		this.current = start;
+		this.current = START;
 	}
 	
 	public int next(){
 		return current++;
+	}
+	
+	public int current(){
+		return current;
+	}
+	
+	public int getMax(){
+		return Integer.MAX_VALUE;
 	}
 	
 }

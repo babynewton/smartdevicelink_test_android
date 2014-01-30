@@ -109,37 +109,35 @@ public class ShowDialog extends BaseAlertDialog{
 		
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-			String show1, show2, show3, show4, statusBar, mediaTrack, mediaClock;
-			
 			Show show = new Show();
 			
 			if(et_show1.isEnabled()){
-				show1 = et_show1.getText().toString();
+				String show1 = et_show1.getText().toString();
 				show.setMainField1(show1);
 			}
 			
 			if(et_show2.isEnabled()){
-				show2 = et_show2.getText().toString();
+				String show2 = et_show2.getText().toString();
 				show.setMainField2(show2);
 			}
 			
 			if(et_show3.isEnabled()){
-				show3 = et_show3.getText().toString();
+				String show3 = et_show3.getText().toString();
 				show.setMainField3(show3);
 			}
 			
 			if(et_show4.isEnabled()){
-				show4 = et_show4.getText().toString();
+				String show4 = et_show4.getText().toString();
 				show.setMainField4(show4);
 			}
 			
 			if(et_statusBar.isEnabled()){
-				statusBar = et_statusBar.getText().toString();
+				String statusBar = et_statusBar.getText().toString();
 				show.setStatusBar(statusBar);
 			}
 			
 			if(et_mediaTrack.isEnabled()){
-				mediaTrack = et_mediaTrack.getText().toString();
+				String mediaTrack = et_mediaTrack.getText().toString();
 				show.setMediaTrack(mediaTrack);
 			}
 			
@@ -148,7 +146,7 @@ public class ShowDialog extends BaseAlertDialog{
 				builder.append(et_mediaClockMins.getText().toString())
 				       .append(":")
 				       .append(et_mediaClockSecs.getText().toString());
-				mediaClock = builder.toString();
+				String mediaClock = builder.toString();
 				show.setMediaClock(mediaClock);
 			}
 			
