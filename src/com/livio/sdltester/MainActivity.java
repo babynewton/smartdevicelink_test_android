@@ -22,6 +22,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.livio.sdl.IpAddress;
+import com.livio.sdl.SdlBaseButton;
 import com.livio.sdl.SdlFunctionBank;
 import com.livio.sdl.SdlFunctionBankManager;
 import com.livio.sdl.enums.EnumClickListener;
@@ -39,18 +40,16 @@ import com.livio.sdltester.dialogs.SdlConnectionDialog;
 import com.livio.sdltester.dialogs.SendMessageDialog;
 import com.livio.sdltester.dialogs.ShowDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
-import com.livio.sdltester.utils.UpCounter;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.RPCResponse;
-import com.smartdevicelink.proxy.rpc.AddCommand;
-import com.smartdevicelink.proxy.rpc.AddSubMenu;
 
 
 public class MainActivity extends Activity{
 	
+	private static final int CONNECTING_DIALOG_TIMEOUT = 3000;
+	
 	private ListView commandList;
-	private UpCounter idGenerator = new UpCounter();
 	
 	/* Messenger for communicating with service. */
     Messenger serviceMsgr = null;
@@ -82,11 +81,17 @@ public class MainActivity extends Activity{
 			case SdlService.ClientMessages.SDL_DISCONNECTED:
 				isConnected = false;
 				break;
-			case SdlService.ClientMessages.ON_FOREGROUND_STATE:
+			case SdlService.ClientMessages.FOREGROUND_STATE_RECEIVED:
 				onForegroundStateReceived( (Boolean) msg.obj);
 				break;
 			case SdlService.ClientMessages.ON_MESSAGE_RESULT:
 				onMessageResponseReceived((RPCResponse) msg.obj);
+				break;
+			case SdlService.ClientMessages.SUBMENU_LIST_RECEIVED:
+				// TODO - do something with the submenu list
+				@SuppressWarnings("unchecked")
+				List<SdlBaseButton> submenuList = (List<SdlBaseButton>) msg.obj;
+				createAddCommandDialog(submenuList);
 				break;
 			default:
 				break;
@@ -108,6 +113,11 @@ public class MainActivity extends Activity{
 		msg.obj = request;
 		sendMessageToService(msg);
 		logSdlMessageSent(request);
+	}
+	
+	private void sendSubmenuListRequest(){
+		Message msg = Message.obtain(null, SdlService.ServiceMessages.REQUEST_SUBMENU_LIST);
+		sendMessageToService(msg);
 	}
 	
 	private void logSdlMessageSent(RPCRequest request){
@@ -219,7 +229,6 @@ public class MainActivity extends Activity{
 	}
 	
 	private void showSdlConnectionDialog(){
-		//TODO - save & load IP addresses from memory
 		String savedIpAddress = MyApplicationPreferences.restoreIpAddress(MainActivity.this);
 		String savedTcpPort = MyApplicationPreferences.restoreTcpPort(MainActivity.this);
 		
@@ -253,6 +262,22 @@ public class MainActivity extends Activity{
 					
 					connectingDialog = new ConnectingDialog(MainActivity.this);
 					connectingDialog.show();
+					new Thread(new Runnable() {
+						
+						@Override
+						public void run() {
+							try {
+								Thread.sleep(CONNECTING_DIALOG_TIMEOUT);
+								if(connectingDialog != null && connectingDialog.isShowing()){
+									connectingDialog.dismiss();
+									Toast.makeText(MainActivity.this, "Unable to connect to the input IP address", Toast.LENGTH_SHORT).show();
+									// TODO - add options item to show the connection dialog again
+								}
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					}).start();
 					
 					Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
                     msg.obj = resultData;
@@ -287,7 +312,7 @@ public class MainActivity extends Activity{
 			createButtonSubscribeDialog();
 			break;
 		case ADD_COMMAND:
-			createAddCommandDialog();
+			sendSubmenuListRequest();
 			break;
 		case ADD_SUBMENU:
 			createAddSubmenuDialog();
@@ -374,15 +399,11 @@ public class MainActivity extends Activity{
 		buttonSubscribeDialog.show();
 	}
 	
-	private void createAddCommandDialog(){
-		List<SdlFunctionBank> allBanks = SdlFunctionBankManager.getInstance().getAllBanks();
-		Collections.sort(allBanks, new SdlFunctionBank.IdComparator());
-		
+	private void createAddCommandDialog(List<SdlBaseButton> allBanks){
 		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks);
 		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				((AddCommand) resultData).setCmdID(idGenerator.next());
 				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});
@@ -394,7 +415,6 @@ public class MainActivity extends Activity{
 		submenuDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				((AddSubMenu) resultData).setMenuID(idGenerator.next());
 				sendSdlMessageToService((RPCRequest) resultData);
 			}
 		});

@@ -17,7 +17,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.livio.sdl.SdlFunctionBank;
+import com.livio.sdl.SdlBaseButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlImageType;
 import com.livio.sdltester.R;
@@ -32,7 +32,7 @@ public class AddCommandDialog extends BaseAlertDialog implements OnCheckedChange
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.ADD_COMMAND;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
-	private ArrayAdapter<SdlFunctionBank> functionBankAdapter;
+	private ArrayAdapter<SdlBaseButton> subMenuAdapter;
 	private ArrayAdapter<SdlImageType> imageTypeAdapter;
 	
 	private EditText et_newCommand;
@@ -46,20 +46,22 @@ public class AddCommandDialog extends BaseAlertDialog implements OnCheckedChange
 	
 	private CheckBox check_addCommand_useIcon;
 	
-	public AddCommandDialog(Context context, List<SdlFunctionBank> availableBanks) {
+	public AddCommandDialog(Context context, List<SdlBaseButton> availableBanks) {
 		super(context, DIALOG_TITLE, R.layout.add_command);
 		createAndSetAdapters(availableBanks);
 		setPositiveButton(okButtonListener);
 		createDialog();
 	}
 	
-	private void createAndSetAdapters(List<SdlFunctionBank> availableBanks){
-		functionBankAdapter = new ArrayAdapter<SdlFunctionBank>(context, android.R.layout.select_dialog_item);
-		functionBankAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		for(SdlFunctionBank functionBank : availableBanks){
-			functionBankAdapter.add(functionBank);
+	private void createAndSetAdapters(List<SdlBaseButton> availableSubmenus){
+		subMenuAdapter = new ArrayAdapter<SdlBaseButton>(context, android.R.layout.select_dialog_item);
+		subMenuAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		
+		subMenuAdapter.add(new SdlBaseButton("Root-level menu", 0, true));
+		for(SdlBaseButton menuButton : availableSubmenus){
+			subMenuAdapter.add(menuButton);
 		}
-		spin_addCommand_submenus.setAdapter(functionBankAdapter);
+		spin_addCommand_submenus.setAdapter(subMenuAdapter);
 		
 		imageTypeAdapter = new ArrayAdapter<SdlImageType>(context, android.R.layout.select_dialog_item, SdlImageType.values());
 		imageTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -97,7 +99,7 @@ public class AddCommandDialog extends BaseAlertDialog implements OnCheckedChange
 			if(listener != null){
 				final String commandName = et_newCommand.getText().toString();
 				final String voiceRecKeyword   = et_voiceRecKeyword.getText().toString();
-				final SdlFunctionBank parentBank = (SdlFunctionBank) spin_addCommand_submenus.getSelectedItem();
+				final SdlBaseButton parentBank = (SdlBaseButton) spin_addCommand_submenus.getSelectedItem();
 				Bitmap image = null;
 				SdlImageType imageType = null;
 				
@@ -110,14 +112,19 @@ public class AddCommandDialog extends BaseAlertDialog implements OnCheckedChange
 					AddCommand result = new AddCommand();
 					MenuParams menuParams = new MenuParams();
 					menuParams.setMenuName(commandName);
-					if(parentBank != null){
+					menuParams.setPosition(0); // TODO - get number of items in the list??? should I input function banks instead of menu buttons?
+					
+					// if we're adding to the root-level menu (id = 0), we don't need to set any id here
+					if(parentBank != null && parentBank.getId() != 0){
 						menuParams.setParentID(parentBank.getId());
 					}
 					result.setMenuParams(menuParams);
 					
-					Vector<String> vrCommands = new Vector<String>(1);
-					vrCommands.add(voiceRecKeyword);
-					result.setVrCommands(vrCommands);
+					if(voiceRecKeyword.length() > 0){
+						Vector<String> vrCommands = new Vector<String>(1);
+						vrCommands.add(voiceRecKeyword);
+						result.setVrCommands(vrCommands);
+					}
 					
 					if(image != null){
 						// TODO - add "Image" into the returned result
