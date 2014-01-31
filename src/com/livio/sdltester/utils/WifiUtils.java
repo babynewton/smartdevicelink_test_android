@@ -5,7 +5,8 @@ public class WifiUtils {
 	
 	public static boolean validateIpAddress(String address){
 		// address should be in the form of x.x.x.x, so at least 7 characters
-		if(address == null || address.length() <= 7){
+		// address maximum is 255.255.255.255, so at most 15 characters
+		if(address == null || address.length() < 7 || address.length() > 15){
 			return false;
 		}
 		

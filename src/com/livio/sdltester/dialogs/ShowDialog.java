@@ -4,6 +4,7 @@ import java.util.EnumSet;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.text.InputFilter;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
@@ -12,6 +13,7 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import com.livio.sdl.MinMaxInputFilter;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlTextAlignment;
 import com.livio.sdltester.R;
@@ -97,10 +99,14 @@ public class ShowDialog extends BaseAlertDialog{
 		et_statusBar.setEnabled(check_statusBar.isChecked());
 		et_mediaTrack = (EditText) view.findViewById(R.id.et_mediaTrack);
 		et_mediaTrack.setEnabled(check_mediaTrack.isChecked());
+		
+		// media clock timers
 		et_mediaClockMins = (EditText) view.findViewById(R.id.et_mediaClockMins);
 		et_mediaClockMins.setEnabled(check_mediaClock.isChecked());
+		et_mediaClockMins.setFilters(new InputFilter[]{new MinMaxInputFilter(0, 59)}); // text input filter - only allow 0-59 minutes
 		et_mediaClockSecs = (EditText) view.findViewById(R.id.et_mediaClockSecs);
 		et_mediaClockSecs.setEnabled(check_mediaClock.isChecked());
+		et_mediaClockSecs.setFilters(new InputFilter[]{new MinMaxInputFilter(0, 59)}); // text input filter - only allow 0-59 seconds
 		
 		spin_textAlignment = (Spinner) view.findViewById(R.id.spin_textAlignment);
 		ArrayAdapter<String> adapter = new ArrayAdapter<String>(context, android.R.layout.select_dialog_item);

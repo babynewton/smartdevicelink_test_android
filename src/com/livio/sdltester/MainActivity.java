@@ -1,7 +1,6 @@
 package com.livio.sdltester;
 
 
-import java.util.Collections;
 import java.util.List;
 
 import android.annotation.SuppressLint;
@@ -23,8 +22,6 @@ import android.widget.Toast;
 
 import com.livio.sdl.IpAddress;
 import com.livio.sdl.SdlBaseButton;
-import com.livio.sdl.SdlFunctionBank;
-import com.livio.sdl.SdlFunctionBankManager;
 import com.livio.sdl.enums.EnumClickListener;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.services.SdlService;
@@ -47,15 +44,17 @@ import com.smartdevicelink.proxy.RPCResponse;
 
 public class MainActivity extends Activity{
 	
-	private static final int CONNECTING_DIALOG_TIMEOUT = 3000;
+	private static final int CONNECTING_DIALOG_TIMEOUT = 10000; // duration to attempt a connection (10s)
+	private static final String OFFLINE_MODE_IP_ADDRESS = "0.0.0.0"; // ip address for offline mode
+	private boolean offlineMode = false;
 	
 	private ListView commandList;
 	
 	/* Messenger for communicating with service. */
-    Messenger serviceMsgr = null;
+    private Messenger serviceMsgr = null;
     
     /* Flag indicating whether we have called bind on the service. */
-    boolean isBound = false, isConnected = false;
+    private boolean isBound = false, isConnected = false;
 
 	private ConnectingDialog connectingDialog;
 	private int connectionAttempts = 3;
@@ -88,7 +87,6 @@ public class MainActivity extends Activity{
 				onMessageResponseReceived((RPCResponse) msg.obj);
 				break;
 			case SdlService.ClientMessages.SUBMENU_LIST_RECEIVED:
-				// TODO - do something with the submenu list
 				@SuppressWarnings("unchecked")
 				List<SdlBaseButton> submenuList = (List<SdlBaseButton>) msg.obj;
 				createAddCommandDialog(submenuList);
@@ -101,10 +99,13 @@ public class MainActivity extends Activity{
     }
 	
 	private void sendMessageToService(Message msg){
-		try {
-			serviceMsgr.send(msg);
-		} catch (RemoteException e) {
-			e.printStackTrace();
+		// only send messages to the service if we are NOT in offline mode
+		if(!offlineMode){
+			try {
+				serviceMsgr.send(msg);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -187,7 +188,7 @@ public class MainActivity extends Activity{
 
 	@Override
 	protected void onResume() {
-		if(!isConnected){
+		if(!isConnected && !offlineMode){
 			showSdlConnectionDialog();
 		}
 		super.onResume();
@@ -257,31 +258,35 @@ public class MainActivity extends Activity{
 				}
 				else{
 					IpAddress ipAddress = (IpAddress) resultData;
-					MyApplicationPreferences.saveIpAddress(MainActivity.this, ipAddress.getIpAddress());
-					MyApplicationPreferences.saveTcpPort(MainActivity.this, ipAddress.getTcpPort());
 					
-					connectingDialog = new ConnectingDialog(MainActivity.this);
-					connectingDialog.show();
-					new Thread(new Runnable() {
+					if(ipAddress.getIpAddress().equals(OFFLINE_MODE_IP_ADDRESS)){
+						Toast.makeText(MainActivity.this, "Offline mode enabled.", Toast.LENGTH_SHORT).show();
+						offlineMode = true;
+					}
+					else{
+						MyApplicationPreferences.saveIpAddress(MainActivity.this, ipAddress.getIpAddress());
+						MyApplicationPreferences.saveTcpPort(MainActivity.this, ipAddress.getTcpPort());
 						
-						@Override
-						public void run() {
-							try {
-								Thread.sleep(CONNECTING_DIALOG_TIMEOUT);
-								if(connectingDialog != null && connectingDialog.isShowing()){
-									connectingDialog.dismiss();
-									Toast.makeText(MainActivity.this, "Unable to connect to the input IP address", Toast.LENGTH_SHORT).show();
-									// TODO - add options item to show the connection dialog again
+						connectingDialog = new ConnectingDialog(MainActivity.this);
+						connectingDialog.show();
+						new Thread(new Runnable() {
+							@Override
+							public void run() {
+								try {
+									Thread.sleep(CONNECTING_DIALOG_TIMEOUT);
+									if(connectingDialog != null && connectingDialog.isShowing()){
+										connectingDialog.dismiss();
+									}
+								} catch (InterruptedException e) {
+									e.printStackTrace();
 								}
-							} catch (InterruptedException e) {
-								e.printStackTrace();
 							}
-						}
-					}).start();
-					
-					Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
-                    msg.obj = resultData;
-                	sendMessageToService(msg);
+						}).start();
+						
+						Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
+	                    msg.obj = resultData;
+	                	sendMessageToService(msg);
+					}
 				}
 			}
 		});

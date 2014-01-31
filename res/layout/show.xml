@@ -25,6 +25,7 @@
             android:layout_below="@+id/tv_metadataLines"
             android:layout_toRightOf="@+id/check_show1"
             android:hint="@string/metadata_line1"
+            android:inputType="textCapWords"
             android:ems="10" >
 
             <requestFocus />
@@ -38,6 +39,7 @@
             android:layout_below="@+id/et_show1"
             android:layout_toRightOf="@+id/check_show2"
             android:hint="@string/metadata_line2"
+            android:inputType="textCapWords"
             android:ems="10"/>
 
         <EditText
@@ -48,6 +50,7 @@
             android:layout_below="@+id/et_show2"
             android:layout_toRightOf="@+id/check_show3"
             android:hint="@string/metadata_line3"
+            android:inputType="textCapWords"
             android:ems="10"/>
 
         <EditText
@@ -58,6 +61,7 @@
             android:layout_below="@+id/et_show3"
             android:layout_toRightOf="@+id/check_show4"
             android:hint="@string/metadata_line4"
+            android:inputType="textCapWords"
             android:ems="10"/>
 
         <CheckBox
@@ -134,6 +138,7 @@
             android:layout_below="@+id/tv_statusBar"
             android:layout_toRightOf="@+id/check_statusBar"
             android:hint="@string/status_bar"
+            android:inputType="textCapWords"
             android:ems="10"/>
         
         <TextView
@@ -161,6 +166,7 @@
             android:layout_below="@+id/tv_media"
             android:layout_toRightOf="@+id/check_mediaTrack"
             android:hint="@string/media_track"
+            android:inputType="textCapWords"
             android:ems="10"/>
 
         <CheckBox
