@@ -11,6 +11,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.EnumComparator;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;

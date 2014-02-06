@@ -1,10 +1,10 @@
-package com.livio.sdltester.dialogs;
-
-import com.livio.sdltester.R;
+package com.livio.sdl.dialogs;
 
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+
+import com.livio.sdl.R;
 
 public abstract class BaseOkCancelDialog extends BaseAlertDialog {
 

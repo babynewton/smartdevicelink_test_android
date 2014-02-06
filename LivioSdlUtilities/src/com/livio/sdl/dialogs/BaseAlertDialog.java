@@ -1,4 +1,4 @@
-package com.livio.sdltester.dialogs;
+package com.livio.sdl.dialogs;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -108,6 +108,19 @@ public abstract class BaseAlertDialog {
 			dialog.dismiss();
 			dialog = null;
 		}
+	}
+	
+	/**
+	 * Returns whether the dialog is currently showing or not.
+	 * 
+	 * @return True if the dialog is showing, false otherwise
+	 */
+	public boolean isShowing(){
+		if(dialog == null){
+			return false;
+		}
+		
+		return dialog.isShowing();
 	}
 	
 	/**

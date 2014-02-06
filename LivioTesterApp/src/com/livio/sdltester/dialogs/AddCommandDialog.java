@@ -17,9 +17,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.livio.sdl.SdlBaseButton;
+import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlImageType;
+import com.livio.sdl.menu.MenuItem;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.AddCommand;
 import com.smartdevicelink.proxy.rpc.MenuParams;
@@ -32,7 +33,7 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.ADD_COMMAND;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
-	private ArrayAdapter<SdlBaseButton> subMenuAdapter;
+	private ArrayAdapter<MenuItem> subMenuAdapter;
 	private ArrayAdapter<SdlImageType> imageTypeAdapter;
 	
 	private EditText et_newCommand;
@@ -46,19 +47,19 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 	
 	private CheckBox check_addCommand_useIcon;
 	
-	public AddCommandDialog(Context context, List<SdlBaseButton> availableBanks) {
+	public AddCommandDialog(Context context, List<MenuItem> availableBanks) {
 		super(context, DIALOG_TITLE, R.layout.add_command);
 		createAndSetAdapters(availableBanks);
 		setPositiveButton(okButtonListener);
 		createDialog();
 	}
 	
-	private void createAndSetAdapters(List<SdlBaseButton> availableSubmenus){
-		subMenuAdapter = new ArrayAdapter<SdlBaseButton>(context, android.R.layout.select_dialog_item);
+	private void createAndSetAdapters(List<MenuItem> availableSubmenus){
+		subMenuAdapter = new ArrayAdapter<MenuItem>(context, android.R.layout.select_dialog_item);
 		subMenuAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		
-		subMenuAdapter.add(new SdlBaseButton("Root-level menu", 0, true));
-		for(SdlBaseButton menuButton : availableSubmenus){
+		subMenuAdapter.add(new MenuItem("Root-level menu", 0, true));
+		for(MenuItem menuButton : availableSubmenus){
 			subMenuAdapter.add(menuButton);
 		}
 		spin_addCommand_submenus.setAdapter(subMenuAdapter);
@@ -99,7 +100,7 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 			if(listener != null){
 				final String commandName = et_newCommand.getText().toString();
 				final String voiceRecKeyword   = et_voiceRecKeyword.getText().toString();
-				final SdlBaseButton parentBank = (SdlBaseButton) spin_addCommand_submenus.getSelectedItem();
+				final MenuItem parentBank = (MenuItem) spin_addCommand_submenus.getSelectedItem();
 				Bitmap image = null;
 				SdlImageType imageType = null;
 				

@@ -15,13 +15,13 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.widget.Toast;
 
-import com.livio.sdl.IpAddress;
 import com.livio.sdl.R;
-import com.livio.sdl.SdlBaseButton;
-import com.livio.sdl.SdlBaseButton.OnClickListener;
-import com.livio.sdl.SdlFunctionBankManager;
-import com.livio.sdl.SdlFunctionButton;
-import com.livio.sdl.SdlMenuButton;
+import com.livio.sdl.datatypes.IpAddress;
+import com.livio.sdl.menu.CommandButton;
+import com.livio.sdl.menu.CommandButton.OnClickListener;
+import com.livio.sdl.menu.MenuItem;
+import com.livio.sdl.menu.MenuManager;
+import com.livio.sdl.menu.SubmenuButton;
 import com.livio.sdl.utils.UpCounter;
 import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
@@ -201,8 +201,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected boolean appHasForeground = false; // tracks app's foreground state
 	protected boolean appIsLoaded = false; // set to true once the app gets its first HMI update
 	
-	protected SparseArray<SdlBaseButton> functionButtons = new SparseArray<SdlBaseButton>(); // maps a function button id to its object
-	protected SparseArray<SdlBaseButton> menuButtons = new SparseArray<SdlBaseButton>(); // maps a menu button id to its object
+	protected MenuManager menuManager = new MenuManager();
 	protected SparseArray<RPCRequest> awaitingResponse = new SparseArray<RPCRequest>(1);
 	
 	protected SmartDeviceLinkProxyALM sdlProxy = null; // the proxy object which sends our requests and receives responses
@@ -482,6 +481,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 		else if(name.equals(Names.DeleteCommand)){
 			awaitingResponse.put(command.getCorrelationID(), command);
 		}
+		else if(name.equals(Names.DeleteSubMenu)){
+			awaitingResponse.put(command.getCorrelationID(), command);
+		}
 	}
 	
 	/**
@@ -490,7 +492,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * @param command The command to translate
 	 * @return The translated SdlBaseButton object
 	 */
-	protected SdlBaseButton createBaseButton(AddCommand command){
+	protected MenuItem createMenuItem(AddCommand command){
 		final String name = command.getMenuParams().getMenuName();
 		final int id = command.getCmdID();
 		int parentId;
@@ -501,9 +503,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 		else{
 			parentId = parentInteger;
 		}
-		final SdlBaseButton result = new SdlFunctionButton(name, id, parentId, new OnClickListener(){
+		
+		final MenuItem result = new CommandButton(name, id, parentId, new OnClickListener(){
 			@Override
-			public void onClick(int parent, int id) {
+			public void onClick(CommandButton button) {
 				Toast.makeText(SdlService.this, name + " clicked!", Toast.LENGTH_SHORT).show();
 			}
 		});
@@ -517,9 +520,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * @param command The command to translate
 	 * @return The translated SdlBaseButton object
 	 */
-	protected SdlBaseButton createBaseButton(AddSubMenu command){
+	protected MenuItem createMenuItem(AddSubMenu command){
 		final String name = command.getMenuName();
-		final SdlBaseButton result = new SdlMenuButton(name, command.getMenuID());
+		final MenuItem result = new SubmenuButton(name, command.getMenuID());
 		return result;
 	}
 	
@@ -528,19 +531,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * 
 	 * @return The copied list of submenu items
 	 */
-	protected List<SdlBaseButton> getSubmenuList(){
-		final int listSize = menuButtons.size();
-		List<SdlBaseButton> result = new ArrayList<SdlBaseButton>(listSize);
-		
-		for(int i=0; i<listSize; i++){
-			SdlBaseButton oldButton = menuButtons.valueAt(i);
-
-			// make a clone of the button object so clients don't have edit access to our real object
-			SdlBaseButton newButton = new SdlBaseButton(oldButton.getName(), oldButton.getId(), oldButton.isMenuButton());
-			result.add(newButton);
-		}
-		
-		return result;
+	protected List<MenuItem> getSubmenuList(){
+		return menuManager.getSubmenus();
 	}
 	
 	/**
@@ -548,19 +540,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * 
 	 * @return The copied list of command items
 	 */
-	protected List<SdlBaseButton> getCommandList(){
-		final int listSize = functionButtons.size();
-		List<SdlBaseButton> result = new ArrayList<SdlBaseButton>(listSize);
-		
-		for(int i=0; i<listSize; i++){
-			SdlBaseButton oldButton = functionButtons.valueAt(i);
-
-			// make a clone of the button object so clients don't have edit access to our real object
-			SdlBaseButton newButton = new SdlBaseButton(oldButton.getName(), oldButton.getId(), oldButton.isMenuButton());
-			result.add(newButton);
-		}
-		
-		return result;
+	protected List<MenuItem> getCommandList(){
+		return menuManager.getCommands();
 	}
 	
 	
@@ -586,9 +567,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 				original = awaitingResponse.get(correlationId);
 				awaitingResponse.remove(correlationId);
 				if(original != null){
-					SdlBaseButton button = createBaseButton((AddCommand) original);
+					MenuItem button = createMenuItem((AddCommand) original);
 					if(button != null){
-						functionButtons.put(button.getId(), button);
+						menuManager.addItem(button);
 					}
 				}
 			}
@@ -598,9 +579,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 				original = awaitingResponse.get(correlationId);
 				awaitingResponse.remove(correlationId);
 				if(original != null){
-					SdlBaseButton button = createBaseButton((AddSubMenu) original);
+					MenuItem button = createMenuItem((AddSubMenu) original);
 					if(button != null){
-						menuButtons.put(button.getId(), button);
+						menuManager.addItem(button);
 					}
 				}
 			}
@@ -612,7 +593,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 				if(original != null){
 					if(success){
 						int idToRemove = ((DeleteCommand) original).getCmdID();
-						functionButtons.remove(idToRemove);
+						menuManager.removeItem(idToRemove);
 					}
 				}
 			}
@@ -625,27 +606,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 					if(success){
 						// TODO - when a submenu is removed, we also need to remove any commands associated with that submenu...
 						int idToRemove = ((DeleteSubMenu) original).getMenuID();
-						menuButtons.remove(idToRemove);
-						removeCommands(idToRemove);
+						menuManager.removeItem(idToRemove);
 					}
 				}
-			}
-		}
-	}
-	
-	/**
-	 * Removes any child command associated with the input parent id.
-	 * 
-	 * @param parentId The parent id of the children to remove.
-	 */
-	protected void removeCommands(int parentId){
-		
-		// loop through the commands and determine which ones need to be removed
-		for(int i=0; i<functionButtons.size(); i++){
-			SdlFunctionButton button = (SdlFunctionButton) functionButtons.valueAt(i);
-			if(button.getParentId() == parentId){
-				functionButtons.remove(button.getId());
-				i--; // we removed an item, so we need to adjust the index so we don't miss anything.
 			}
 		}
 	}
@@ -750,7 +713,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 */
 	public static void setDebug(boolean enable){
 		debug = enable;
-		SdlFunctionBankManager.setDebug(enable);
+		MenuManager.setDebug(enable);
 	}
 	
 	private static void log(String msg){

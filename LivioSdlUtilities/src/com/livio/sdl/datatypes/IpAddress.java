@@ -1,4 +1,4 @@
-package com.livio.sdl;
+package com.livio.sdl.datatypes;
 
 public class IpAddress {
 

@@ -1,6 +1,7 @@
 package com.livio.sdltester;
 
 
+import java.util.Collections;
 import java.util.List;
 
 import android.annotation.SuppressLint;
@@ -18,21 +19,20 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import com.livio.sdl.IpAddress;
-import com.livio.sdl.SdlBaseButton;
+import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.enums.EnumClickListener;
 import com.livio.sdl.enums.SdlCommand;
+import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.services.SdlService;
 import com.livio.sdl.utils.WifiUtils;
 import com.livio.sdltester.dialogs.AddCommandDialog;
 import com.livio.sdltester.dialogs.AddSubMenuDialog;
-import com.livio.sdltester.dialogs.BaseAlertDialog;
 import com.livio.sdltester.dialogs.ButtonSubscriptionDialog;
 import com.livio.sdltester.dialogs.ChangeRegistrationDialog;
 import com.livio.sdltester.dialogs.ConnectingDialog;
@@ -73,6 +73,7 @@ public class MainActivity extends Activity{
     /* Flag indicating whether we have called bind on the service. */
     private boolean isBound = false, isConnected = false;
 
+    private BaseAlertDialog connectionDialog;
 	private ConnectingDialog connectingDialog;
 	private int connectionAttempts = 3;
 	
@@ -110,7 +111,8 @@ public class MainActivity extends Activity{
 				break;
 			case SdlService.ClientMessages.SUBMENU_LIST_RECEIVED:
 				@SuppressWarnings("unchecked")
-				List<SdlBaseButton> submenuList = (List<SdlBaseButton>) msg.obj;
+				List<MenuItem> submenuList = (List<MenuItem>) msg.obj;
+				Collections.sort(submenuList, new MenuItem.NameComparator()); // sort submenu list by name
 				resultCode = msg.arg1;
 				switch(resultCode){
 				case ResultCodes.SubmenuResult.ADD_COMMAND_DIALOG:
@@ -130,7 +132,8 @@ public class MainActivity extends Activity{
 				break;
 			case SdlService.ClientMessages.COMMAND_LIST_RECEIVED:
 				@SuppressWarnings("unchecked")
-				List<SdlBaseButton> commandList = (List<SdlBaseButton>) msg.obj;
+				List<MenuItem> commandList = (List<MenuItem>) msg.obj;
+				Collections.sort(commandList, new MenuItem.NameComparator()); // sort command list by name
 				resultCode = msg.arg1;
 				switch(resultCode){
 				case ResultCodes.CommandResult.DELETE_COMMAND_DIALOG:
@@ -251,7 +254,7 @@ public class MainActivity extends Activity{
 
 	@Override
 	protected void onResume() {
-		if(!isConnected && !offlineMode){
+		if(!isConnected && !offlineMode && (connectionDialog == null || !connectionDialog.isShowing()) ){
 			showSdlConnectionDialog();
 		}
 		super.onResume();
@@ -303,7 +306,6 @@ public class MainActivity extends Activity{
 		String savedIpAddress = MyApplicationPreferences.restoreIpAddress(MainActivity.this);
 		String savedTcpPort = MyApplicationPreferences.restoreTcpPort(MainActivity.this);
 		
-		BaseAlertDialog connectionDialog;
 		if(savedIpAddress != null && savedTcpPort != null){
 			connectionDialog = new SdlConnectionDialog(this, savedIpAddress, savedTcpPort);
 		}
@@ -479,7 +481,7 @@ public class MainActivity extends Activity{
 		buttonSubscribeDialog.show();
 	}
 	
-	private void createAddCommandDialog(List<SdlBaseButton> allBanks){
+	private void createAddCommandDialog(List<MenuItem> allBanks){
 		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks);
 		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
@@ -523,7 +525,7 @@ public class MainActivity extends Activity{
 		changeRegistrationDialog.show();
 	}
 	
-	private void createDeleteCommandDialog(List<SdlBaseButton> commandList){
+	private void createDeleteCommandDialog(List<MenuItem> commandList){
 		BaseAlertDialog deleteCommandDialog = new DeleteCommandDialog(this, commandList);
 		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
 			
@@ -535,7 +537,7 @@ public class MainActivity extends Activity{
 		deleteCommandDialog.show();
 	}
 	
-	private void createDeleteSubmenuDialog(List<SdlBaseButton> submenuList){
+	private void createDeleteSubmenuDialog(List<MenuItem> submenuList){
 		BaseAlertDialog deleteCommandDialog = new DeleteSubmenuDialog(this, submenuList);
 		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
 			
@@ -555,7 +557,7 @@ public class MainActivity extends Activity{
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
+	public boolean onOptionsItemSelected(android.view.MenuItem item) {
 		int menuItemId = item.getItemId();
 		switch(menuItemId){
 		case R.id.menu_connect:
