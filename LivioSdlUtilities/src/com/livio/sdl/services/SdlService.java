@@ -1,6 +1,7 @@
 package com.livio.sdl.services;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import android.annotation.SuppressLint;
@@ -17,6 +18,7 @@ import android.widget.Toast;
 
 import com.livio.sdl.R;
 import com.livio.sdl.datatypes.IpAddress;
+import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.menu.CommandButton;
 import com.livio.sdl.menu.CommandButton.OnClickListener;
 import com.livio.sdl.menu.MenuItem;
@@ -73,8 +75,10 @@ import com.smartdevicelink.proxy.rpc.ShowConstantTBTResponse;
 import com.smartdevicelink.proxy.rpc.ShowResponse;
 import com.smartdevicelink.proxy.rpc.SliderResponse;
 import com.smartdevicelink.proxy.rpc.SpeakResponse;
+import com.smartdevicelink.proxy.rpc.SubscribeButton;
 import com.smartdevicelink.proxy.rpc.SubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.SubscribeVehicleDataResponse;
+import com.smartdevicelink.proxy.rpc.UnsubscribeButton;
 import com.smartdevicelink.proxy.rpc.UnsubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.UpdateTurnListResponse;
@@ -127,6 +131,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 * Message.what integer called when a ServiceMessages.REQUEST_COMMAND_LIST message has been received.
 		 */
 		public static final int COMMAND_LIST_RECEIVED = 6;
+		/**
+		 * Message.what integer called when a ServiceMessages.REQUEST_BUTTON_SUBSCRIPTIONS message has been received.
+		 */
+		public static final int BUTTON_SUBSCRIPTIONS_RECEIVED = 7;
 	}
 	
 	/**
@@ -168,6 +176,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 * Message.what integer commanding the service to respond with a list of existing commands that have been added.
 		 */
 		public static final int REQUEST_COMMAND_LIST = 8;
+		/*
+		 * Message.what integer commanding the service to respond with a list of buttons that have been subscribed to.
+		 */
+		public static final int REQUEST_BUTTON_SUBSCRIPTIONS = 9;
 	}
 	
 	/**
@@ -202,6 +214,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	
 	protected MenuManager menuManager = new MenuManager();
 	protected SparseArray<RPCRequest> awaitingResponse = new SparseArray<RPCRequest>(1);
+	protected List<SdlButton> buttonSubscriptions = new ArrayList<SdlButton>();
 	
 	protected SmartDeviceLinkProxyALM sdlProxy = null; // the proxy object which sends our requests and receives responses
 	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
@@ -240,6 +253,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 					break;
 				case ServiceMessages.REQUEST_COMMAND_LIST:
 					commandListRequested(msg.replyTo, msg.arg1);
+					break;
+				case ServiceMessages.REQUEST_BUTTON_SUBSCRIPTIONS:
+					buttonSubscriptionsRequested(msg.replyTo, msg.arg1);
 					break;
 				default:
 					break;
@@ -325,6 +341,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * Sends the list of available sub-menus to the listening messenger client.
 	 * 
 	 * @param listener The client to reply to
+	 * @param reqCode The request code sent with the initial request
 	 */
 	protected void submenuListRequested(Messenger listener, int reqCode){
 		Message msg = Message.obtain(null, ClientMessages.SUBMENU_LIST_RECEIVED);
@@ -337,6 +354,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * Sends the list of available commands to the listening messenger client.
 	 * 
 	 * @param listener The client to reply to
+	 * @param reqCode The request code sent with the initial request
 	 */
 	protected void commandListRequested(Messenger listener, int reqCode){
 		Message msg = Message.obtain(null, ClientMessages.COMMAND_LIST_RECEIVED);
@@ -345,6 +363,18 @@ public class SdlService extends Service implements IProxyListenerALM{
 		sendMessageToClient(listener, msg);
 	}
 	
+	/**
+	 * Sends the list of button subscriptions to the listening messenger client.
+	 * 
+	 * @param listener The client to reply to
+	 * @param reqCode The request code sent with the initial request
+	 */
+	protected void buttonSubscriptionsRequested(Messenger listener, int reqCode){
+		Message msg = Message.obtain(null, ClientMessages.BUTTON_SUBSCRIPTIONS_RECEIVED);
+		msg.obj = getButtonSubscriptions();
+		msg.arg1 = reqCode;
+		sendMessageToClient(listener, msg);
+	}
 
 	/* ********** Android service life cycle methods ********** */
 	@Override
@@ -493,6 +523,12 @@ public class SdlService extends Service implements IProxyListenerALM{
 		else if(name.equals(Names.DeleteSubMenu)){
 			awaitingResponse.put(command.getCorrelationID(), command);
 		}
+		else if(name.equals(Names.SubscribeButton)){
+			awaitingResponse.put(command.getCorrelationID(), command);
+		}
+		else if(name.equals(Names.UnsubscribeButton)){
+			awaitingResponse.put(command.getCorrelationID(), command);
+		}
 	}
 	
 	/**
@@ -551,6 +587,19 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 */
 	protected List<MenuItem> getCommandList(){
 		return menuManager.getCommands();
+	}
+	
+	/**
+	 * Creates a copy of the list of button subscriptions added so far.
+	 * 
+	 * @return The copied list of button subscriptions
+	 */
+	protected List<SdlButton> getButtonSubscriptions(){
+		if(buttonSubscriptions == null || buttonSubscriptions.size() <= 0){
+			return Collections.emptyList();
+		}
+		
+		return new ArrayList<SdlButton>(buttonSubscriptions);
 	}
 	
 	/**
@@ -684,6 +733,39 @@ public class SdlService extends Service implements IProxyListenerALM{
 			}
 		}
 	}
+	@Override
+	public void onSubscribeButtonResponse(SubscribeButtonResponse response) {
+		sendMessageResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			if(original != null){
+				SdlButton button = SdlButton.translateFromLegacy(((SubscribeButton) original).getButtonName());
+				buttonSubscriptions.add(button);
+			}
+		}
+	}
+	
+	@Override
+	public void onUnsubscribeButtonResponse(UnsubscribeButtonResponse response) {
+		sendMessageResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			if(original != null){
+				SdlButton button = SdlButton.translateFromLegacy(((UnsubscribeButton) original).getButtonName());
+				buttonSubscriptions.remove(button);
+			}
+		}
+	}
 	
 	@Override public void onGenericResponse(GenericResponse response) {sendMessageResponse(response);}
 	@Override public void onCreateInteractionChoiceSetResponse(CreateInteractionChoiceSetResponse response) {sendMessageResponse(response);}
@@ -695,8 +777,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override public void onSetMediaClockTimerResponse(SetMediaClockTimerResponse response) {sendMessageResponse(response);}
 	@Override public void onShowResponse(ShowResponse response) {sendMessageResponse(response);}
 	@Override public void onSpeakResponse(SpeakResponse response) {sendMessageResponse(response);}
-	@Override public void onSubscribeButtonResponse(SubscribeButtonResponse response) {sendMessageResponse(response);}
-	@Override public void onUnsubscribeButtonResponse(UnsubscribeButtonResponse response) {sendMessageResponse(response);}
 	@Override public void onSubscribeVehicleDataResponse(SubscribeVehicleDataResponse response) {sendMessageResponse(response);}
 	@Override public void onUnsubscribeVehicleDataResponse(UnsubscribeVehicleDataResponse response) {sendMessageResponse(response);}
 	@Override public void onGetVehicleDataResponse(GetVehicleDataResponse response) {sendMessageResponse(response);}

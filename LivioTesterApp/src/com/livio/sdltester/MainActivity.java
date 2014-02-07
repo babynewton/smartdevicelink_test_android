@@ -1,6 +1,7 @@
 package com.livio.sdltester;
 
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,6 +31,7 @@ import com.livio.sdl.SdlMessageAdapter;
 import com.livio.sdl.datatypes.IpAddress;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.enums.EnumClickListener;
+import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.services.SdlService;
@@ -37,6 +39,7 @@ import com.livio.sdl.utils.WifiUtils;
 import com.livio.sdltester.dialogs.AddCommandDialog;
 import com.livio.sdltester.dialogs.AddSubMenuDialog;
 import com.livio.sdltester.dialogs.ButtonSubscriptionDialog;
+import com.livio.sdltester.dialogs.ButtonUnsubscriptionDialog;
 import com.livio.sdltester.dialogs.ChangeRegistrationDialog;
 import com.livio.sdltester.dialogs.ConnectingDialog;
 import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
@@ -50,7 +53,6 @@ import com.livio.sdltester.dialogs.ShowDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
-import com.smartdevicelink.proxy.rpc.Alert;
 
 
 public class MainActivity extends Activity{
@@ -69,6 +71,10 @@ public class MainActivity extends Activity{
 		}
 		private static final class CommandResult{
 			private static final int DELETE_COMMAND_DIALOG = 1;
+		}
+		private static final class ButtonSubscriptionResult{
+			private static final int BUTTON_SUBSCRIBE = 1;
+			private static final int BUTTON_UNSUBSCRIBE = 2;
 		}
 		
 	}
@@ -123,6 +129,9 @@ public class MainActivity extends Activity{
 				break;
 			case SdlService.ClientMessages.COMMAND_LIST_RECEIVED:
 				onCommandListReceived((List<MenuItem>) msg.obj, msg.arg1);
+				break;
+			case SdlService.ClientMessages.BUTTON_SUBSCRIPTIONS_RECEIVED:
+				onButtonSubscriptionsReceived((List<SdlButton>) msg.obj, msg.arg1);
 				break;
 			default:
 				break;
@@ -180,6 +189,19 @@ public class MainActivity extends Activity{
 	 */
 	private void sendCommandListRequest(int reqCode){
 		Message msg = Message.obtain(null, SdlService.ServiceMessages.REQUEST_COMMAND_LIST);
+		msg.replyTo = mMessenger;
+		msg.arg1 = reqCode;
+		sendMessageToService(msg);
+	}
+	
+	/**
+	 * Sends a request for the most up-to-date list of button subscriptions with a request code so this
+	 * activity knows what to do when the response comes back.
+	 * 
+	 * @param reqCode The request code to associate with the request
+	 */
+	private void sendButtonSubscriptionRequest(int reqCode){
+		Message msg = Message.obtain(null, SdlService.ServiceMessages.REQUEST_BUTTON_SUBSCRIPTIONS);
 		msg.replyTo = mMessenger;
 		msg.arg1 = reqCode;
 		sendMessageToService(msg);
@@ -369,6 +391,29 @@ public class MainActivity extends Activity{
 		}
 	}
 	
+	private void onButtonSubscriptionsReceived(List<SdlButton> buttonSubscriptionList, int reqCode){
+		switch(reqCode){
+		case ResultCodes.ButtonSubscriptionResult.BUTTON_SUBSCRIBE:
+			if(buttonSubscriptionList.size() == SdlButton.values().length){
+				Toast.makeText(MainActivity.this, getResources().getString(R.string.button_subscriptions_already_subscribed), Toast.LENGTH_LONG).show();
+			}
+			else{
+				createButtonSubscribeDialog(buttonSubscriptionList);
+			}
+			break;
+		case ResultCodes.ButtonSubscriptionResult.BUTTON_UNSUBSCRIBE:
+			if(buttonSubscriptionList.size() == 0){
+				Toast.makeText(MainActivity.this, getResources().getString(R.string.button_subscriptions_none_subscribed), Toast.LENGTH_LONG).show();
+			}
+			else{
+				createButtonUnsubscribeDialog(buttonSubscriptionList);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	
 	/**
 	 * Sets offline mode so that messages are not sent to the SDL service.  This allows
 	 * the app to run successfully without being connected to SDL core.
@@ -485,7 +530,10 @@ public class MainActivity extends Activity{
 			createShowDialog();
 			break;
 		case SUBSCRIBE_BUTTON:
-			createButtonSubscribeDialog();
+			sendButtonSubscriptionRequest(ResultCodes.ButtonSubscriptionResult.BUTTON_SUBSCRIBE);
+			break;
+		case UNSUBSCRIBE_BUTTON:
+			sendButtonSubscriptionRequest(ResultCodes.ButtonSubscriptionResult.BUTTON_UNSUBSCRIBE);
 			break;
 		case ADD_COMMAND:
 			sendSubmenuListRequest(ResultCodes.SubmenuResult.ADD_COMMAND_DIALOG);
@@ -575,15 +623,34 @@ public class MainActivity extends Activity{
 	/**
 	 * Creates a button subscribe dialog, allowing the user to manually send a button subscribe command.
 	 */	
-	private void createButtonSubscribeDialog(){
-		BaseAlertDialog buttonSubscribeDialog = new ButtonSubscriptionDialog(this);
+	private void createButtonSubscribeDialog(List<SdlButton> buttonSubscriptions){
+		BaseAlertDialog buttonSubscribeDialog = new ButtonSubscriptionDialog(this, buttonSubscriptions);
 		buttonSubscribeDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
+				@SuppressWarnings("unchecked")
+				List<RPCRequest> buttonSubscribeRequests = (ArrayList<RPCRequest>) resultData;
+				for(RPCRequest request : buttonSubscribeRequests){
+					sendSdlMessageToService(request);
+				}
 			}
 		});
 		buttonSubscribeDialog.show();
+	}
+	
+	private void createButtonUnsubscribeDialog(List<SdlButton> buttonSubscriptions){
+		BaseAlertDialog buttonUnsubscribeDialog = new ButtonUnsubscriptionDialog(this, buttonSubscriptions);
+		buttonUnsubscribeDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				@SuppressWarnings("unchecked")
+				List<RPCRequest> buttonSubscribeRequests = (ArrayList<RPCRequest>) resultData;
+				for(RPCRequest request : buttonSubscribeRequests){
+					sendSdlMessageToService(request);
+				}
+			}
+		});
+		buttonUnsubscribeDialog.show();
 	}
 
 	/**

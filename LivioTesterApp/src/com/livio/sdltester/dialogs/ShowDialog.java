@@ -128,21 +128,33 @@ public class ShowDialog extends BaseOkCancelDialog{
 			
 			if(et_show1.isEnabled()){
 				String show1 = et_show1.getText().toString();
+				if(show1.equals("")){
+					show1 = " ";
+				}
 				show.setMainField1(show1);
 			}
 			
 			if(et_show2.isEnabled()){
 				String show2 = et_show2.getText().toString();
+				if(show2.equals("")){
+					show2 = " ";
+				}
 				show.setMainField2(show2);
 			}
 			
 			if(et_show3.isEnabled()){
 				String show3 = et_show3.getText().toString();
+				if(show3.equals("")){
+					show3 = " ";
+				}
 				show.setMainField3(show3);
 			}
 			
 			if(et_show4.isEnabled()){
 				String show4 = et_show4.getText().toString();
+				if(show4.equals("")){
+					show4 = " ";
+				}
 				show.setMainField4(show4);
 			}
 			

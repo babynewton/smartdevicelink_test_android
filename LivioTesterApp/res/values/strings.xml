@@ -21,4 +21,8 @@
     
 <!--     Function Banks -->
     <string name="function_bank_root_name">Root-level Menu</string>
+    
+<!--     Button Subscriptions -->
+    <string name="button_subscriptions_already_subscribed">Already subscribed to all buttons!</string>
+    <string name="button_subscriptions_none_subscribed">App hasn\'t subscribed to buttons yet!</string>
 </resources>

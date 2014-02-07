@@ -116,11 +116,11 @@
         <TextView
             android:id="@+id/tv_statusBar"
             style="@style/small_header_text"
-            android:layout_alignParentRight="true"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
             android:layout_below="@+id/spin_textAlignment"
             android:text="@string/status_bar"
-            />
+            android:visibility="gone" />
 
         <CheckBox
             android:id="@+id/check_statusBar"
@@ -128,7 +128,8 @@
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/et_statusBar"
             android:layout_alignParentLeft="true"
-            android:checked="false" />
+            android:checked="false"
+            android:visibility="gone" />
 
         <EditText
             android:id="@+id/et_statusBar"
@@ -137,18 +138,19 @@
             android:layout_alignParentRight="true"
             android:layout_below="@+id/tv_statusBar"
             android:layout_toRightOf="@+id/check_statusBar"
+            android:ems="10"
             android:hint="@string/status_bar"
             android:inputType="textCapWords"
-            android:ems="10"/>
+            android:visibility="gone" />
         
         <TextView
             android:id="@+id/tv_media"
             style="@style/small_header_text"
-            android:layout_alignParentRight="true"
             android:layout_alignParentLeft="true"
+            android:layout_alignParentRight="true"
             android:layout_below="@+id/et_statusBar"
             android:text="@string/media"
-            />
+            android:visibility="gone" />
 
         <CheckBox
             android:id="@+id/check_mediaTrack"
@@ -156,7 +158,8 @@
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/et_mediaTrack"
             android:layout_alignParentLeft="true"
-            android:checked="false" />
+            android:checked="false"
+            android:visibility="gone" />
 
         <EditText
             android:id="@+id/et_mediaTrack"
@@ -165,9 +168,10 @@
             android:layout_alignParentRight="true"
             android:layout_below="@+id/tv_media"
             android:layout_toRightOf="@+id/check_mediaTrack"
+            android:ems="10"
             android:hint="@string/media_track"
             android:inputType="textCapWords"
-            android:ems="10"/>
+            android:visibility="gone" />
 
         <CheckBox
             android:id="@+id/check_mediaClock"
@@ -175,20 +179,21 @@
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/et_mediaClockMins"
             android:layout_alignParentLeft="true"
-            android:checked="false" />
+            android:checked="false"
+            android:visibility="gone" />
         
         <TextView
             android:id="@+id/tv_mediaClock"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/check_mediaClock"
             android:layout_alignBaseline="@+id/check_mediaClock"
             android:layout_below="@+id/et_mediaTrack"
-            android:gravity="center"
-            android:textStyle="bold"
             android:layout_margin="10dip"
+            android:layout_toRightOf="@+id/check_mediaClock"
+            android:gravity="center"
             android:text="@string/clock"
-            />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <EditText
             android:id="@+id/et_mediaClockMins"
@@ -196,23 +201,24 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/et_mediaTrack"
             android:layout_toRightOf="@+id/tv_mediaClock"
-            android:maxLength="2"
+            android:ems="10"
             android:hint="@string/clock_mins"
             android:inputType="number"
-            android:ems="10"/>
+            android:maxLength="2"
+            android:visibility="gone" />
         
         <TextView
             android:id="@+id/tv_mediaClockColon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/et_mediaClockMins"
             android:layout_alignBaseline="@+id/et_mediaClockMins"
             android:layout_below="@+id/et_mediaTrack"
-            android:gravity="center"
-            android:textStyle="bold"
             android:layout_margin="10dip"
+            android:layout_toRightOf="@+id/et_mediaClockMins"
+            android:gravity="center"
             android:text="@string/colon"
-            />
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <EditText
             android:id="@+id/et_mediaClockSecs"
@@ -220,10 +226,11 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/et_mediaTrack"
             android:layout_toRightOf="@+id/tv_mediaClockColon"
-            android:maxLength="2"
+            android:ems="10"
             android:hint="@string/clock_secs"
             android:inputType="number"
-            android:ems="10"/>
+            android:maxLength="2"
+            android:visibility="gone" />
         
 <!--         TODO - Include Graphics and include custom presets -->
         

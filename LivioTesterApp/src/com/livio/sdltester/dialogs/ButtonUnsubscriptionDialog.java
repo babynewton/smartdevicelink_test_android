@@ -19,29 +19,27 @@ import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
-import com.smartdevicelink.proxy.rpc.SubscribeButton;
+import com.smartdevicelink.proxy.rpc.UnsubscribeButton;
 
-public class ButtonSubscriptionDialog extends BaseOkCancelDialog{
+public class ButtonUnsubscriptionDialog extends BaseOkCancelDialog {
 
-	private static final SdlCommand SYNC_COMMAND = SdlCommand.SUBSCRIBE_BUTTON;
+	private static final SdlCommand SYNC_COMMAND = SdlCommand.UNSUBSCRIBE_BUTTON;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
 	private ListView listView;
 	private ArrayAdapter<SdlButton> listViewAdapter;
 	private List<SdlButton> selectedItems = new ArrayList<SdlButton>();
 	
-	public ButtonSubscriptionDialog(Context context, List<SdlButton> buttonSubscriptions) {
+	public ButtonUnsubscriptionDialog(Context context, List<SdlButton> buttonSubscriptions) {
 		super(context, DIALOG_TITLE, R.layout.button_subscription);
 		setPositiveButton(positiveButton);
-		filterSubscribedButtons(buttonSubscriptions);
+		addubscribedButtons(buttonSubscriptions);
 		createDialog();
 	}
 	
-	private void filterSubscribedButtons(List<SdlButton> buttonSubscriptions){
-		for(SdlButton button : SdlButton.values()){
-			if(!buttonSubscriptions.contains(button)){
-				listViewAdapter.add(button);
-			}
+	private void addubscribedButtons(List<SdlButton> buttonSubscriptions){
+		for(SdlButton button : buttonSubscriptions){
+			listViewAdapter.add(button);
 		}
 		listViewAdapter.sort(new EnumComparator<SdlButton>());
 		((BaseAdapter) listView.getAdapter()).notifyDataSetChanged();
@@ -81,13 +79,13 @@ public class ButtonSubscriptionDialog extends BaseOkCancelDialog{
 				notifyListener(Collections.emptyList());
 			}
 			else{
-				List<RPCRequest> buttonSubscribeMessages = new ArrayList<RPCRequest>(selectedItems.size());
+				List<RPCRequest> buttonUnsubscribeMessages = new ArrayList<RPCRequest>(selectedItems.size());
 				for(SdlButton button : selectedItems){
-					SubscribeButton subscribeButton = new SubscribeButton();
-					subscribeButton.setButtonName(SdlButton.translateToLegacy(button));
-					buttonSubscribeMessages.add(subscribeButton);
+					UnsubscribeButton unsubscribeButton = new UnsubscribeButton();
+					unsubscribeButton.setButtonName(SdlButton.translateToLegacy(button));
+					buttonUnsubscribeMessages.add(unsubscribeButton);
 				}
-				notifyListener(buttonSubscribeMessages);
+				notifyListener(buttonUnsubscribeMessages);
 			}
 		}
 	};
