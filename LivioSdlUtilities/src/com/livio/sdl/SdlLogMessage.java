@@ -65,8 +65,11 @@ public class SdlLogMessage {
 				functionName = new StringBuilder().append(response.getFunctionName()).append(" ").append(NEGATIVE_RESPONSE).toString();
 				
 				String info = response.getInfo();
-				String result = response.getResultCode().name();
-				details = new StringBuilder().append(result).append(": ").append(info).toString();
+				StringBuilder builder = new StringBuilder().append(response.getResultCode().name());
+				if(info != null){
+					builder.append(": ").append(info);
+				}
+				details = builder.toString();
 			}
 		}
 		else if(messageType.equals(REQUEST)){

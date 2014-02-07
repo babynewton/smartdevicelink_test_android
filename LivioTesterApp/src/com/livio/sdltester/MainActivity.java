@@ -50,6 +50,7 @@ import com.livio.sdltester.dialogs.ShowDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
+import com.smartdevicelink.proxy.rpc.Alert;
 
 
 public class MainActivity extends Activity{
@@ -272,11 +273,8 @@ public class MainActivity extends Activity{
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				SdlLogMessage logMessage = listViewAdapter.getItem(position);
-				String messageType = logMessage.getMessageType();
-				if(!messageType.equals(SdlLogMessage.NOTIFICATION)){
-					BaseAlertDialog jsonDialog = new JsonDialog(MainActivity.this, logMessage);
-					jsonDialog.show();
-				}
+				BaseAlertDialog jsonDialog = new JsonDialog(MainActivity.this, logMessage);
+				jsonDialog.show();
 			}
 		});
 	}

@@ -23,14 +23,14 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnCheckedChang
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
 	//set up your min & max time allowed here.  divide by 10 for actual time in seconds.
-	private static final int MINIMUM_ALERT_TONE_TIME = 0; // 0.0 seconds
-	private static final int MAXIMUM_ALERT_TONE_TIME = 50;// 5.0 seconds
+	private static final int MINIMUM_ALERT_TONE_TIME = 30; // 3.0 seconds
+	private static final int MAXIMUM_ALERT_TONE_TIME = 100;// 10.0 seconds
 	
 	//seekbar can only start at 0, so we have to do all these stupid adjustments everywhere...
 	private static final int MAX_SEEKBAR_PROGRESS = MAXIMUM_ALERT_TONE_TIME - MINIMUM_ALERT_TONE_TIME;
 
 	//this is your default selection for tone duration.  again, divide by 10 for the actual time in seconds.
-	private static final int DEFAULT_TONE_DURATION = 10;  // 1.0 second
+	private static final int DEFAULT_TONE_DURATION = 50;  // 5.0 seconds
 	
 	//another stupid adjustment.  your default selection must be offset by the minimum value since seekbars can only start at 0
 	private static final int ADJUSTED_DEFAULT_TONE_DURATION = DEFAULT_TONE_DURATION - MINIMUM_ALERT_TONE_TIME;
@@ -123,11 +123,22 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnCheckedChang
 	private final DialogInterface.OnClickListener okButtonListener = new DialogInterface.OnClickListener() {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-			final String textToSpeak = et_alert_textToSpeak.getText().toString();
-			final String line1   = et_alert_line1.getText().toString();
-			final String line2   = et_alert_line2.getText().toString();
-			final String line3   = et_alert_line3.getText().toString();
-			final int toneDurationInMs = progressInMs(seek_alert_toneDuration.getProgress());
+			String textToSpeak = et_alert_textToSpeak.getText().toString();
+			String line1   = et_alert_line1.getText().toString();
+			String line2   = et_alert_line2.getText().toString();
+			String line3   = et_alert_line3.getText().toString();
+			int toneDurationInMs = progressInMs(seek_alert_toneDuration.getProgress());
+			boolean playTone = check_alert_playTone.isChecked();
+			
+			if(textToSpeak.equals("")){
+				textToSpeak = " ";
+			}if(line1.equals("")){
+				line1 = " ";
+			}if(line2.equals("")){
+				line2 = " ";
+			}if(line3.equals("")){
+				line3 = " ";
+			}
 			
 			Alert alert = new Alert();
 			if(textToSpeak.length() > 0){
@@ -137,7 +148,8 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnCheckedChang
 			alert.setAlertText2(line2);
 			alert.setAlertText3(line3);
 			
-			if(check_alert_playTone.isChecked()){
+			alert.setPlayTone(playTone);
+			if(playTone){
 				alert.setDuration(toneDurationInMs);
 			}
 			
