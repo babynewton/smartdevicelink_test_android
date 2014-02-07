@@ -2,7 +2,6 @@
 
 <!--     General Strings -->
     <string name="app_name">Livio SDL Tester</string>
-    <string name="menu_settings">Settings</string>
     <string name="no_selection">No selection</string>
     <string name="not_implemented">This feature is not yet implemented.</string>
     <string name="not_an_sdl_command">The input argument is not an SDL command.</string>
@@ -11,8 +10,6 @@
     <string name="menu_connect">Connect to SDL</string>
     
 <!--     Dialog Strings -->
-    <string name="positive_button">OK</string>
-    <string name="negative_button">Cancel</string>
     <string name="sdl_command_dialog_title">Select an SDL Command:</string>
     
 <!--     SDL Connection -->
@@ -21,63 +18,6 @@
     
 <!--     Offline Mode -->
     <string name="offline_mode_text">Would you like to enter offline mode?</string>
-    
-<!--     Add Command -->
-    <string name="add_command_command_name">Command Name</string>
-    <string name="add_command_vr_keyword">Voice Recognition Keyword</string>
-    <string name="add_command_parent_menu">Parent Menu:</string>
-    <string name="add_command_image_type">Image Type:</string>
-    
-<!--     Delete Command -->
-    <string name="no_commands_to_delete">There are no commands to delete.</string>
-    
-<!--     Delete Submenu -->
-    <string name="no_submenus_to_delete">There are no submenus to delete.</string>
-    
-<!--     Add Submenu -->
-    <string name="submenu_name">Submenu Name</string>
-
-<!--     Create Interaction Choice Set -->
-    <string name="max_choices">You have reached the max number of choices.</string>
-    <string name="item_number">Item #</string>
-    
-<!--     Choice Set Item -->
-    <string name="item_number1">Item #1</string>
-    <string name="choice_name">Choice Name</string>
-    <string name="voice_keyword">Voice Recognition Keyword</string>
-    <string name="use_artwork">Use artwork?</string>
-    
-<!--     Change Registration -->
-    <string name="language">Language</string>
-    <string name="hmi_language">HMI Display Language</string>
-    
-<!--     Alert Dialog -->
-    <string name="text_to_speak">Text to Speak</string>
-    <string name="alert_line1">Alert Line #1</string>
-    <string name="alert_line2">Alert Line #2</string>
-    <string name="alert_line3">Alert Line #3</string>
-    <string name="alert_sound_enabled">Alert sound enabled</string>
-    <string name="alert_duration_s">Alert Duration (in seconds)</string>
-    <string name="alert_duration_ms">Alert Duration (in milliseconds)</string>
-    
-<!--     Show Dialog -->
-    <string name="metadata_lines">Metadata Lines</string>
-    <string name="metadata_line1">Metadata Line #1</string>
-    <string name="metadata_line2">Metadata Line #2</string>
-    <string name="metadata_line3">Metadata Line #3</string>
-    <string name="metadata_line4">Metadata Line #4</string>
-    <string name="text_alignment">Text Alignment</string>
-    <string name="status_bar">Status Bar</string>
-    <string name="media_track">Media Track</string>
-    <string name="media">Media</string>
-    <string name="clock">Clock</string>
-    <string name="clock_mins">MM</string>
-    <string name="clock_secs">SS</string>
-    <string name="colon">:</string>
-    
-<!--     Unit Suffixes -->
-    <string name="units_seconds"> s</string>
-    <string name="units_milliseconds"> ms</string>
     
 <!--     Function Banks -->
     <string name="function_bank_root_name">Root-level Menu</string>

@@ -26,7 +26,6 @@ import com.livio.sdl.utils.UpCounter;
 import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
-import com.smartdevicelink.proxy.RPCResponse;
 import com.smartdevicelink.proxy.SmartDeviceLinkProxyALM;
 import com.smartdevicelink.proxy.constants.Names;
 import com.smartdevicelink.proxy.interfaces.IProxyListenerALM;
@@ -208,7 +207,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
 	protected boolean isConnected = false;
 	
-	
 	/* ********** Messenger methods to & from the client ********** */
 	
 	protected final Messenger messenger = new Messenger(new IncomingHandler());
@@ -352,9 +350,20 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onCreate() {
 		log("onCreate called");
+		initialize();
+		super.onCreate();
+	}
+	
+	private void initialize(){
+		isConnected = false;
+		
 		correlationIdGenerator = new UpCounter(100);
 		commandIdGenerator = new UpCounter(100);
-		super.onCreate();
+		appHasForeground = false;
+		appIsLoaded = false;
+		
+		menuManager.clear();
+		awaitingResponse.clear();
 	}
 
 	@Override
@@ -386,7 +395,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected SmartDeviceLinkProxyALM createSdlProxyObject(IpAddress inputIp){
 		int tcpPort = Integer.parseInt(inputIp.getTcpPort());
 		String ipAddress = inputIp.getIpAddress();
-		String appName = getResources().getString(R.string.app_name);
+		String appName = getResources().getString(R.string.app_name); // TODO - this should happen in the child class, not the super class.
 		
 		SmartDeviceLinkProxyALM result = null;
 		try {
@@ -544,10 +553,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 		return menuManager.getCommands();
 	}
 	
-	
-	
-	
-	
 	/**
 	 * Called when app is first loaded and receives full HMI control 
 	 */
@@ -555,73 +560,18 @@ public class SdlService extends Service implements IProxyListenerALM{
 		Message msg = Message.obtain(null, ClientMessages.ON_APP_OPENED);
 		sendMessageToRegisteredClients(msg);
 	}
-	
-	private void handleResponse(RPCResponse response){
-		String name = response.getFunctionName();
-		boolean success = response.getSuccess();
-		int correlationId = response.getCorrelationID();
-		RPCRequest original;
-		
-		if(name.equals(Names.AddCommand)){
-			if(success){
-				original = awaitingResponse.get(correlationId);
-				awaitingResponse.remove(correlationId);
-				if(original != null){
-					MenuItem button = createMenuItem((AddCommand) original);
-					if(button != null){
-						menuManager.addItem(button);
-					}
-				}
-			}
-		}
-		else if(name.equals(Names.AddSubMenu)){
-			if(success){
-				original = awaitingResponse.get(correlationId);
-				awaitingResponse.remove(correlationId);
-				if(original != null){
-					MenuItem button = createMenuItem((AddSubMenu) original);
-					if(button != null){
-						menuManager.addItem(button);
-					}
-				}
-			}
-		}
-		else if(name.equals(Names.DeleteCommand)){
-			if(success){
-				original = awaitingResponse.get(correlationId);
-				awaitingResponse.remove(correlationId);
-				if(original != null){
-					if(success){
-						int idToRemove = ((DeleteCommand) original).getCmdID();
-						menuManager.removeItem(idToRemove);
-					}
-				}
-			}
-		}
-		else if(name.equals(Names.DeleteSubMenu)){
-			if(success){
-				original = awaitingResponse.get(correlationId);
-				awaitingResponse.remove(correlationId);
-				if(original != null){
-					if(success){
-						// TODO - when a submenu is removed, we also need to remove any commands associated with that submenu...
-						int idToRemove = ((DeleteSubMenu) original).getMenuID();
-						menuManager.removeItem(idToRemove);
-					}
-				}
-			}
-		}
-	}
 
 	/* ********** IProxyListenerALM interface methods ********** */
 	
 	/* Most useful callbacks */
-	@Override public void onOnHMIStatus(OnHMIStatus newStatus) {
+	@Override
+	public void onOnHMIStatus(OnHMIStatus newStatus) {
 		sendMessageResponse(newStatus);
 		
 		if(!isConnected){
 			Message msg = Message.obtain(null, ClientMessages.SDL_CONNECTED);
 			sendMessageToRegisteredClients(msg);
+			isConnected = true;
 		}
 		
 		
@@ -637,39 +587,102 @@ public class SdlService extends Service implements IProxyListenerALM{
 			appHasForeground = false;
 		}
 	}
-	@Override public void onOnCommand(OnCommand notification) {}
-	@Override public void onOnButtonPress(OnButtonPress notification) {}
+	
+	@Override
+	public void onProxyClosed(String info, Exception e) {
+		Message msg = Message.obtain(null, ClientMessages.SDL_DISCONNECTED);
+		sendMessageToRegisteredClients(msg);
+		stopSdlProxy();
+		initialize();
+	}
+	
+	@Override public void onOnCommand(OnCommand notification) {sendMessageResponse(notification);}
+	@Override public void onOnButtonPress(OnButtonPress notification) {sendMessageResponse(notification);}
 	
 	/* Not very useful callbacks */
-	@Override public void onOnPermissionsChange(OnPermissionsChange notification) {}
-	@Override public void onOnVehicleData(OnVehicleData notification) {}
-	@Override public void onOnAudioPassThru(OnAudioPassThru notification) {}
-	@Override public void onOnLanguageChange(OnLanguageChange notification) {}
-	@Override public void onOnDriverDistraction(OnDriverDistraction notification) {}
-	@Override public void onOnTBTClientState(OnTBTClientState notification) {}
+	@Override public void onOnPermissionsChange(OnPermissionsChange notification) {sendMessageResponse(notification);}
+	@Override public void onOnVehicleData(OnVehicleData notification) {sendMessageResponse(notification);}
+	@Override public void onOnAudioPassThru(OnAudioPassThru notification) {sendMessageResponse(notification);}
+	@Override public void onOnLanguageChange(OnLanguageChange notification) {sendMessageResponse(notification);}
+	@Override public void onOnDriverDistraction(OnDriverDistraction notification) {sendMessageResponse(notification);}
+	@Override public void onOnTBTClientState(OnTBTClientState notification) {sendMessageResponse(notification);}
 	@Override public void onError(String info, Exception e) {}
-	@Override public void onOnButtonEvent(OnButtonEvent notification) {}
-	@Override public void onProxyClosed(String info, Exception e) {}
+	@Override public void onOnButtonEvent(OnButtonEvent notification) {sendMessageResponse(notification);}
 	
 	/* Message responses */
-	@Override public void onAddCommandResponse(AddCommandResponse response) {
+	@Override
+	public void onAddCommandResponse(AddCommandResponse response) {
 		sendMessageResponse(response);
-		handleResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			
+			if(original != null){
+				MenuItem button = createMenuItem((AddCommand) original);
+				if(button != null){
+					menuManager.addItem(button);
+				}
+			}
+		}
 	}
 	
-	@Override public void onDeleteCommandResponse(DeleteCommandResponse response) {
+	@Override
+	public void onDeleteCommandResponse(DeleteCommandResponse response) {
 		sendMessageResponse(response);
-		handleResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			if(original != null){
+				if(success){
+					int idToRemove = ((DeleteCommand) original).getCmdID();
+					menuManager.removeItem(idToRemove);
+				}
+			}
+		}
 	}
 	
-	@Override public void onAddSubMenuResponse(AddSubMenuResponse response) {
+	@Override
+	public void onAddSubMenuResponse(AddSubMenuResponse response) {
 		sendMessageResponse(response);
-		handleResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			if(original != null){
+				MenuItem button = createMenuItem((AddSubMenu) original);
+				if(button != null){
+					menuManager.addItem(button);
+				}
+			}
+		}
 	}
 	
-	@Override public void onDeleteSubMenuResponse(DeleteSubMenuResponse response) {
+	@Override
+	public void onDeleteSubMenuResponse(DeleteSubMenuResponse response) {
 		sendMessageResponse(response);
-		handleResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			if(original != null){
+				int idToRemove = ((DeleteSubMenu) original).getMenuID();
+				menuManager.removeItem(idToRemove);
+			}
+		}
 	}
 	
 	@Override public void onGenericResponse(GenericResponse response) {sendMessageResponse(response);}

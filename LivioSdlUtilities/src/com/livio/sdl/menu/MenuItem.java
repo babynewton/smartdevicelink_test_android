@@ -2,6 +2,15 @@ package com.livio.sdl.menu;
 
 import java.util.Comparator;
 
+/**
+ * Represents a generic menu item - either a submenu or a command.  All menu items
+ * have similar fields, for example, a name and an id.
+ * 
+ * @see CommandButton, SubmenuButton
+ *
+ * @author Mike Burke
+ *
+ */
 public class MenuItem {
 	/**
 	 * Comparator for sorting MenuItem objects based on their id.

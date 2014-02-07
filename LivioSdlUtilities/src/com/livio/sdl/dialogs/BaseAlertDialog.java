@@ -17,7 +17,7 @@ public abstract class BaseAlertDialog {
 	
 	/**
 	 * Allows another class to listen for the result of the subclass dialog.  Results
-	 * are returned as a Bundle.
+	 * are returned as an object.
 	 *
 	 * @author Mike Burke
 	 *
@@ -147,7 +147,7 @@ public abstract class BaseAlertDialog {
 	/**
 	 * Notifies an existing dialog listener that results are ready.
 	 * 
-	 * @param bundle Bundle containing dialog results
+	 * @param resultData Object containing dialog results
 	 */
 	public void notifyListener(Object resultData){
 		if(listener != null){

@@ -20,11 +20,14 @@ import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.livio.sdl.IpAddress;
+import com.livio.sdl.SdlLogMessage;
+import com.livio.sdl.SdlMessageAdapter;
+import com.livio.sdl.datatypes.IpAddress;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.enums.EnumClickListener;
 import com.livio.sdl.enums.SdlCommand;
@@ -39,6 +42,7 @@ import com.livio.sdltester.dialogs.ConnectingDialog;
 import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
 import com.livio.sdltester.dialogs.DeleteCommandDialog;
 import com.livio.sdltester.dialogs.DeleteSubmenuDialog;
+import com.livio.sdltester.dialogs.JsonDialog;
 import com.livio.sdltester.dialogs.SdlAlertDialog;
 import com.livio.sdltester.dialogs.SdlConnectionDialog;
 import com.livio.sdltester.dialogs.SendMessageDialog;
@@ -50,6 +54,13 @@ import com.smartdevicelink.proxy.RPCRequest;
 
 public class MainActivity extends Activity{
 	
+	/**
+	 * Used when requesting information from the SDL service, these constants can be used
+	 * to perform different tasks when the information is returned by the service.
+	 *
+	 * @author Mike Burke
+	 *
+	 */
 	private static final class ResultCodes{
 		private static final class SubmenuResult{
 			private static final int ADD_COMMAND_DIALOG = 1;
@@ -62,22 +73,19 @@ public class MainActivity extends Activity{
 	}
 	
 	private static final int CONNECTING_DIALOG_TIMEOUT = 10000; // duration to attempt a connection (10s)
-	private static final String OFFLINE_MODE_IP_ADDRESS = "0.0.0.0"; // ip address for offline mode
+	
 	private boolean offlineMode = false;
 	
 	private ListView commandList;
+	private SdlMessageAdapter listViewAdapter;
 	
 	/* Messenger for communicating with service. */
     private Messenger serviceMsgr = null;
     
-    /* Flag indicating whether we have called bind on the service. */
     private boolean isBound = false, isConnected = false;
 
     private BaseAlertDialog connectionDialog;
 	private ConnectingDialog connectingDialog;
-	private int connectionAttempts = 3;
-	
-	private ArrayAdapter<RPCMessage> listViewAdapter;
 	
     /*
      * Target we publish for clients to send messages to IncomingHandler.
@@ -86,22 +94,22 @@ public class MainActivity extends Activity{
     
 	@SuppressLint("HandlerLeak")
 	private class IncomingHandler extends Handler{
+		@SuppressWarnings("unchecked")
 		@Override
 		public void handleMessage(Message msg) {
-			int resultCode;
-			
 			switch(msg.what){
 			case SdlService.ClientMessages.SDL_CONNECTED:
 				isConnected = true;
+				setOfflineMode(false);
 				if(connectingDialog != null && connectingDialog.isShowing()){
 					connectingDialog.dismiss();
 				}
 				break;
 			case SdlService.ClientMessages.SDL_DISCONNECTED:
 				isConnected = false;
+				Toast.makeText(MainActivity.this, getResources().getString(R.string.sdl_disconnected), Toast.LENGTH_LONG).show();
 				break;
 			case SdlService.ClientMessages.ON_APP_OPENED:
-				//TODO - what should happen here?  Any messages sent before this point will not work correctly.
 				break;
 			case SdlService.ClientMessages.FOREGROUND_STATE_RECEIVED:
 				onForegroundStateReceived( (Boolean) msg.obj);
@@ -110,43 +118,10 @@ public class MainActivity extends Activity{
 				onMessageResponseReceived((RPCMessage) msg.obj);
 				break;
 			case SdlService.ClientMessages.SUBMENU_LIST_RECEIVED:
-				@SuppressWarnings("unchecked")
-				List<MenuItem> submenuList = (List<MenuItem>) msg.obj;
-				Collections.sort(submenuList, new MenuItem.NameComparator()); // sort submenu list by name
-				resultCode = msg.arg1;
-				switch(resultCode){
-				case ResultCodes.SubmenuResult.ADD_COMMAND_DIALOG:
-					createAddCommandDialog(submenuList);
-					break;
-				case ResultCodes.SubmenuResult.DELETE_SUBMENU_DIALOG:
-					if(submenuList.size() > 0){
-						createDeleteSubmenuDialog(submenuList);
-					}
-					else{
-						Toast.makeText(MainActivity.this, getResources().getString(R.string.no_submenus_to_delete), Toast.LENGTH_SHORT).show();
-					}
-					break;
-				default:
-					break;
-				}
+				onSubmenuListReceived((List<MenuItem>) msg.obj, msg.arg1);
 				break;
 			case SdlService.ClientMessages.COMMAND_LIST_RECEIVED:
-				@SuppressWarnings("unchecked")
-				List<MenuItem> commandList = (List<MenuItem>) msg.obj;
-				Collections.sort(commandList, new MenuItem.NameComparator()); // sort command list by name
-				resultCode = msg.arg1;
-				switch(resultCode){
-				case ResultCodes.CommandResult.DELETE_COMMAND_DIALOG:
-					if(commandList.size() > 0){
-						createDeleteCommandDialog(commandList);	
-					}
-					else{
-						Toast.makeText(MainActivity.this, getResources().getString(R.string.no_commands_to_delete), Toast.LENGTH_SHORT).show();
-					}
-					break;
-				default:
-					break;
-				}
+				onCommandListReceived((List<MenuItem>) msg.obj, msg.arg1);
 				break;
 			default:
 				break;
@@ -155,6 +130,11 @@ public class MainActivity extends Activity{
 		}
     }
 	
+	/**
+	 * Sends the input message to the SDL service through the service messenger.
+	 * 
+	 * @param msg The message to send
+	 */
 	private void sendMessageToService(Message msg){
 		// only send messages to the service if we are NOT in offline mode
 		if(!offlineMode){
@@ -166,13 +146,24 @@ public class MainActivity extends Activity{
 		}
 	}
 	
+	/**
+	 * Sends an RPCRequest to the SDL service through the service messenger and adds the request to the list view.
+	 * 
+	 * @param request The request to send
+	 */
 	private void sendSdlMessageToService(RPCRequest request){
 		Message msg = Message.obtain(null, SdlService.ServiceMessages.SEND_MESSAGE);
 		msg.obj = request;
 		sendMessageToService(msg);
-		logSdlMessageSent(request);
+		logSdlMessage(request);
 	}
 	
+	/**
+	 * Sends a request for the most up-to-date submenu list with a request code so this activity knows
+	 * what to do when the response comes back.
+	 * 
+	 * @param reqCode The request code to associate with the request
+	 */
 	private void sendSubmenuListRequest(int reqCode){
 		Message msg = Message.obtain(null, SdlService.ServiceMessages.REQUEST_SUBMENU_LIST);
 		msg.replyTo = mMessenger;
@@ -180,6 +171,12 @@ public class MainActivity extends Activity{
 		sendMessageToService(msg);
 	}
 	
+	/**
+	 * Sends a request for the most up-to-date command list with a request code so this activity knows
+	 * what to do when the response comes back.
+	 * 
+	 * @param reqCode The request code to associate with the request
+	 */
 	private void sendCommandListRequest(int reqCode){
 		Message msg = Message.obtain(null, SdlService.ServiceMessages.REQUEST_COMMAND_LIST);
 		msg.replyTo = mMessenger;
@@ -187,13 +184,13 @@ public class MainActivity extends Activity{
 		sendMessageToService(msg);
 	}
 	
-	private void logSdlMessageSent(RPCRequest request){
-		listViewAdapter.add(request);
-		listViewAdapter.notifyDataSetChanged();
-	}
-	
-	private void logSdlMessageReceived(RPCMessage response){
-		listViewAdapter.add(response);
+	/**
+	 * Adds the input RPCMessage to the list view.
+	 * 
+	 * @param request The message to log
+	 */
+	private void logSdlMessage(RPCMessage request){
+		listViewAdapter.add(new SdlLogMessage(request));
 		listViewAdapter.notifyDataSetChanged();
 	}
     
@@ -215,14 +212,20 @@ public class MainActivity extends Activity{
         }
     };
     
-    void doBindService() {
+    /**
+     * Binds this activity to the SDL service, using the service connection as a messenger between the two.
+     */
+    private void doBindService() {
     	if(!isBound){
 	   		bindService(new Intent(MainActivity.this, SdlService.class), mConnection, Context.BIND_AUTO_CREATE);
 	        isBound = true;
     	}
     }
 
-    void doUnbindService() {
+    /**
+     * Unbinds this activity from the SDL service.
+     */
+    private void doUnbindService() {
         if (isBound) {
             if (serviceMsgr != null) {
                 Message msg = Message.obtain(null, SdlService.ServiceMessages.UNREGISTER_CLIENT);
@@ -236,6 +239,7 @@ public class MainActivity extends Activity{
         }
     }
 	
+    /* ********** Android Life-Cycle ********** */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -245,19 +249,6 @@ public class MainActivity extends Activity{
 		
 		initViews();
 		doBindService();
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-	}
-
-	@Override
-	protected void onResume() {
-		if(!isConnected && !offlineMode && (connectionDialog == null || !connectionDialog.isShowing()) ){
-			showSdlConnectionDialog();
-		}
-		super.onResume();
 	}
 
 	private void initViews(){		
@@ -275,8 +266,32 @@ public class MainActivity extends Activity{
 		});
 		
 		commandList = (ListView) findViewById(R.id.list_main_commandList);
-		listViewAdapter = new ArrayAdapter<RPCMessage>(this, android.R.layout.simple_list_item_1);
+		listViewAdapter = new SdlMessageAdapter(this);
 		commandList.setAdapter(listViewAdapter);
+		commandList.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				SdlLogMessage logMessage = listViewAdapter.getItem(position);
+				String messageType = logMessage.getMessageType();
+				if(!messageType.equals(SdlLogMessage.NOTIFICATION)){
+					BaseAlertDialog jsonDialog = new JsonDialog(MainActivity.this, logMessage);
+					jsonDialog.show();
+				}
+			}
+		});
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		if(!isConnected && !offlineMode && (connectionDialog == null || !connectionDialog.isShowing()) ){
+			showSdlConnectionDialog();
+		}
+		super.onResume();
 	}
 
 	@Override
@@ -286,33 +301,110 @@ public class MainActivity extends Activity{
 		super.onDestroy();
 	}
 	
+	/* ********** SDL Service request callbacks ********** */
+	
+	/**
+	 * Called when the current foreground state has been updated.
+	 * 
+	 * @param foregroundState True if the app is in the foreground on the head-unit, false otherwise
+	 */
 	private void onForegroundStateReceived(boolean foregroundState){
-		// TODO
+		// TODO - change foreground state from a request-response model to an autoresponse model
 	}
 	
+	/**
+	 * Called when a message has been received from the head-unit.
+	 * 
+	 * @param response The response that was received
+	 */
 	private void onMessageResponseReceived(RPCMessage response){
-		// TODO
-		logSdlMessageReceived(response);
+		logSdlMessage(response);
 	}
 	
+	/**
+	 * Called when the up-to-date list of submenus is received.  The request code can be used
+	 * to perform different operations based on the request code that is sent with the initial request.
+	 * 
+	 * @param submenuList The list of submenu items
+	 * @param reqCode The request code that was sent with the request
+	 */
+	private void onSubmenuListReceived(List<MenuItem> submenuList, int reqCode){
+		Collections.sort(submenuList, new MenuItem.NameComparator()); // sort submenu list by name.  you can also sort by id with the MenuItem.IdComparator object
+		
+		switch(reqCode){
+		case ResultCodes.SubmenuResult.ADD_COMMAND_DIALOG:
+			createAddCommandDialog(submenuList);
+			break;
+		case ResultCodes.SubmenuResult.DELETE_SUBMENU_DIALOG:
+			if(submenuList.size() > 0){
+				createDeleteSubmenuDialog(submenuList);
+			}
+			else{
+				Toast.makeText(MainActivity.this, getResources().getString(R.string.no_submenus_to_delete), Toast.LENGTH_SHORT).show();
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	
+	/**
+	 * Called when the up-to-date list of commands is received.  The request code can be used
+	 * to perform different operations based on the request code that is sent with the initial request.
+	 * 
+	 * @param commandList The list of command items
+	 * @param reqCode The request code that was sent with the request
+	 */
+	private void onCommandListReceived(List<MenuItem> commandList, int reqCode){
+		Collections.sort(commandList, new MenuItem.NameComparator()); // sort command list by name
+		switch(reqCode){
+		case ResultCodes.CommandResult.DELETE_COMMAND_DIALOG:
+			if(commandList.size() > 0){
+				createDeleteCommandDialog(commandList);	
+			}
+			else{
+				Toast.makeText(MainActivity.this, getResources().getString(R.string.no_commands_to_delete), Toast.LENGTH_SHORT).show();
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	
+	/**
+	 * Sets offline mode so that messages are not sent to the SDL service.  This allows
+	 * the app to run successfully without being connected to SDL core.
+	 * 
+	 * @param enable
+	 */
 	private void setOfflineMode(boolean enable){
-		offlineMode = enable;
-		String enableStr = (enable) ? "enabled" : "disabled";
-		String toastMsg = new StringBuilder().append("Offline mode ").append(enableStr).toString();
-		Toast.makeText(MainActivity.this, toastMsg, Toast.LENGTH_SHORT).show();
+		if(offlineMode != enable){
+			offlineMode = enable;
+			String enableStr = (enable) ? "enabled" : "disabled";
+			String toastMsg = new StringBuilder().append("Offline mode ").append(enableStr).toString();
+			Toast.makeText(MainActivity.this, toastMsg, Toast.LENGTH_SHORT).show();
+			// TODO - implement offline mode in SDL service so we can still receive (fake) responses and still see some data being updated in offline mode
+		}
 	}
 	
+	/**
+	 * Shows the SDL connection dialog, which allows the user to enter the IP address for the core component they would like to connect to.
+	 */
 	private void showSdlConnectionDialog(){
+		// restore any old IP address from preferences
 		String savedIpAddress = MyApplicationPreferences.restoreIpAddress(MainActivity.this);
 		String savedTcpPort = MyApplicationPreferences.restoreTcpPort(MainActivity.this);
 		
 		if(savedIpAddress != null && savedTcpPort != null){
+			// if there was an old IP stored in preferences, initialize the dialog with those values
 			connectionDialog = new SdlConnectionDialog(this, savedIpAddress, savedTcpPort);
 		}
 		else{
+			// if no IP address was in preferences, initialize the dialog with no input strings
 			connectionDialog = new SdlConnectionDialog(this);
 		}
 		
+		// set us up the dialog
 		connectionDialog.setCancelable(false);
 		connectionDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
@@ -330,36 +422,39 @@ public class MainActivity extends Activity{
 				boolean ipPortValid = WifiUtils.validateTcpPort(portString);
 				
 				if(ipAddressValid && ipPortValid){
+					// if the user entered valid IP settings, save them to preferences so they don't have to re-enter them next time
 					MyApplicationPreferences.saveIpAddress(MainActivity.this, addressString);
 					MyApplicationPreferences.saveTcpPort(MainActivity.this, portString);
 					
-					if(addressString.equals(OFFLINE_MODE_IP_ADDRESS)){
-						setOfflineMode(true);
-					}
-					else{
-						connectingDialog = new ConnectingDialog(MainActivity.this);
-						connectingDialog.show();
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								Looper.prepare();
-								try {
-									Thread.sleep(CONNECTING_DIALOG_TIMEOUT);
-									if(connectingDialog != null && connectingDialog.isShowing()){
-										connectingDialog.dismiss();
-										Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
-									}
-								} catch (InterruptedException e) {
-									// do nothing
+					// show an indeterminate connecting dialog
+					connectingDialog = new ConnectingDialog(MainActivity.this);
+					connectingDialog.show();
+					
+					// and start a timeout thread in case the connection isn't successful
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+							Looper.prepare();
+							try {
+								Thread.sleep(CONNECTING_DIALOG_TIMEOUT);
+								
+								if(connectingDialog != null && connectingDialog.isShowing()){
+									// if we made it here without being interrupted, the connection was unsuccessful - dismiss the dialog and enter offline mode
+									connectingDialog.dismiss();
+									Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
+									setOfflineMode(true);
 								}
-								Looper.loop();
+							} catch (InterruptedException e) {
+								// do nothing
 							}
-						}).start();
-						
-						Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
-	                    msg.obj = resultData;
-	                	sendMessageToService(msg);
-					}
+							Looper.loop();
+						}
+					}).start();
+					
+					// message the SDL service, telling it to attempt a connection with the input IP address
+					Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
+                    msg.obj = resultData;
+                	sendMessageToService(msg);
 				}
 				else{
 					// user input was invalid
@@ -371,10 +466,10 @@ public class MainActivity extends Activity{
 		connectionDialog.show();
 	}
 	
-	/*
-	 * This really sucks...
+	/**
+	 * Launches the appropriate dialog for whichever command item was clicked.
 	 * 
-	 * Figure out which command we're looking at and launch the appropriate dialog.
+	 * @param command The command that was clicked
 	 */
 	private void showCommandDialog(SdlCommand command){
 		if(command == null){
@@ -437,6 +532,9 @@ public class MainActivity extends Activity{
 		}
 	}
 	
+	/**
+	 * Creates an alert dialog, allowing the user to manually send an alert command.
+	 */
 	private void createAlertDialog(){
 		BaseAlertDialog alertDialog = new SdlAlertDialog(this);
 		alertDialog.setListener(new BaseAlertDialog.Listener() {
@@ -447,7 +545,10 @@ public class MainActivity extends Activity{
 		});
 		alertDialog.show();
 	}
-	
+
+	/**
+	 * Creates a speak dialog, allowing the user to manually send a speak command.
+	 */
 	private void createSpeakDialog(){
 		BaseAlertDialog speakDialog = new SpeakDialog(this);
 		speakDialog.setListener(new BaseAlertDialog.Listener() {
@@ -458,7 +559,10 @@ public class MainActivity extends Activity{
 		});
 		speakDialog.show();
 	}
-	
+
+	/**
+	 * Creates a show dialog, allowing the user to manually send a show command.
+	 */	
 	private void createShowDialog(){
 		BaseAlertDialog showDialog = new ShowDialog(this);
 		showDialog.setListener(new BaseAlertDialog.Listener() {
@@ -469,7 +573,10 @@ public class MainActivity extends Activity{
 		});
 		showDialog.show();
 	}
-	
+
+	/**
+	 * Creates a button subscribe dialog, allowing the user to manually send a button subscribe command.
+	 */	
 	private void createButtonSubscribeDialog(){
 		BaseAlertDialog buttonSubscribeDialog = new ButtonSubscriptionDialog(this);
 		buttonSubscribeDialog.setListener(new BaseAlertDialog.Listener() {
@@ -480,7 +587,10 @@ public class MainActivity extends Activity{
 		});
 		buttonSubscribeDialog.show();
 	}
-	
+
+	/**
+	 * Creates an add command dialog, allowing the user to manually send an add command command.
+	 */	
 	private void createAddCommandDialog(List<MenuItem> allBanks){
 		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks);
 		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
@@ -491,7 +601,10 @@ public class MainActivity extends Activity{
 		});
 		addCommandDialog.show();
 	}
-	
+
+	/**
+	 * Creates an add submenu dialog, allowing the user to manually send an add submenu command.
+	 */	
 	private void createAddSubmenuDialog(){
 		BaseAlertDialog submenuDialog = new AddSubMenuDialog(this);
 		submenuDialog.setListener(new BaseAlertDialog.Listener() {
@@ -502,7 +615,10 @@ public class MainActivity extends Activity{
 		});
 		submenuDialog.show();
 	}
-	
+
+	/**
+	 * Creates a create interaction choice set dialog, allowing the user to manually send a create interaction choice set command.
+	 */	
 	private void createInteractionChoiceSetDialog(){
 		BaseAlertDialog createInteractionChoiceSetDialog = new CreateInteractionChoiceSetDialog(this);
 		createInteractionChoiceSetDialog.setListener(new BaseAlertDialog.Listener() {
@@ -513,7 +629,10 @@ public class MainActivity extends Activity{
 		});
 		createInteractionChoiceSetDialog.show();
 	}
-	
+
+	/**
+	 * Creates a change registration dialog, allowing the user to manually send a change registration command.
+	 */	
 	private void createChangeRegistrationDialog(){
 		BaseAlertDialog changeRegistrationDialog = new ChangeRegistrationDialog(this);
 		changeRegistrationDialog.setListener(new BaseAlertDialog.Listener() {
@@ -524,7 +643,10 @@ public class MainActivity extends Activity{
 		});
 		changeRegistrationDialog.show();
 	}
-	
+
+	/**
+	 * Creates a delete command dialog, allowing the user to manually send a delete command command.
+	 */	
 	private void createDeleteCommandDialog(List<MenuItem> commandList){
 		BaseAlertDialog deleteCommandDialog = new DeleteCommandDialog(this, commandList);
 		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
@@ -536,7 +658,10 @@ public class MainActivity extends Activity{
 		});
 		deleteCommandDialog.show();
 	}
-	
+
+	/**
+	 * Creates a delete submenu dialog, allowing the user to manually send a delete submenu command.
+	 */	
 	private void createDeleteSubmenuDialog(List<MenuItem> submenuList){
 		BaseAlertDialog deleteCommandDialog = new DeleteSubmenuDialog(this, submenuList);
 		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
@@ -561,7 +686,7 @@ public class MainActivity extends Activity{
 		int menuItemId = item.getItemId();
 		switch(menuItemId){
 		case R.id.menu_connect:
-			offlineMode = false;
+			setOfflineMode(false);
 			showSdlConnectionDialog();
 			return true;
 		default:

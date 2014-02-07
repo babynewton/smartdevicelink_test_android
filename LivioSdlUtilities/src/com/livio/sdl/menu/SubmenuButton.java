@@ -4,7 +4,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
+/**
+ * Represents a submenu button that can be clicked on the SDL-connected head-unit.  A submenu
+ * contains all the fields contained in the MenuItem parent class, as well as maintaining a list
+ * of children commands.
+ *
+ * @author Mike Burke
+ *
+ */
 public class SubmenuButton extends MenuItem {
 
 	private List<MenuItem> children;
@@ -18,6 +25,12 @@ public class SubmenuButton extends MenuItem {
 		super(name, id, true);
 	}
 	
+	/**
+	 * Creates a copy of the children to ensure there are no leaked references to the
+	 * children of the object we're copying.
+	 * 
+	 * @param children
+	 */
 	private void copyChildren(List<MenuItem> children){
 		if(children == null || children.size() <= 0){
 			return;
@@ -45,6 +58,11 @@ public class SubmenuButton extends MenuItem {
 		return new ArrayList<MenuItem>(children);
 	}
 	
+	/**
+	 * Adds a child to this submenu object.
+	 * 
+	 * @param item The item to add
+	 */
 	public void addChild(MenuItem item){
 		if(children == null){
 			children = new ArrayList<MenuItem>();
@@ -53,6 +71,11 @@ public class SubmenuButton extends MenuItem {
 		children.add(item);
 	}
 	
+	/**
+	 * Removes a child from this submenu object.
+	 * 
+	 * @param childId The id of the child to remove
+	 */
 	public void removeChild(int childId){
 		if(children == null || children.size() <= 0){
 			return;
@@ -66,6 +89,9 @@ public class SubmenuButton extends MenuItem {
 		}
 	}
 	
+	/**
+	 * Removes all children from this submenu object.
+	 */
 	public void removeAllChildren(){
 		if(children == null || children.size() <= 0){
 			return;

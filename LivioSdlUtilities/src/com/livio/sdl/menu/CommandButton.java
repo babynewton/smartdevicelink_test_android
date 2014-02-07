@@ -1,6 +1,13 @@
 package com.livio.sdl.menu;
 
-
+/**
+ * Represents a command button that can be clicked on the SDL-connected head-unit.  A command
+ * button contains all the fields contained in the MenuItem parent class, as well as a parent id,
+ * a string representing an image on the head-unit and an OnClickListener.
+ *
+ * @author Mike Burke
+ *
+ */
 public class CommandButton extends MenuItem {
 
 	public interface OnClickListener{

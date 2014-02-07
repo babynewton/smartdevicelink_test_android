@@ -8,8 +8,20 @@ import java.util.List;
 import android.util.Log;
 import android.util.SparseArray;
 
+/**
+ * Manages SDL menu items (commands and submenus), keeping an up-to-date list of available
+ * menu items.
+ *
+ * @author Mike Burke
+ *
+ */
 public class MenuManager {
-	
+	/**
+	 * Allows iterating over the items in a menu manager object.
+	 *
+	 * @author Mike Burke
+	 *
+	 */
 	public static class MenuIterator implements Iterator<MenuItem>{
 
 		private final MenuManager items;
@@ -39,6 +51,7 @@ public class MenuManager {
 	private static boolean debug = false;
 	private SparseArray<MenuItem> menuItems;
 	
+	// constructors
 	public MenuManager() {
 		menuItems = new SparseArray<MenuItem>();
 	}
@@ -47,6 +60,12 @@ public class MenuManager {
 		menuItems = new SparseArray<MenuItem>(startSize);
 	}
 	
+	/**
+	 * Adds the input menu item to the list.  If the input item is the child of a submenu,
+	 * also adds the item to the parent's list of children.
+	 * 
+	 * @param item The item to add
+	 */
 	public void addItem(MenuItem item){
 		log(new StringBuilder().append("Adding item: ").append(item.toString()).toString());
 		menuItems.put(item.getId(), item);
@@ -62,32 +81,30 @@ public class MenuManager {
 		}
 	}
 	
+	/**
+	 * Adds the input command button to the parent represented by the parent id.
+	 * 
+	 * @param button The button to add
+	 * @param parentId The id of the button's parent
+	 */
 	private void addCommandToParent(CommandButton button, int parentId){
 		MenuItem parent = menuItems.get(parentId);
 		log(new StringBuilder().append("Adding command: ").append(button.toString()).append(" to parent: ").append(parent.toString()).toString());
+		
 		if(parent.isMenu()){
 			SubmenuButton parentButton = (SubmenuButton) parent;
 			parentButton.addChild(button);
 		}
 	}
 	
-	public void removeItemAt(int index){
-		if(index < 0 || index >= menuItems.size()){
-			throw new ArrayIndexOutOfBoundsException();
-		}
-		
-		int i=0;
-		Iterator<MenuItem> iterator = iterator();
-		while(iterator.hasNext()){
-			MenuItem current = iterator.next();
-			if(i == index){
-				removeItem(current.getId());
-				return;
-			}
-			i++;
-		}
-	}
-	
+	/**
+	 * Removes the item with the input id.  If the item to remove is a submenu which contains children,
+	 * this method removes the children commands from the menu manager as well.  If the item to remove is
+	 * a command which belongs to a registered submenu, this method will also remove the child from its
+	 * parent's list of children.
+	 * 
+	 * @param id The id of the item to remove
+	 */
 	public void removeItem(int id){
 		MenuItem itemToRemove = menuItems.get(id);
 		if(itemToRemove == null){
@@ -115,6 +132,11 @@ public class MenuManager {
 		menuItems.remove(id);
 	}
 	
+	/**
+	 * Removes any children that belong to the input submenu.
+	 * 
+	 * @param parent The parent whose children should be removed
+	 */
 	private void removeChildren(SubmenuButton parent){
 		List<MenuItem> children = parent.getChildren();
 		if(children != null && children.size() > 0){
@@ -124,6 +146,11 @@ public class MenuManager {
 		}
 	}
 	
+	/**
+	 * Makes a copy of all registered submenus and returns it.
+	 * 
+	 * @return A list of all registered submenus
+	 */
 	public List<MenuItem> getSubmenus(){
 		if(size() == 0){
 			return Collections.emptyList();
@@ -132,17 +159,25 @@ public class MenuManager {
 		log("Making a copy of all submenus");
 		
 		List<MenuItem> result = new ArrayList<MenuItem>();
+		
+		// iterate through all items
 		Iterator<MenuItem> iterator = iterator();
 		while(iterator.hasNext()){
 			MenuItem current = iterator.next();
 			if(current.isMenu()){
+				// if this item is a submenu, make a copy of the item and add it to the result list
 				result.add(new SubmenuButton((SubmenuButton) current));
 			}
 		}
 		
 		return result;
 	}
-	
+
+	/**
+	 * Makes a copy of all registered commands and returns it.
+	 * 
+	 * @return A list of all registered commands
+	 */
 	public List<MenuItem> getCommands(){
 		if(size() == 0){
 			return Collections.emptyList();
@@ -151,10 +186,13 @@ public class MenuManager {
 		log("Making a copy of all commands");
 		
 		List<MenuItem> result = new ArrayList<MenuItem>();
+		
+		// iterate through all items
 		Iterator<MenuItem> iterator = iterator();
 		while(iterator.hasNext()){
 			MenuItem current = iterator.next();
 			if(!current.isMenu()){
+				// if this item is a command, make a copy of the item and add it to the result list
 				result.add(new CommandButton((CommandButton) current));
 			}
 		}
@@ -162,6 +200,11 @@ public class MenuManager {
 		return result;
 	}
 	
+	/**
+	 * Makes a copy of all items and returns it.
+	 * 
+	 * @return A list of all registered menu items
+	 */
 	public List<MenuItem> getAllItems(){
 		if(size() == 0){
 			return Collections.emptyList();
@@ -170,9 +213,13 @@ public class MenuManager {
 		log("Making a copy of all menu items");
 		
 		List<MenuItem> result = new ArrayList<MenuItem>(size());
+		
+		// iterate through all items
 		Iterator<MenuItem> iterator = iterator();
 		while(iterator.hasNext()){
 			MenuItem current = iterator.next();
+
+			// make a copy of the item and add it to the list
 			if(current.isMenu()){
 				result.add(new SubmenuButton((SubmenuButton) current));
 			}
@@ -184,18 +231,39 @@ public class MenuManager {
 		return result;
 	}
 	
+	/**
+	 * Returns the item with the given id.
+	 * 
+	 * @param id The id of the item to return
+	 * @return The item with the input id, or null if the id doesn't exist
+	 */
 	public MenuItem get(int id){
 		return menuItems.get(id);
 	}
 	
+	/**
+	 * Returns the item at the input index.
+	 * 
+	 * @param index The index of the item to return
+	 * @return The item at the given index
+	 */
 	public MenuItem getItemAt(int index){
 		return menuItems.valueAt(index);
 	}
 	
+	/**
+	 * Returns the item with the given name.
+	 * 
+	 * @param name The name of the item to return
+	 * @return The item with the given name, or null if the name doesn't exist
+	 */
 	public MenuItem get(String name){
+		// iterate through all items
 		Iterator<MenuItem> iterator = iterator();
 		while(iterator.hasNext()){
 			MenuItem current = iterator.next();
+
+			// if the current item matches the input name, return it
 			if(name.equals(current.getName())){
 				return current;
 			}
@@ -204,16 +272,38 @@ public class MenuManager {
 		return null;
 	}
 	
+	/**
+	 * Returns the number of items being managed by the menu manager.
+	 * 
+	 * @return The number of items being managed by the menu manager
+	 */
 	public int size(){
 		return menuItems.size();
 	}
 	
+	/**
+	 * Removes all menu items from the menu manager.
+	 */
+	public void clear(){
+		menuItems.clear();
+	}
+	
+	/**
+	 * Creates a new iterator object for this MenuManager object.
+	 * 
+	 * @return The new iterator instance
+	 */
 	public Iterator<MenuItem> iterator(){
 		log("Creating new iterator object");
 		Iterator<MenuItem> iterator = new MenuIterator(this);
 		return iterator;
 	}
 
+	/**
+	 * Enables or disables debug mode for log messages.
+	 * 
+	 * @param enable True to enable debug logs, false to disable
+	 */
 	public static void setDebug(boolean enable){
 		debug = enable;
 	}
