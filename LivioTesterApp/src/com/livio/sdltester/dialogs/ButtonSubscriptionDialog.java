@@ -6,82 +6,49 @@ import java.util.List;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
-import android.widget.ListView;
 
-import com.livio.sdl.dialogs.BaseOkCancelDialog;
-import com.livio.sdl.enums.EnumComparator;
+import com.livio.sdl.dialogs.BaseMultipleListViewDialog;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
-import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.SubscribeButton;
 
-public class ButtonSubscriptionDialog extends BaseOkCancelDialog{
+/**
+ * Shows a dialog allowing the user to subscribe to buttons that haven't been subscribed to yet.  This class
+ * requires an input list of SDL buttons that have been subscribed to so far.  Button subscriptions should
+ * be queried from the SDL service prior to showing this dialog to be sure information is up to date.
+ * 
+ * The result of this dialog is a list of RPC requests, one request per selected item since SDL can't do
+ * these as a batch as of version 2.0.
+ *
+ * @author Mike Burke
+ *
+ */
+public class ButtonSubscriptionDialog extends BaseMultipleListViewDialog<SdlButton>{
 
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.SUBSCRIBE_BUTTON;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
-	private ListView listView;
-	private ArrayAdapter<SdlButton> listViewAdapter;
-	private List<SdlButton> selectedItems = new ArrayList<SdlButton>();
-	
 	public ButtonSubscriptionDialog(Context context, List<SdlButton> buttonSubscriptions) {
-		super(context, DIALOG_TITLE, R.layout.button_subscription);
+		super(context, DIALOG_TITLE, buttonSubscriptions);
 		setPositiveButton(positiveButton);
-		filterSubscribedButtons(buttonSubscriptions);
 		createDialog();
-	}
-	
-	private void filterSubscribedButtons(List<SdlButton> buttonSubscriptions){
-		for(SdlButton button : SdlButton.values()){
-			if(!buttonSubscriptions.contains(button)){
-				listViewAdapter.add(button);
-			}
-		}
-		listViewAdapter.sort(new EnumComparator<SdlButton>());
-		((BaseAdapter) listView.getAdapter()).notifyDataSetChanged();
-	}
-
-	@Override
-	protected void findViews(View parent) {
-		listView = (ListView) parent.findViewById(R.id.listView);
-		listViewAdapter = new ArrayAdapter<SdlButton>(context, android.R.layout.simple_list_item_multiple_choice);
-		listView.setAdapter(listViewAdapter);
-		listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
-		listView.setOnItemClickListener(new OnItemClickListener() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				toggleItem(((ArrayAdapter<SdlButton>) parent.getAdapter()).getItem(position));
-			}
-		});
-	}
-	
-	private void toggleItem(SdlButton button){
-		final boolean alreadyInList = selectedItems.contains(button);
-		
-		if(alreadyInList){
-			selectedItems.remove(button);
-		}
-		else{
-			selectedItems.add(button);
-		}
 	}
 	
 	//dialog button click listeners
 	private final DialogInterface.OnClickListener positiveButton = new DialogInterface.OnClickListener() {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
+			// called when the OK button is clicked.
+			
 			if(selectedItems == null || selectedItems.size() == 0){
+				// if no items were selected, send an empty list as the result
 				notifyListener(Collections.emptyList());
 			}
 			else{
 				List<RPCRequest> buttonSubscribeMessages = new ArrayList<RPCRequest>(selectedItems.size());
+				
+				// loop through the selected items and create RPC requests for each one since they can't be done in a batch.
 				for(SdlButton button : selectedItems){
 					SubscribeButton subscribeButton = new SubscribeButton();
 					subscribeButton.setButtonName(SdlButton.translateToLegacy(button));
@@ -91,5 +58,4 @@ public class ButtonSubscriptionDialog extends BaseOkCancelDialog{
 			}
 		}
 	};
-
 }

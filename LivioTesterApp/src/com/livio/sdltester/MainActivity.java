@@ -31,6 +31,7 @@ import com.livio.sdl.SdlMessageAdapter;
 import com.livio.sdl.datatypes.IpAddress;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.enums.EnumClickListener;
+import com.livio.sdl.enums.EnumComparator;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
@@ -46,6 +47,7 @@ import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
 import com.livio.sdltester.dialogs.DeleteCommandDialog;
 import com.livio.sdltester.dialogs.DeleteSubmenuDialog;
 import com.livio.sdltester.dialogs.JsonDialog;
+import com.livio.sdltester.dialogs.PerformInteractionDialog;
 import com.livio.sdltester.dialogs.SdlAlertDialog;
 import com.livio.sdltester.dialogs.SdlConnectionDialog;
 import com.livio.sdltester.dialogs.SendMessageDialog;
@@ -59,7 +61,7 @@ public class MainActivity extends Activity{
 	
 	/**
 	 * Used when requesting information from the SDL service, these constants can be used
-	 * to perform different tasks when the information is returned by the service.
+	 * to perform different tasks when the information is asynchronously returned by the service.
 	 *
 	 * @author Mike Burke
 	 *
@@ -76,7 +78,9 @@ public class MainActivity extends Activity{
 			private static final int BUTTON_SUBSCRIBE = 1;
 			private static final int BUTTON_UNSUBSCRIBE = 2;
 		}
-		
+		private static final class InteractionSetResult{
+			private static final int PERFORM_INTERACTION = 1;
+		}
 	}
 	
 	private static final int CONNECTING_DIALOG_TIMEOUT = 10000; // duration to attempt a connection (10s)
@@ -107,7 +111,15 @@ public class MainActivity extends Activity{
 			switch(msg.what){
 			case SdlService.ClientMessages.SDL_CONNECTED:
 				isConnected = true;
+				
+				// since we're connected now, we're no longer in offline mode
 				setOfflineMode(false);
+				
+				// clear the command log since we're starting fresh from here
+				listViewAdapter.clear();
+				listViewAdapter.notifyDataSetChanged();
+				
+				// dismiss the connecting dialog if it's showing
 				if(connectingDialog != null && connectingDialog.isShowing()){
 					connectingDialog.dismiss();
 				}
@@ -132,6 +144,9 @@ public class MainActivity extends Activity{
 				break;
 			case SdlService.ClientMessages.BUTTON_SUBSCRIPTIONS_RECEIVED:
 				onButtonSubscriptionsReceived((List<SdlButton>) msg.obj, msg.arg1);
+				break;
+			case SdlService.ClientMessages.INTERACTION_SETS_RECEIVED:
+				onInteractionSetReceived((List<MenuItem>) msg.obj, msg.arg1);
 				break;
 			default:
 				break;
@@ -208,6 +223,19 @@ public class MainActivity extends Activity{
 	}
 	
 	/**
+	 * Sends a request for the most up-to-date list of button subscriptions with a request code so this
+	 * activity knows what to do when the response comes back.
+	 * 
+	 * @param reqCode The request code to associate with the request
+	 */
+	private void sendInteractionSetRequest(int reqCode){
+		Message msg = Message.obtain(null, SdlService.ServiceMessages.REQUEST_INTERACTION_SETS);
+		msg.replyTo = mMessenger;
+		msg.arg1 = reqCode;
+		sendMessageToService(msg);
+	}
+	
+	/**
 	 * Adds the input RPCMessage to the list view.
 	 * 
 	 * @param request The message to log
@@ -215,6 +243,9 @@ public class MainActivity extends Activity{
 	private void logSdlMessage(RPCMessage request){
 		listViewAdapter.add(new SdlLogMessage(request));
 		listViewAdapter.notifyDataSetChanged();
+		
+		// after adding a new item, auto-scroll to the bottom of the list
+		commandList.setSelection(listViewAdapter.getCount() - 1);
 	}
     
     /*
@@ -391,6 +422,13 @@ public class MainActivity extends Activity{
 		}
 	}
 	
+	/**
+	 * Called when the up-to-date list of button subscriptions is received.  The request code can be used
+	 * to perform different operations based on the request code that is sent with the initial request.
+	 * 
+	 * @param buttonSubscriptionList The list of button subscriptions
+	 * @param reqCode The request code that was sent with the request
+	 */
 	private void onButtonSubscriptionsReceived(List<SdlButton> buttonSubscriptionList, int reqCode){
 		switch(reqCode){
 		case ResultCodes.ButtonSubscriptionResult.BUTTON_SUBSCRIBE:
@@ -398,7 +436,9 @@ public class MainActivity extends Activity{
 				Toast.makeText(MainActivity.this, getResources().getString(R.string.button_subscriptions_already_subscribed), Toast.LENGTH_LONG).show();
 			}
 			else{
-				createButtonSubscribeDialog(buttonSubscriptionList);
+				List<SdlButton> buttonsNotSubscribedTo = filterSubscribedButtons(buttonSubscriptionList);
+				Collections.sort(buttonsNotSubscribedTo, new EnumComparator<SdlButton>());
+				createButtonSubscribeDialog(buttonsNotSubscribedTo);
 			}
 			break;
 		case ResultCodes.ButtonSubscriptionResult.BUTTON_UNSUBSCRIBE:
@@ -406,12 +446,56 @@ public class MainActivity extends Activity{
 				Toast.makeText(MainActivity.this, getResources().getString(R.string.button_subscriptions_none_subscribed), Toast.LENGTH_LONG).show();
 			}
 			else{
+				Collections.sort(buttonSubscriptionList, new EnumComparator<SdlButton>());
 				createButtonUnsubscribeDialog(buttonSubscriptionList);
 			}
 			break;
 		default:
 			break;
 		}
+	}
+	
+	/**
+	 * Called when the up-to-date list of interaction sets is received.  The request code can be used
+	 * to perform different operations based on the request code that is sent with the initial request.
+	 * 
+	 * @param interactionSetList The list of interaction sets
+	 * @param reqCode The request code that was sent with the request
+	 */
+	private void onInteractionSetReceived(List<MenuItem> interactionSetList, int reqCode){
+		switch(reqCode){
+		case ResultCodes.InteractionSetResult.PERFORM_INTERACTION:
+			if(interactionSetList.size() == 0){
+				Toast.makeText(MainActivity.this, getResources().getString(R.string.interaction_list_none_added), Toast.LENGTH_LONG).show();
+			}
+			else{
+				Collections.sort(interactionSetList, new MenuItem.IdComparator());
+				createPerformInteractionDialog(interactionSetList);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	
+	/**
+	 * Finds any buttons that are <b>not</b> in the input list of button subscriptions
+	 * and adds them to the listview adapter.
+	 * 
+	 * @param buttonSubscriptions A list of buttons that have been subscribed to
+	 */
+	private List<SdlButton> filterSubscribedButtons(List<SdlButton> buttonSubscriptions){
+		final SdlButton[] buttonValues = SdlButton.values();
+		final int numItems = buttonValues.length - buttonSubscriptions.size();
+		List<SdlButton> result = new ArrayList<SdlButton>(numItems);
+		
+		for(SdlButton button : buttonValues){
+			if(!buttonSubscriptions.contains(button)){
+				result.add(button);
+			}
+		}
+
+		return result;
 	}
 	
 	/**
@@ -516,6 +600,7 @@ public class MainActivity extends Activity{
 	 */
 	private void showCommandDialog(SdlCommand command){
 		if(command == null){
+			// shouldn't happen, but if an invalid command gets here, let's throw an exception.
 			throw new IllegalArgumentException(getResources().getString(R.string.not_an_sdl_command));
 		}
 		
@@ -530,12 +615,18 @@ public class MainActivity extends Activity{
 			createShowDialog();
 			break;
 		case SUBSCRIBE_BUTTON:
+			// the subscribe button dialog needs a list of buttons that have been subscribed to so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onButtonSubscriptionsReceived().
 			sendButtonSubscriptionRequest(ResultCodes.ButtonSubscriptionResult.BUTTON_SUBSCRIBE);
 			break;
 		case UNSUBSCRIBE_BUTTON:
+			// the unsubscribe button dialog needs a list of buttons that have been subscribed to so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onButtonSubscriptionsReceived().
 			sendButtonSubscriptionRequest(ResultCodes.ButtonSubscriptionResult.BUTTON_UNSUBSCRIBE);
 			break;
 		case ADD_COMMAND:
+			// the add command dialog needs a list of submenus that the command could be added to, so let's request that list here and
+			// we'll actually show the dialog when the list gets returned by the service.  See onSubmenuListReceived().
 			sendSubmenuListRequest(ResultCodes.SubmenuResult.ADD_COMMAND_DIALOG);
 			break;
 		case ADD_SUBMENU:
@@ -544,20 +635,26 @@ public class MainActivity extends Activity{
 		case CREATE_INTERACTION_CHOICE_SET:
 			createInteractionChoiceSetDialog();
 			break;
+		case PERFORM_INTERACTION:
+			sendInteractionSetRequest(ResultCodes.InteractionSetResult.PERFORM_INTERACTION);
+			break;
 		case CHANGE_REGISTRATION:
 			createChangeRegistrationDialog();
 			break;
 		case DELETE_COMMAND:
+			// the delete command dialog needs a list of commands that have been added so far so the user can select which command to delete,
+			// so let's request the list here and we'll show the dialog when it's returned by the service.  See onCommandListReceived().
 			sendCommandListRequest(ResultCodes.CommandResult.DELETE_COMMAND_DIALOG);
 			break;
 		case DELETE_SUB_MENU:
+			// the delete submenu dialog needs a list of commands that have been added so far so the user can select which submenu to delete,
+			// so let's request the list here and we'll show the dialog when it's returned by the service.  See onSubmenuListReceived().
 			sendSubmenuListRequest(ResultCodes.SubmenuResult.DELETE_SUBMENU_DIALOG);
 			break;
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
 		case SET_MEDIA_CLOCK_TIMER:
 		case DELETE_INTERACTION_CHOICE_SET:
-		case PERFORM_INTERACTION:
 		case SLIDER:
 		case SCROLLABLE_MESSAGE:
 		case PUT_FILE:
@@ -621,8 +718,10 @@ public class MainActivity extends Activity{
 	}
 
 	/**
-	 * Creates a button subscribe dialog, allowing the user to manually send a button subscribe command.
-	 */	
+	 * Creates a button subscribe dialog, allowing the user to manually send a button subscribe command. 
+	 * 
+	 * @param buttonSubscriptions
+	 */
 	private void createButtonSubscribeDialog(List<SdlButton> buttonSubscriptions){
 		BaseAlertDialog buttonSubscribeDialog = new ButtonSubscriptionDialog(this, buttonSubscriptions);
 		buttonSubscribeDialog.setListener(new BaseAlertDialog.Listener() {
@@ -638,6 +737,11 @@ public class MainActivity extends Activity{
 		buttonSubscribeDialog.show();
 	}
 	
+	/**
+	 * Creates a button unsubscribe dialog, allowing the user to manually send a button unsubscribe command.
+	 * 
+	 * @param buttonSubscriptions
+	 */
 	private void createButtonUnsubscribeDialog(List<SdlButton> buttonSubscriptions){
 		BaseAlertDialog buttonUnsubscribeDialog = new ButtonUnsubscriptionDialog(this, buttonSubscriptions);
 		buttonUnsubscribeDialog.setListener(new BaseAlertDialog.Listener() {
@@ -737,6 +841,20 @@ public class MainActivity extends Activity{
 			}
 		});
 		deleteCommandDialog.show();
+	}
+	
+	/**
+	 * Creates a perform interaction dialog, allowing the user to manually send a PerformInteraction command.
+	 */
+	private void createPerformInteractionDialog(List<MenuItem> interactionList){
+		BaseAlertDialog performInteractionDialog = new PerformInteractionDialog(this, interactionList);
+		performInteractionDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				sendSdlMessageToService((RPCRequest) resultData);
+			}
+		});
+		performInteractionDialog.show();
 	}
 
 	@Override

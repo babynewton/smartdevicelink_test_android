@@ -25,4 +25,13 @@
 <!--     Button Subscriptions -->
     <string name="button_subscriptions_already_subscribed">Already subscribed to all buttons!</string>
     <string name="button_subscriptions_none_subscribed">App hasn\'t subscribed to buttons yet!</string>
+    
+<!--     Perform Interaction -->
+    <string name="perform_interaction_title">Interaction Title</string>
+    <string name="perform_interaction_voice_prompt">Interaction Voice Prompt</string>
+    <string name="perform_interaction_select_choice_set">Select Choice Sets</string>
+    <string name="perform_interaction_mode">Interaction Mode</string>
+    <string name="perform_interaction_timeout">Interaction Timeout (in seconds)</string>
+    <string name="perform_interaction_timeout_enabled">Interaction Timeout Enabled</string>
+    <string name="interaction_list_none_added">No choice interaction sets have been added yet!</string>
 </resources>

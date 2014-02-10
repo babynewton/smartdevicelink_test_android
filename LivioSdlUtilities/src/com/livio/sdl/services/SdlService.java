@@ -3,6 +3,7 @@ package com.livio.sdl.services;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Vector;
 
 import android.annotation.SuppressLint;
 import android.app.Service;
@@ -38,6 +39,8 @@ import com.smartdevicelink.proxy.rpc.AddSubMenuResponse;
 import com.smartdevicelink.proxy.rpc.AlertManeuverResponse;
 import com.smartdevicelink.proxy.rpc.AlertResponse;
 import com.smartdevicelink.proxy.rpc.ChangeRegistrationResponse;
+import com.smartdevicelink.proxy.rpc.Choice;
+import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSet;
 import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSetResponse;
 import com.smartdevicelink.proxy.rpc.DeleteCommand;
 import com.smartdevicelink.proxy.rpc.DeleteCommandResponse;
@@ -135,6 +138,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 * Message.what integer called when a ServiceMessages.REQUEST_BUTTON_SUBSCRIPTIONS message has been received.
 		 */
 		public static final int BUTTON_SUBSCRIPTIONS_RECEIVED = 7;
+		/**
+		 * Message.what integer called when a ServiceMessages.REQUEST_INTERACTION_SETS message has been received.
+		 */
+		public static final int INTERACTION_SETS_RECEIVED = 8;
 	}
 	
 	/**
@@ -165,21 +172,21 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 */
 		public static final int SEND_MESSAGE = 5;
 		/**
-		 * Message.what integer commanding the service to respond with the current foreground state of the applicaiton.
-		 */
-		public static final int REQUEST_FOREGROUND_STATE = 6;
-		/**
 		 * Message.what integer commanding the service to respond with a list of existing submenus that have been added.
 		 */
-		public static final int REQUEST_SUBMENU_LIST = 7;
+		public static final int REQUEST_SUBMENU_LIST = 6;
 		/**
 		 * Message.what integer commanding the service to respond with a list of existing commands that have been added.
 		 */
-		public static final int REQUEST_COMMAND_LIST = 8;
-		/*
+		public static final int REQUEST_COMMAND_LIST = 7;
+		/**
 		 * Message.what integer commanding the service to respond with a list of buttons that have been subscribed to.
 		 */
-		public static final int REQUEST_BUTTON_SUBSCRIPTIONS = 9;
+		public static final int REQUEST_BUTTON_SUBSCRIPTIONS = 8;
+		/**
+		 * Message.what integer commanding the service to respond with a list of interaction sets created so far.
+		 */
+		public static final int REQUEST_INTERACTION_SETS = 9;
 	}
 	
 	/**
@@ -213,6 +220,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected boolean appIsLoaded = false; // set to true once the app gets its first HMI update
 	
 	protected MenuManager menuManager = new MenuManager();
+	protected MenuManager choiceSetManager = new MenuManager();
 	protected SparseArray<RPCRequest> awaitingResponse = new SparseArray<RPCRequest>(1);
 	protected List<SdlButton> buttonSubscriptions = new ArrayList<SdlButton>();
 	
@@ -245,9 +253,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 				case ServiceMessages.SEND_MESSAGE:
 					sendSdlCommand((RPCRequest) msg.obj);
 					break;
-				case ServiceMessages.REQUEST_FOREGROUND_STATE:
-					foregroundStateRequested(msg.replyTo);
-					break;
 				case ServiceMessages.REQUEST_SUBMENU_LIST:
 					submenuListRequested(msg.replyTo, msg.arg1);
 					break;
@@ -256,6 +261,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 					break;
 				case ServiceMessages.REQUEST_BUTTON_SUBSCRIPTIONS:
 					buttonSubscriptionsRequested(msg.replyTo, msg.arg1);
+					break;
+				case ServiceMessages.REQUEST_INTERACTION_SETS:
+					interactionSetsRequested(msg.replyTo, msg.arg1);
 					break;
 				default:
 					break;
@@ -375,6 +383,19 @@ public class SdlService extends Service implements IProxyListenerALM{
 		msg.arg1 = reqCode;
 		sendMessageToClient(listener, msg);
 	}
+	
+	/**
+	 * Sends the list of interaction sets to the listening messenger client.
+	 * 
+	 * @param listener The client to reply to
+	 * @param reqCode The request code sent with the initial request
+	 */
+	protected void interactionSetsRequested(Messenger listener, int reqCode){
+		Message msg = Message.obtain(null, ClientMessages.INTERACTION_SETS_RECEIVED);
+		msg.obj = getInteractionSets();
+		msg.arg1 = reqCode;
+		sendMessageToClient(listener, msg);
+	}
 
 	/* ********** Android service life cycle methods ********** */
 	@Override
@@ -393,6 +414,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		appIsLoaded = false;
 		
 		menuManager.clear();
+		choiceSetManager.clear();
 		awaitingResponse.clear();
 	}
 
@@ -529,13 +551,24 @@ public class SdlService extends Service implements IProxyListenerALM{
 		else if(name.equals(Names.UnsubscribeButton)){
 			awaitingResponse.put(command.getCorrelationID(), command);
 		}
+		else if(name.equals(Names.CreateInteractionChoiceSet)){
+			CreateInteractionChoiceSet choiceSet = (CreateInteractionChoiceSet) command;
+			choiceSet.setInteractionChoiceSetID(commandIdGenerator.next());
+			
+			Vector<Choice> choices = choiceSet.getChoiceSet();
+			for(Choice choice : choices){
+				choice.setChoiceID(commandIdGenerator.next());
+			}
+			
+			awaitingResponse.put(command.getCorrelationID(), command);
+		}
 	}
 	
 	/**
-	 * Translates the AddCommand object into a SdlBaseButton object, complete with a click listener.
+	 * Translates the AddCommand object into a MenuItem object, complete with a click listener.
 	 * 
 	 * @param command The command to translate
-	 * @return The translated SdlBaseButton object
+	 * @return The translated MenuItem object
 	 */
 	protected MenuItem createMenuItem(AddCommand command){
 		final String name = command.getMenuParams().getMenuName();
@@ -560,14 +593,46 @@ public class SdlService extends Service implements IProxyListenerALM{
 	}
 	
 	/**
-	 * Translates the AddSubMenu object into a SdlBaseButton object.
+	 * Translates the AddSubMenu object into a MenuItem object.
 	 * 
 	 * @param command The command to translate
-	 * @return The translated SdlBaseButton object
+	 * @return The translated MenuItem object
 	 */
 	protected MenuItem createMenuItem(AddSubMenu command){
 		final String name = command.getMenuName();
 		final MenuItem result = new SubmenuButton(name, command.getMenuID());
+		return result;
+	}
+	
+	/**
+	 * Translates the CreateInteractionChoiceSet object into a MenuItem object.
+	 * 
+	 * @param command The command to translate
+	 * @return The translated MenuItem object
+	 */
+	protected MenuItem createMenuItem(CreateInteractionChoiceSet command){
+		final String name = "Choice Set";
+		final MenuItem result = new SubmenuButton(name, command.getInteractionChoiceSetID());
+		return result;
+	}
+	
+	/**
+	 * Translates the CreateInteractionChoiceSet object into a MenuItem object, complete with a click listener.
+	 * 
+	 * @param choice The command to translate
+	 * @param parentId The parent id of the input choice command
+	 * @return The translated MenuItem object
+	 */
+	protected MenuItem createMenuItem(Choice choice, final int parentId){
+		final String name = choice.getMenuName();
+		final int id = choice.getChoiceID();
+		final MenuItem result = new CommandButton(name, id, parentId, new OnClickListener(){
+			@Override
+			public void onClick(CommandButton button) {
+				Toast.makeText(SdlService.this, name + " clicked!", Toast.LENGTH_SHORT).show();
+			}
+		});
+		
 		return result;
 	}
 	
@@ -590,6 +655,15 @@ public class SdlService extends Service implements IProxyListenerALM{
 	}
 	
 	/**
+	 * Creates a copy of the choice set menus added so far.
+	 * 
+	 * @return The copied list of choice set items
+	 */
+	protected List<MenuItem> getChoiceSetList(){
+		return choiceSetManager.getSubmenus();
+	}
+	
+	/**
 	 * Creates a copy of the list of button subscriptions added so far.
 	 * 
 	 * @return The copied list of button subscriptions
@@ -600,6 +674,20 @@ public class SdlService extends Service implements IProxyListenerALM{
 		}
 		
 		return new ArrayList<SdlButton>(buttonSubscriptions);
+	}
+	
+	/**
+	 * Creates a copy of the list of interaction sets added so far.
+	 * 
+	 * @return The copied list of interaction sets
+	 */
+	protected List<MenuItem> getInteractionSets(){
+		List<MenuItem> result = choiceSetManager.getSubmenus();
+		if(result == null || result.size() <= 0){
+			return Collections.emptyList();
+		}
+		
+		return result;
 	}
 	
 	/**
@@ -615,17 +703,14 @@ public class SdlService extends Service implements IProxyListenerALM{
 	/* Most useful callbacks */
 	@Override
 	public void onOnHMIStatus(OnHMIStatus newStatus) {
-		sendMessageResponse(newStatus);
-		
 		if(!isConnected){
 			Message msg = Message.obtain(null, ClientMessages.SDL_CONNECTED);
 			sendMessageToRegisteredClients(msg);
 			isConnected = true;
 		}
 		
-		
 		HMILevel hmiLevel = newStatus.getHmiLevel();
-		if(hmiLevel == HMILevel.HMI_FULL){
+		if(hmiLevel == HMILevel.HMI_FULL || hmiLevel == HMILevel.HMI_LIMITED || hmiLevel == HMILevel.HMI_BACKGROUND){
 			if(!appIsLoaded){
 				onAppLoaded();
 				appIsLoaded = true;
@@ -635,6 +720,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 		else{
 			appHasForeground = false;
 		}
+		
+		sendMessageResponse(newStatus);
 	}
 	
 	@Override
@@ -766,9 +853,35 @@ public class SdlService extends Service implements IProxyListenerALM{
 			}
 		}
 	}
+
+	@Override 
+	public void onCreateInteractionChoiceSetResponse(CreateInteractionChoiceSetResponse response) {
+		sendMessageResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			if(original != null){
+				// add the parent (choice set) item to the choice set manager
+				CreateInteractionChoiceSet choiceSet = (CreateInteractionChoiceSet) original;
+				MenuItem item = createMenuItem(choiceSet);
+				choiceSetManager.addItem(item);
+				
+				// then, add all the parent's children to the choice set manager
+				final int parentId = choiceSet.getInteractionChoiceSetID();
+				Vector<Choice> children = choiceSet.getChoiceSet();
+				for(Choice child : children){
+					item = createMenuItem(child, parentId);
+					choiceSetManager.addItem(item);
+				}
+			}
+		}
+	}
 	
 	@Override public void onGenericResponse(GenericResponse response) {sendMessageResponse(response);}
-	@Override public void onCreateInteractionChoiceSetResponse(CreateInteractionChoiceSetResponse response) {sendMessageResponse(response);}
 	@Override public void onAlertResponse(AlertResponse response) {sendMessageResponse(response);}
 	@Override public void onDeleteInteractionChoiceSetResponse(DeleteInteractionChoiceSetResponse response) {sendMessageResponse(response);}
 	@Override public void onPerformInteractionResponse(PerformInteractionResponse response) {sendMessageResponse(response);}

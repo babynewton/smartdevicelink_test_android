@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <EditText android:id="@+id/et_performInteraction_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textCapSentences"
+        android:hint="@string/perform_interaction_title">
+
+        <requestFocus />
+    </EditText>
+
+    <EditText
+        android:id="@+id/et_performInteraction_voicePrompt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textCapSentences"
+        android:hint="@string/perform_interaction_voice_prompt"/>
+
+    <Button
+        android:id="@+id/but_performInteraction_selectChoiceSets"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/perform_interaction_select_choice_set"
+        />
+
+    <TextView android:id="@+id/tv_performInteraction_interactionMode"
+        style="@style/small_header_text"
+        android:text="@string/perform_interaction_mode" />
+
+    <Spinner android:id="@+id/spin_performInteraction_interactionMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <CheckBox android:id="@+id/check_performInteraction_timeoutEnabled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/perform_interaction_timeout_enabled"
+        android:checked="true" />
+
+    <TextView android:id="@+id/tv_performInteraction_timeoutTitle"
+        style="@style/small_header_text"
+        android:text="@string/perform_interaction_timeout" />
+
+    <TextView android:id="@+id/tv_performInteraction_timeoutDuration"
+        style="@style/small_header_text" />
+
+    <SeekBar android:id="@+id/seek_performInteraction_timeoutDuration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="950"
+        android:progress="950"
+         />
+
+</LinearLayout>

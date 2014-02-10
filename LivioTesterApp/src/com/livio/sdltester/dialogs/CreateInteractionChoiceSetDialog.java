@@ -19,8 +19,10 @@ import android.widget.Toast;
 
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
+import com.livio.sdl.utils.UpCounter;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.Choice;
+import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSet;
 
 public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 	
@@ -104,7 +106,7 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			List<DataHolder> itemList = createChoiceInteractionSetList();
-			Choice[] choiceItems = new Choice[itemList.size()];
+			Vector<Choice> choiceItems = new Vector<Choice>(itemList.size());
 			
 			for(int i=0; i < itemList.size(); i++){
 				final DataHolder item = itemList.get(i);
@@ -117,20 +119,30 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 					Choice choice = new Choice();
 					choice.setMenuName(choiceName);
 					
+					Vector<String> vrCommands = new Vector<String>(); // TODO - allow CSV for multiple voice rec inputs
 					if(voiceRecKeyword.length() > 0){
-						Vector<String> vrCommands = new Vector<String>(1); // TODO - allow CSV for multiple voice rec inputs
 						vrCommands.add(voiceRecKeyword);
-						choice.setVrCommands(vrCommands);
 					}
+					else{
+						vrCommands.add("Choice");
+						vrCommands.add(String.valueOf(i));
+					}
+					
+					choice.setVrCommands(vrCommands);
 					
 					if(image != null){
 //						choice.setImage(image); TODO - add image once support is in place
 					}
 
-					choiceItems[i] = choice;
+					choiceItems.add(choice);
 				}
 			}
-			notifyListener(choiceItems);
+			
+			if(choiceItems.size() > 0){
+				CreateInteractionChoiceSet choiceSet = new CreateInteractionChoiceSet();
+				choiceSet.setChoiceSet(choiceItems);
+				notifyListener(choiceSet);
+			}
 		}
 	};
 	
