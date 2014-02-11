@@ -47,8 +47,10 @@ import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
 import com.livio.sdltester.dialogs.DeleteCommandDialog;
 import com.livio.sdltester.dialogs.DeleteInteractionDialog;
 import com.livio.sdltester.dialogs.DeleteSubmenuDialog;
+import com.livio.sdltester.dialogs.GetDtcsDialog;
 import com.livio.sdltester.dialogs.JsonDialog;
 import com.livio.sdltester.dialogs.PerformInteractionDialog;
+import com.livio.sdltester.dialogs.ReadDidsDialog;
 import com.livio.sdltester.dialogs.SdlAlertDialog;
 import com.livio.sdltester.dialogs.SdlConnectionDialog;
 import com.livio.sdltester.dialogs.SendMessageDialog;
@@ -148,7 +150,7 @@ public class MainActivity extends Activity{
 				onButtonSubscriptionsReceived((List<SdlButton>) msg.obj, msg.arg1);
 				break;
 			case SdlService.ClientMessages.INTERACTION_SETS_RECEIVED:
-				onInteractionSetReceived((List<MenuItem>) msg.obj, msg.arg1);
+				onInteractionListReceived((List<MenuItem>) msg.obj, msg.arg1);
 				break;
 			default:
 				break;
@@ -464,7 +466,7 @@ public class MainActivity extends Activity{
 	 * @param interactionSetList The list of interaction sets
 	 * @param reqCode The request code that was sent with the request
 	 */
-	private void onInteractionSetReceived(List<MenuItem> interactionSetList, int reqCode){
+	private void onInteractionListReceived(List<MenuItem> interactionSetList, int reqCode){
 		switch(reqCode){
 		case ResultCodes.InteractionSetResult.PERFORM_INTERACTION:
 			if(interactionSetList.size() == 0){
@@ -640,30 +642,40 @@ public class MainActivity extends Activity{
 			// we'll actually show the dialog when the list gets returned by the service.  See onSubmenuListReceived().
 			sendSubmenuListRequest(ResultCodes.SubmenuResult.ADD_COMMAND_DIALOG);
 			break;
-		case ADD_SUBMENU:
-			createAddSubmenuDialog();
-			break;
-		case CREATE_INTERACTION_CHOICE_SET:
-			createInteractionChoiceSetDialog();
-			break;
-		case PERFORM_INTERACTION:
-			sendInteractionSetRequest(ResultCodes.InteractionSetResult.PERFORM_INTERACTION);
-			break;
-		case DELETE_INTERACTION_CHOICE_SET:
-			sendInteractionSetRequest(ResultCodes.InteractionSetResult.DELETE_INTERACTION_SET);
-			break;
-		case CHANGE_REGISTRATION:
-			createChangeRegistrationDialog();
-			break;
 		case DELETE_COMMAND:
 			// the delete command dialog needs a list of commands that have been added so far so the user can select which command to delete,
 			// so let's request the list here and we'll show the dialog when it's returned by the service.  See onCommandListReceived().
 			sendCommandListRequest(ResultCodes.CommandResult.DELETE_COMMAND_DIALOG);
 			break;
+		case ADD_SUBMENU:
+			createAddSubmenuDialog();
+			break;
 		case DELETE_SUB_MENU:
 			// the delete submenu dialog needs a list of commands that have been added so far so the user can select which submenu to delete,
 			// so let's request the list here and we'll show the dialog when it's returned by the service.  See onSubmenuListReceived().
 			sendSubmenuListRequest(ResultCodes.SubmenuResult.DELETE_SUBMENU_DIALOG);
+			break;
+		case CREATE_INTERACTION_CHOICE_SET:
+			createInteractionChoiceSetDialog();
+			break;
+		case PERFORM_INTERACTION:
+			// the perform interaction dialog needs a list of interaction sets that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onInteractionListReceived().
+			sendInteractionSetRequest(ResultCodes.InteractionSetResult.PERFORM_INTERACTION);
+			break;
+		case DELETE_INTERACTION_CHOICE_SET:
+			// the delete interaction dialog needs a list of interaction sets that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onInteractionListReceived().
+			sendInteractionSetRequest(ResultCodes.InteractionSetResult.DELETE_INTERACTION_SET);
+			break;
+		case CHANGE_REGISTRATION:
+			createChangeRegistrationDialog();
+			break;
+		case GET_DTCS:
+			createGetDtcsDialog();
+			break;
+		case READ_DIDS:
+			createReadDidsDialog();
 			break;
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
@@ -679,8 +691,6 @@ public class MainActivity extends Activity{
 		case SUBSCRIBE_VEHICLE_DATA:
 		case UNSUBSCRIBE_VEHICLE_DATA:
 		case GET_VEHICLE_DATA:
-		case READ_DIDS:
-		case GET_DTCS:
 			Toast.makeText(this, getResources().getString(R.string.not_implemented), Toast.LENGTH_SHORT).show();
 			break;
 		default:
@@ -688,17 +698,32 @@ public class MainActivity extends Activity{
 		}
 	}
 	
+	// listener to be used when receiving a single RPCRequest from a dialog.
+	private final BaseAlertDialog.Listener singleMessageListener = new BaseAlertDialog.Listener() {
+		@Override
+		public void onResult(Object resultData) {
+			sendSdlMessageToService((RPCRequest) resultData);
+		}
+	};
+	
+	// listener to be used when receiving a list of RPCRequests from a dialog.
+	private final BaseAlertDialog.Listener multipleMessageListener = new BaseAlertDialog.Listener() {
+		@Override
+		public void onResult(Object resultData) {
+			@SuppressWarnings("unchecked")
+			List<RPCRequest> msgList = (List<RPCRequest>) resultData;
+			for(RPCRequest request : msgList){
+				sendSdlMessageToService(request);
+			}
+		}
+	};
+	
 	/**
 	 * Creates an alert dialog, allowing the user to manually send an alert command.
 	 */
 	private void createAlertDialog(){
 		BaseAlertDialog alertDialog = new SdlAlertDialog(this);
-		alertDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		alertDialog.setListener(singleMessageListener);
 		alertDialog.show();
 	}
 
@@ -707,12 +732,7 @@ public class MainActivity extends Activity{
 	 */
 	private void createSpeakDialog(){
 		BaseAlertDialog speakDialog = new SpeakDialog(this);
-		speakDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		speakDialog.setListener(singleMessageListener);
 		speakDialog.show();
 	}
 
@@ -721,12 +741,7 @@ public class MainActivity extends Activity{
 	 */	
 	private void createShowDialog(){
 		BaseAlertDialog showDialog = new ShowDialog(this);
-		showDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		showDialog.setListener(singleMessageListener);
 		showDialog.show();
 	}
 
@@ -737,16 +752,7 @@ public class MainActivity extends Activity{
 	 */
 	private void createButtonSubscribeDialog(List<SdlButton> buttonSubscriptions){
 		BaseAlertDialog buttonSubscribeDialog = new ButtonSubscriptionDialog(this, buttonSubscriptions);
-		buttonSubscribeDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				@SuppressWarnings("unchecked")
-				List<RPCRequest> buttonSubscribeRequests = (ArrayList<RPCRequest>) resultData;
-				for(RPCRequest request : buttonSubscribeRequests){
-					sendSdlMessageToService(request);
-				}
-			}
-		});
+		buttonSubscribeDialog.setListener(multipleMessageListener);
 		buttonSubscribeDialog.show();
 	}
 	
@@ -757,16 +763,7 @@ public class MainActivity extends Activity{
 	 */
 	private void createButtonUnsubscribeDialog(List<SdlButton> buttonSubscriptions){
 		BaseAlertDialog buttonUnsubscribeDialog = new ButtonUnsubscriptionDialog(this, buttonSubscriptions);
-		buttonUnsubscribeDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				@SuppressWarnings("unchecked")
-				List<RPCRequest> buttonSubscribeRequests = (ArrayList<RPCRequest>) resultData;
-				for(RPCRequest request : buttonSubscribeRequests){
-					sendSdlMessageToService(request);
-				}
-			}
-		});
+		buttonUnsubscribeDialog.setListener(multipleMessageListener);
 		buttonUnsubscribeDialog.show();
 	}
 
@@ -777,12 +774,7 @@ public class MainActivity extends Activity{
 	 */
 	private void createAddCommandDialog(List<MenuItem> allBanks){
 		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks);
-		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		addCommandDialog.setListener(singleMessageListener);
 		addCommandDialog.show();
 	}
 
@@ -791,12 +783,7 @@ public class MainActivity extends Activity{
 	 */	
 	private void createAddSubmenuDialog(){
 		BaseAlertDialog submenuDialog = new AddSubMenuDialog(this);
-		submenuDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		submenuDialog.setListener(singleMessageListener);
 		submenuDialog.show();
 	}
 
@@ -805,12 +792,7 @@ public class MainActivity extends Activity{
 	 */	
 	private void createInteractionChoiceSetDialog(){
 		BaseAlertDialog createInteractionChoiceSetDialog = new CreateInteractionChoiceSetDialog(this);
-		createInteractionChoiceSetDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		createInteractionChoiceSetDialog.setListener(singleMessageListener);
 		createInteractionChoiceSetDialog.show();
 	}
 
@@ -819,12 +801,7 @@ public class MainActivity extends Activity{
 	 */	
 	private void createChangeRegistrationDialog(){
 		BaseAlertDialog changeRegistrationDialog = new ChangeRegistrationDialog(this);
-		changeRegistrationDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		changeRegistrationDialog.setListener(singleMessageListener);
 		changeRegistrationDialog.show();
 	}
 
@@ -835,13 +812,7 @@ public class MainActivity extends Activity{
 	 */
 	private void createDeleteCommandDialog(List<MenuItem> commandList){
 		BaseAlertDialog deleteCommandDialog = new DeleteCommandDialog(this, commandList);
-		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
-			
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		deleteCommandDialog.setListener(singleMessageListener);
 		deleteCommandDialog.show();
 	}
 
@@ -852,13 +823,7 @@ public class MainActivity extends Activity{
 	 */
 	private void createDeleteSubmenuDialog(List<MenuItem> submenuList){
 		BaseAlertDialog deleteCommandDialog = new DeleteSubmenuDialog(this, submenuList);
-		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
-			
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		deleteCommandDialog.setListener(singleMessageListener);
 		deleteCommandDialog.show();
 	}
 	
@@ -869,12 +834,7 @@ public class MainActivity extends Activity{
 	 */
 	private void createPerformInteractionDialog(List<MenuItem> interactionList){
 		BaseAlertDialog performInteractionDialog = new PerformInteractionDialog(this, interactionList);
-		performInteractionDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		performInteractionDialog.setListener(singleMessageListener);
 		performInteractionDialog.show();
 	}
 	
@@ -885,13 +845,26 @@ public class MainActivity extends Activity{
 	 */
 	private void createDeleteInteractionDialog(List<MenuItem> interactionList){
 		BaseAlertDialog deleteInteractionDialog = new DeleteInteractionDialog(this, interactionList);
-		deleteInteractionDialog.setListener(new BaseAlertDialog.Listener() {
-			@Override
-			public void onResult(Object resultData) {
-				sendSdlMessageToService((RPCRequest) resultData);
-			}
-		});
+		deleteInteractionDialog.setListener(singleMessageListener);
 		deleteInteractionDialog.show();
+	}
+	
+	/**
+	 * Creates a get DTCs dialog, allowing the user to manually send a GetDTCs command.
+	 */
+	private void createGetDtcsDialog(){
+		BaseAlertDialog getDtcsDialog = new GetDtcsDialog(this);
+		getDtcsDialog.setListener(singleMessageListener);
+		getDtcsDialog.show();
+	}
+	
+	/**
+	 * Creates a read DIDs dialog, allowing the user to manually send a ReadDID command.
+	 */
+	private void createReadDidsDialog(){
+		BaseAlertDialog getDtcsDialog = new ReadDidsDialog(this);
+		getDtcsDialog.setListener(singleMessageListener);
+		getDtcsDialog.show();
 	}
 
 	@Override

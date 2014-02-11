@@ -22,6 +22,10 @@
     
 <!--     Add Submenu -->
     <string name="submenu_name">Submenu Name</string>
+    
+<!--     Get DTCs and Read DIDs -->
+    <string name="ecu_name">ECU Name (0&#8211;65535)</string>
+    <string name="did_location">DID Location (0&#8211;65535)</string>
 
 <!--     Create Interaction Choice Set -->
     <string name="max_choices">You have reached the max number of choices.</string>

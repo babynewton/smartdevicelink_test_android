@@ -8,7 +8,7 @@ import com.livio.sdl.R;
 
 public class BaseTextViewDialog extends BaseAlertDialog {
 
-	private TextView tv;
+	protected TextView tv;
 	
 	public BaseTextViewDialog(Context context, String dialogTitle, String message){
 		super(context, dialogTitle, R.layout.textview);
