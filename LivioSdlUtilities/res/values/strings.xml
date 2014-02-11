@@ -26,6 +26,13 @@
 <!--     Get DTCs and Read DIDs -->
     <string name="ecu_name">ECU Name (0&#8211;65535)</string>
     <string name="did_location">DID Location (0&#8211;65535)</string>
+    
+<!--     Slider -->
+    <string name="slider_title">Slider Title</string>
+    <string name="slider_footer">Slider Footer</string>
+    <string name="slider_ticks">Number of slider ticks: </string>
+    <string name="slider_start_position">Start position: </string>
+    <string name="slider_timeout">Timeout: </string>
 
 <!--     Create Interaction Choice Set -->
     <string name="max_choices">You have reached the max number of choices.</string>

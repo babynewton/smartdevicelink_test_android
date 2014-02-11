@@ -55,6 +55,7 @@ import com.livio.sdltester.dialogs.SdlAlertDialog;
 import com.livio.sdltester.dialogs.SdlConnectionDialog;
 import com.livio.sdltester.dialogs.SendMessageDialog;
 import com.livio.sdltester.dialogs.ShowDialog;
+import com.livio.sdltester.dialogs.SliderDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
@@ -677,10 +678,12 @@ public class MainActivity extends Activity{
 		case READ_DIDS:
 			createReadDidsDialog();
 			break;
+		case SLIDER:
+			createSliderDialog();
+			break;
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
 		case SET_MEDIA_CLOCK_TIMER:
-		case SLIDER:
 		case SCROLLABLE_MESSAGE:
 		case PUT_FILE:
 		case DELETE_FILE:
@@ -863,6 +866,15 @@ public class MainActivity extends Activity{
 	 */
 	private void createReadDidsDialog(){
 		BaseAlertDialog getDtcsDialog = new ReadDidsDialog(this);
+		getDtcsDialog.setListener(singleMessageListener);
+		getDtcsDialog.show();
+	}
+	
+	/**
+	 * Creates a slider dialog, allowing the user to manually send a Slider command.
+	 */
+	private void createSliderDialog(){
+		BaseAlertDialog getDtcsDialog = new SliderDialog(this);
 		getDtcsDialog.setListener(singleMessageListener);
 		getDtcsDialog.show();
 	}
