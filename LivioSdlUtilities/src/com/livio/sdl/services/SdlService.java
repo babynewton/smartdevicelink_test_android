@@ -45,6 +45,7 @@ import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSetResponse;
 import com.smartdevicelink.proxy.rpc.DeleteCommand;
 import com.smartdevicelink.proxy.rpc.DeleteCommandResponse;
 import com.smartdevicelink.proxy.rpc.DeleteFileResponse;
+import com.smartdevicelink.proxy.rpc.DeleteInteractionChoiceSet;
 import com.smartdevicelink.proxy.rpc.DeleteInteractionChoiceSetResponse;
 import com.smartdevicelink.proxy.rpc.DeleteSubMenu;
 import com.smartdevicelink.proxy.rpc.DeleteSubMenuResponse;
@@ -562,6 +563,9 @@ public class SdlService extends Service implements IProxyListenerALM{
 			
 			awaitingResponse.put(command.getCorrelationID(), command);
 		}
+		else if(name.equals(Names.DeleteInteractionChoiceSet)){
+			awaitingResponse.put(command.getCorrelationID(), command);
+		}
 	}
 	
 	/**
@@ -880,10 +884,28 @@ public class SdlService extends Service implements IProxyListenerALM{
 			}
 		}
 	}
+
+	@Override 
+	public void onDeleteInteractionChoiceSetResponse(DeleteInteractionChoiceSetResponse response) {
+		sendMessageResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = awaitingResponse.get(correlationId);
+			awaitingResponse.remove(correlationId);
+			if(original != null){
+				// get the choice set ID from the original request and remove it from the choice set manager
+				DeleteInteractionChoiceSet choiceSet = (DeleteInteractionChoiceSet) original;
+				int choiceId = choiceSet.getInteractionChoiceSetID();
+				choiceSetManager.removeItem(choiceId);
+			}
+		}
+	}
 	
 	@Override public void onGenericResponse(GenericResponse response) {sendMessageResponse(response);}
 	@Override public void onAlertResponse(AlertResponse response) {sendMessageResponse(response);}
-	@Override public void onDeleteInteractionChoiceSetResponse(DeleteInteractionChoiceSetResponse response) {sendMessageResponse(response);}
 	@Override public void onPerformInteractionResponse(PerformInteractionResponse response) {sendMessageResponse(response);}
 	@Override public void onResetGlobalPropertiesResponse(ResetGlobalPropertiesResponse response) {sendMessageResponse(response);}
 	@Override public void onSetGlobalPropertiesResponse(SetGlobalPropertiesResponse response) {sendMessageResponse(response);}

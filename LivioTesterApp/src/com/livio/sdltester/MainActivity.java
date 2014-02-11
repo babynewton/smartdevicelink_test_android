@@ -45,6 +45,7 @@ import com.livio.sdltester.dialogs.ChangeRegistrationDialog;
 import com.livio.sdltester.dialogs.ConnectingDialog;
 import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
 import com.livio.sdltester.dialogs.DeleteCommandDialog;
+import com.livio.sdltester.dialogs.DeleteInteractionDialog;
 import com.livio.sdltester.dialogs.DeleteSubmenuDialog;
 import com.livio.sdltester.dialogs.JsonDialog;
 import com.livio.sdltester.dialogs.PerformInteractionDialog;
@@ -80,6 +81,7 @@ public class MainActivity extends Activity{
 		}
 		private static final class InteractionSetResult{
 			private static final int PERFORM_INTERACTION = 1;
+			private static final int DELETE_INTERACTION_SET = 2;
 		}
 	}
 	
@@ -473,6 +475,15 @@ public class MainActivity extends Activity{
 				createPerformInteractionDialog(interactionSetList);
 			}
 			break;
+		case ResultCodes.InteractionSetResult.DELETE_INTERACTION_SET:
+			if(interactionSetList.size() == 0){
+				Toast.makeText(MainActivity.this, getResources().getString(R.string.interaction_list_none_added), Toast.LENGTH_LONG).show();
+			}
+			else{
+				Collections.sort(interactionSetList, new MenuItem.IdComparator());
+				createDeleteInteractionDialog(interactionSetList);
+			}
+			break;
 		default:
 			break;
 		}
@@ -638,6 +649,9 @@ public class MainActivity extends Activity{
 		case PERFORM_INTERACTION:
 			sendInteractionSetRequest(ResultCodes.InteractionSetResult.PERFORM_INTERACTION);
 			break;
+		case DELETE_INTERACTION_CHOICE_SET:
+			sendInteractionSetRequest(ResultCodes.InteractionSetResult.DELETE_INTERACTION_SET);
+			break;
 		case CHANGE_REGISTRATION:
 			createChangeRegistrationDialog();
 			break;
@@ -654,7 +668,6 @@ public class MainActivity extends Activity{
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
 		case SET_MEDIA_CLOCK_TIMER:
-		case DELETE_INTERACTION_CHOICE_SET:
 		case SLIDER:
 		case SCROLLABLE_MESSAGE:
 		case PUT_FILE:
@@ -720,7 +733,7 @@ public class MainActivity extends Activity{
 	/**
 	 * Creates a button subscribe dialog, allowing the user to manually send a button subscribe command. 
 	 * 
-	 * @param buttonSubscriptions
+	 * @param buttonSubscriptions The list used to populate the dialog
 	 */
 	private void createButtonSubscribeDialog(List<SdlButton> buttonSubscriptions){
 		BaseAlertDialog buttonSubscribeDialog = new ButtonSubscriptionDialog(this, buttonSubscriptions);
@@ -740,7 +753,7 @@ public class MainActivity extends Activity{
 	/**
 	 * Creates a button unsubscribe dialog, allowing the user to manually send a button unsubscribe command.
 	 * 
-	 * @param buttonSubscriptions
+	 * @param buttonSubscriptions The list used to populate the dialog
 	 */
 	private void createButtonUnsubscribeDialog(List<SdlButton> buttonSubscriptions){
 		BaseAlertDialog buttonUnsubscribeDialog = new ButtonUnsubscriptionDialog(this, buttonSubscriptions);
@@ -759,7 +772,9 @@ public class MainActivity extends Activity{
 
 	/**
 	 * Creates an add command dialog, allowing the user to manually send an add command command.
-	 */	
+	 * 
+	 * @param allBanks The list used to populate the dialog
+	 */
 	private void createAddCommandDialog(List<MenuItem> allBanks){
 		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks);
 		addCommandDialog.setListener(new BaseAlertDialog.Listener() {
@@ -815,7 +830,9 @@ public class MainActivity extends Activity{
 
 	/**
 	 * Creates a delete command dialog, allowing the user to manually send a delete command command.
-	 */	
+	 * 
+	 * @param commandList The list used to populate the dialog
+	 */
 	private void createDeleteCommandDialog(List<MenuItem> commandList){
 		BaseAlertDialog deleteCommandDialog = new DeleteCommandDialog(this, commandList);
 		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
@@ -830,7 +847,9 @@ public class MainActivity extends Activity{
 
 	/**
 	 * Creates a delete submenu dialog, allowing the user to manually send a delete submenu command.
-	 */	
+	 * 
+	 * @param submenuList The list used to populate the dialog
+	 */
 	private void createDeleteSubmenuDialog(List<MenuItem> submenuList){
 		BaseAlertDialog deleteCommandDialog = new DeleteSubmenuDialog(this, submenuList);
 		deleteCommandDialog.setListener(new BaseAlertDialog.Listener() {
@@ -845,6 +864,8 @@ public class MainActivity extends Activity{
 	
 	/**
 	 * Creates a perform interaction dialog, allowing the user to manually send a PerformInteraction command.
+	 * 
+	 * @param interactionList The list used to populate the dialog
 	 */
 	private void createPerformInteractionDialog(List<MenuItem> interactionList){
 		BaseAlertDialog performInteractionDialog = new PerformInteractionDialog(this, interactionList);
@@ -855,6 +876,22 @@ public class MainActivity extends Activity{
 			}
 		});
 		performInteractionDialog.show();
+	}
+	
+	/**
+	 * Creates a delete interaction dialog, allowing the user to manually send a DeleteInteractionChoiceSet command.
+	 * 
+	 * @param interactionList The list used to populate the dialog
+	 */
+	private void createDeleteInteractionDialog(List<MenuItem> interactionList){
+		BaseAlertDialog deleteInteractionDialog = new DeleteInteractionDialog(this, interactionList);
+		deleteInteractionDialog.setListener(new BaseAlertDialog.Listener() {
+			@Override
+			public void onResult(Object resultData) {
+				sendSdlMessageToService((RPCRequest) resultData);
+			}
+		});
+		deleteInteractionDialog.show();
 	}
 
 	@Override
