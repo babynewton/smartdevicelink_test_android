@@ -124,8 +124,7 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 						vrCommands.add(voiceRecKeyword);
 					}
 					else{
-						vrCommands.add("Choice");
-						vrCommands.add(String.valueOf(i));
+						vrCommands.add(choiceName);
 					}
 					
 					choice.setVrCommands(vrCommands);

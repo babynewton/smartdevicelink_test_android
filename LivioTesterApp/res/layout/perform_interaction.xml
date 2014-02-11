@@ -51,8 +51,8 @@
     <SeekBar android:id="@+id/seek_performInteraction_timeoutDuration"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:max="950"
-        android:progress="950"
+        android:max="95"
+        android:progress="95"
          />
 
 </LinearLayout>
