@@ -205,7 +205,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	}
 	
 	/* ********** Static variables ********** */
-	private static final boolean IS_MEDIA_APP = false;					/*		All of these variables		*/
+	private static final boolean IS_MEDIA_APP = true;					/*		All of these variables		*/
 	private static final Language DEFAULT_LANGUAGE = Language.EN_US;	/*		are needed to start up		*/
 	private static final String APP_ID = "appId";						/*		the SDL proxy object		*/
 	private static final boolean WIFI_AUTO_RECONNECT = true;			/*									*/

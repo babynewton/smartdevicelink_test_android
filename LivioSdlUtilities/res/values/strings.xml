@@ -32,7 +32,12 @@
     <string name="slider_footer">Slider Footer</string>
     <string name="slider_ticks">Number of slider ticks: </string>
     <string name="slider_start_position">Start position: </string>
-    <string name="slider_timeout">Timeout: </string>
+    <string name="timeout">Timeout: </string>
+    
+<!--     Scrollable Message -->
+    <string name="scrollable_message_text">"\"\'My mind,\' he said, \'rebels at stagnation. Give me problems, give me work, give me the most abstruse cryptogram or the most intricate analysis, and I am in my own proper atmosphere. I can dispense then with artificial stimulants. But I abhor the dull routine of existence. I crave for mental exaltation. That is why I have chosen my own particular profession,&#8211;or rather created it, for I am the only one in the world.\'\"\n\n&#8211; Sherlock Holmes by Sir Arthur Conan Doyle"</string>
+    <string name="scrollable_message_hint">Enter a long message (500 chars max)</string>
+    <string name="scrollable_message_clear">Clear Text</string>
 
 <!--     Create Interaction Choice Set -->
     <string name="max_choices">You have reached the max number of choices.</string>
@@ -68,9 +73,12 @@
     <string name="media_track">Media Track</string>
     <string name="media">Media</string>
     <string name="clock">Clock</string>
+    <string name="clock_hrs">HH</string>
     <string name="clock_mins">MM</string>
     <string name="clock_secs">SS</string>
     <string name="colon">:</string>
+    
+    <string name="media_clock_timer_mode">Timer Mode</string>
     
 <!--     Unit Suffixes -->
     <string name="units_seconds"> s</string>

@@ -46,7 +46,7 @@
     
     <TextView android:id="@+id/tv_slider_timeout"
         style="@style/small_header_text"
-        android:text="@string/slider_timeout"/>
+        android:text="@string/timeout"/>
     
     <SeekBar android:id="@+id/seek_slider_timeout"
         android:layout_height="wrap_content"

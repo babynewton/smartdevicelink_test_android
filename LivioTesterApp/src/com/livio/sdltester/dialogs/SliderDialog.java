@@ -48,7 +48,7 @@ public class SliderDialog extends BaseOkCancelDialog {
 		Resources res = context.getResources();
 		numOfTicks = res.getString(R.string.slider_ticks);
 		startPosition= res.getString(R.string.slider_start_position);
-		timeout = res.getString(R.string.slider_timeout);
+		timeout = res.getString(R.string.timeout);
 		
 		et_slider_title = (EditText) parent.findViewById(R.id.et_slider_title);
 		et_slider_footer = (EditText) parent.findViewById(R.id.et_slider_footer);

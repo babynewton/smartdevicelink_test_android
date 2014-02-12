@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="10dip"
+    android:layout_marginRight="10dip"
+    android:orientation="vertical"
+    android:paddingLeft="20dip"
+    android:paddingRight="20dip" >
+
+    <TextView
+        style="@style/small_header_text"
+        android:text="@string/media_clock_timer_mode" />
+
+    <Spinner android:id="@+id/spin_mediaClock_updateMode"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView android:id="@+id/tv_mediaClock_clock"
+        style="@style/small_header_text"
+        android:text="@string/clock" />
+
+    <LinearLayout android:id="@+id/ll_clock"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal">
+        
+        <EditText android:id="@+id/et_mediaClockHours"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:freezesText="true"
+            android:inputType="number"
+            android:hint="@string/clock_hrs"/>
+
+	    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+	        android:text="@string/colon" />
+        
+        <EditText android:id="@+id/et_mediaClockMins"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:freezesText="true"
+            android:inputType="number"
+            android:hint="@string/clock_mins"/>
+
+	    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+	        android:text="@string/colon" />
+        
+        <EditText android:id="@+id/et_mediaClockSecs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:freezesText="true"
+            android:inputType="number"
+            android:hint="@string/clock_secs"/>
+        
+    </LinearLayout>
+    
+</LinearLayout>

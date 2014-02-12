@@ -51,9 +51,11 @@ import com.livio.sdltester.dialogs.GetDtcsDialog;
 import com.livio.sdltester.dialogs.JsonDialog;
 import com.livio.sdltester.dialogs.PerformInteractionDialog;
 import com.livio.sdltester.dialogs.ReadDidsDialog;
+import com.livio.sdltester.dialogs.ScrollableMessageDialog;
 import com.livio.sdltester.dialogs.SdlAlertDialog;
 import com.livio.sdltester.dialogs.SdlConnectionDialog;
 import com.livio.sdltester.dialogs.SendMessageDialog;
+import com.livio.sdltester.dialogs.SetMediaClockTimerDialog;
 import com.livio.sdltester.dialogs.ShowDialog;
 import com.livio.sdltester.dialogs.SliderDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
@@ -681,10 +683,14 @@ public class MainActivity extends Activity{
 		case SLIDER:
 			createSliderDialog();
 			break;
+		case SCROLLABLE_MESSAGE:
+			createScrollableMessageDialog();
+			break;
+		case SET_MEDIA_CLOCK_TIMER:
+			createSetMediaClockTimerDialog();
+			break;
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
-		case SET_MEDIA_CLOCK_TIMER:
-		case SCROLLABLE_MESSAGE:
 		case PUT_FILE:
 		case DELETE_FILE:
 		case LIST_FILES:
@@ -877,6 +883,21 @@ public class MainActivity extends Activity{
 		BaseAlertDialog getDtcsDialog = new SliderDialog(this);
 		getDtcsDialog.setListener(singleMessageListener);
 		getDtcsDialog.show();
+	}
+	
+	/**
+	 * Creates a scrollable message dialog, allowing the user to manually send a ScrollableMessage command.
+	 */
+	private void createScrollableMessageDialog(){
+		BaseAlertDialog scrollableMessageDialog = new ScrollableMessageDialog(this);
+		scrollableMessageDialog.setListener(singleMessageListener);
+		scrollableMessageDialog.show();
+	}
+	
+	private void createSetMediaClockTimerDialog(){
+		BaseAlertDialog setMediaClockTimerDialog = new SetMediaClockTimerDialog(this);
+		setMediaClockTimerDialog.setListener(singleMessageListener);
+		setMediaClockTimerDialog.show();
 	}
 
 	@Override
