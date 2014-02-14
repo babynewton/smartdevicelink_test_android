@@ -62,6 +62,7 @@ public class SdlMessageAdapter extends ArrayAdapter<SdlLogMessage> {
 		TextView tv_messageDetails = (TextView) view.findViewById(R.id.tv_messageDetail);
 		TextView tv_timestamp = (TextView) view.findViewById(R.id.tv_timestamp);
 		
+		// set text values based on input message
 		tv_messageName.setText(item.getFunctionName());
 		tv_messageDetails.setText(item.getDetails());
 		tv_timestamp.setText(item.getTimeStamp());

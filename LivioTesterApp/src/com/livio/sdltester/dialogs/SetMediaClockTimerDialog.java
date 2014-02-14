@@ -6,7 +6,6 @@ import android.text.InputFilter;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -16,6 +15,7 @@ import com.livio.sdl.datatypes.MinMaxInputFilter;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlUpdateMode;
+import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.SetMediaClockTimer;
 import com.smartdevicelink.proxy.rpc.StartTime;
@@ -40,9 +40,7 @@ public class SetMediaClockTimerDialog extends BaseOkCancelDialog {
 	@Override
 	protected void findViews(View parent) {
 		spin_mediaClock_type = (Spinner) parent.findViewById(R.id.spin_mediaClock_updateMode);
-		ArrayAdapter<SdlUpdateMode> adapter = new ArrayAdapter<SdlUpdateMode>(context, android.R.layout.select_dialog_item, SdlUpdateMode.values());
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spin_mediaClock_type.setAdapter(adapter);
+		spin_mediaClock_type.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlUpdateMode.values()));
 		spin_mediaClock_type.setOnItemSelectedListener(new OnItemSelectedListener() {
 			@Override public void onNothingSelected(AdapterView<?> arg0) {}
 

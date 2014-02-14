@@ -6,6 +6,15 @@ import android.content.DialogInterface;
 
 import com.livio.sdl.R;
 
+/**
+ * An abstract class that represents a dialog with an OK button and a cancel button.  Subclasses
+ * can extend this class to create different types of OK/Cancel dialogs.  Subclasses
+ * must set positive / negative buttons in their constructor and call createDialog() as the last
+ * line of the constructor.
+ *
+ * @author Mike Burke
+ *
+ */
 public abstract class BaseOkCancelDialog extends BaseAlertDialog {
 
 	protected DialogInterface.OnClickListener okButton, cancelButton;

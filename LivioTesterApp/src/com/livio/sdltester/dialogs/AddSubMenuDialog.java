@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
@@ -42,7 +43,7 @@ public class AddSubMenuDialog extends BaseOkCancelDialog{
 				notifyListener(rpcCommand);
 			}
 			else{
-				notifyListener(null);
+				Toast.makeText(context, "Must enter a submenu name.", Toast.LENGTH_LONG).show();
 			}
 		}
 	};

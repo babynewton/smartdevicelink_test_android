@@ -19,7 +19,6 @@ import android.widget.Toast;
 
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
-import com.livio.sdl.utils.UpCounter;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.Choice;
 import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSet;
@@ -141,6 +140,9 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 				CreateInteractionChoiceSet choiceSet = new CreateInteractionChoiceSet();
 				choiceSet.setChoiceSet(choiceItems);
 				notifyListener(choiceSet);
+			}
+			else{
+				Toast.makeText(context, "Must enter at least 1 choice name.", Toast.LENGTH_LONG).show();
 			}
 		}
 	};

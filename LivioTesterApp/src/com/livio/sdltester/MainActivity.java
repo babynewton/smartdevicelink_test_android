@@ -2,6 +2,7 @@ package com.livio.sdltester;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,7 +31,7 @@ import com.livio.sdl.SdlLogMessage;
 import com.livio.sdl.SdlMessageAdapter;
 import com.livio.sdl.datatypes.IpAddress;
 import com.livio.sdl.dialogs.BaseAlertDialog;
-import com.livio.sdl.enums.EnumClickListener;
+import com.livio.sdl.dialogs.ListViewDialog;
 import com.livio.sdl.enums.EnumComparator;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
@@ -54,7 +55,6 @@ import com.livio.sdltester.dialogs.ReadDidsDialog;
 import com.livio.sdltester.dialogs.ScrollableMessageDialog;
 import com.livio.sdltester.dialogs.SdlAlertDialog;
 import com.livio.sdltester.dialogs.SdlConnectionDialog;
-import com.livio.sdltester.dialogs.SendMessageDialog;
 import com.livio.sdltester.dialogs.SetMediaClockTimerDialog;
 import com.livio.sdltester.dialogs.ShowDialog;
 import com.livio.sdltester.dialogs.SliderDialog;
@@ -187,7 +187,6 @@ public class MainActivity extends Activity{
 		Message msg = Message.obtain(null, SdlService.ServiceMessages.SEND_MESSAGE);
 		msg.obj = request;
 		sendMessageToService(msg);
-		logSdlMessage(request);
 	}
 	
 	/**
@@ -317,12 +316,19 @@ public class MainActivity extends Activity{
 			new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					new SendMessageDialog(MainActivity.this, new EnumClickListener() {
+					Context context = MainActivity.this;
+					String dialogTitle = context.getResources().getString(R.string.sdl_command_dialog_title);
+					List<SdlCommand> commandList = Arrays.asList(SdlCommand.values());
+					Collections.sort(commandList, new EnumComparator<SdlCommand>());
+					
+					BaseAlertDialog commandDialog = new ListViewDialog<SdlCommand>(context, dialogTitle, commandList);
+					commandDialog.setListener(new BaseAlertDialog.Listener() {
 						@Override
-						public <E extends Enum<E>> void OnEnumItemClicked(E selection) {
-							showCommandDialog((SdlCommand) selection);
+						public void onResult(Object resultData) {
+							showCommandDialog((SdlCommand) resultData);
 						}
-				}).show();
+					});
+					commandDialog.show();
 			}
 		});
 		
@@ -691,12 +697,12 @@ public class MainActivity extends Activity{
 			break;
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
+			
 		case PUT_FILE:
 		case DELETE_FILE:
 		case LIST_FILES:
 		case SET_APP_ICON:
-		case PERFORM_AUDIO_PASSTHRU:
-		case END_AUDIO_PASSTHRU:
+			
 		case SUBSCRIBE_VEHICLE_DATA:
 		case UNSUBSCRIBE_VEHICLE_DATA:
 		case GET_VEHICLE_DATA:
@@ -711,7 +717,9 @@ public class MainActivity extends Activity{
 	private final BaseAlertDialog.Listener singleMessageListener = new BaseAlertDialog.Listener() {
 		@Override
 		public void onResult(Object resultData) {
-			sendSdlMessageToService((RPCRequest) resultData);
+			if(resultData != null){
+				sendSdlMessageToService((RPCRequest) resultData);
+			}
 		}
 	};
 	
@@ -719,10 +727,12 @@ public class MainActivity extends Activity{
 	private final BaseAlertDialog.Listener multipleMessageListener = new BaseAlertDialog.Listener() {
 		@Override
 		public void onResult(Object resultData) {
-			@SuppressWarnings("unchecked")
-			List<RPCRequest> msgList = (List<RPCRequest>) resultData;
-			for(RPCRequest request : msgList){
-				sendSdlMessageToService(request);
+			if(resultData != null){
+				@SuppressWarnings("unchecked")
+				List<RPCRequest> msgList = (List<RPCRequest>) resultData;
+				for(RPCRequest request : msgList){
+					sendSdlMessageToService(request);
+				}
 			}
 		}
 	};
@@ -894,6 +904,9 @@ public class MainActivity extends Activity{
 		scrollableMessageDialog.show();
 	}
 	
+	/**
+	 * Creates a set media clock timer dialog, allowing the user to manually send a SetMediaClockTimer command.
+	 */
 	private void createSetMediaClockTimerDialog(){
 		BaseAlertDialog setMediaClockTimerDialog = new SetMediaClockTimerDialog(this);
 		setMediaClockTimerDialog.setListener(singleMessageListener);

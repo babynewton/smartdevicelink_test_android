@@ -6,6 +6,13 @@ import android.widget.TextView;
 
 import com.livio.sdl.R;
 
+/**
+ * A simple dialog that contains a single, scrollable TextView.  The textview
+ * is initialized with a the title and message in the constructor.
+ *
+ * @author Mike Burke
+ *
+ */
 public class BaseTextViewDialog extends BaseAlertDialog {
 
 	protected TextView tv;

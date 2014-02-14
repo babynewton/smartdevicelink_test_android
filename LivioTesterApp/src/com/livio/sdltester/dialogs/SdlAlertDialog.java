@@ -173,16 +173,6 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnCheckedChang
 		updateProgressText(progressToFloat(progress));
 	}
 
-	@Override
-	public void onStartTrackingTouch(SeekBar seekBar) {
-		// do nothing (required method for SeekBar listener)
-		
-	}
-
-	@Override
-	public void onStopTrackingTouch(SeekBar seekBar) {
-		// do nothing (required method for SeekBar listener)
-		
-	}
-	
+	@Override public void onStartTrackingTouch(SeekBar seekBar) {}
+	@Override public void onStopTrackingTouch(SeekBar seekBar) {}
 }

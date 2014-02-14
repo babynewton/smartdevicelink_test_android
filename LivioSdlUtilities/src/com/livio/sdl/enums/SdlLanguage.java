@@ -1,44 +1,128 @@
 package com.livio.sdl.enums;
 
-import java.util.Arrays;
 import java.util.EnumSet;
-
-import android.content.Context;
-import android.widget.ArrayAdapter;
 
 /**
  * Specifies the language to be used for TTS, VR, displayed messages/menus
  * <p>
  * 
- * @since AppLink 1.0
+ * @since SmartDeviceLink 1.0
  *
  */
 public enum SdlLanguage {
-	//TODO - change these to actual readable language names, maybe?
+	/**
+	 * American English
+	 */
     EN_US("EN-US"),
-    ES_MX("ES-MX"),
-    FR_CA("FR-CA"),
-    DE_DE("DE-DE"),
-    ES_ES("ES-ES"),
-    EN_GB("EN-GB"),
-    RU_RU("RU-RU"),
-    TR_TR("TR-TR"),
-    PL_PL("PL-PL"),
-    FR_FR("FR-FR"),
-    IT_IT("IT-IT"),
-    SV_SE("SV-SE"),
-    PT_PT("PT-PT"),
-    NL_NL("NL-NL"),
+    /**
+     * Australian English
+     */
     EN_AU("EN-AU"),
-    ZH_CN("ZH-CN"),
-    ZH_TW("ZH-TW"),
-    JA_JP("JA-JP"),
-    AR_SA("AR-SA"),
-    KO_KR("KO-KR"),
+    /**
+     * British English
+     */
+    EN_GB("EN-GB"),
+    
+    /**
+     * Mexico Spanish
+     */
+    ES_MX("ES-MX"),
+    /**
+     * Spain Spanish
+     */
+    ES_ES("ES-ES"),
+
+    /**
+     * France French
+     */
+    FR_FR("FR-FR"),
+    /**
+     * Canadian French
+     */
+    FR_CA("FR-CA"),
+    
+    /**
+     * German
+     */
+    DE_DE("DE-DE"),
+    
+    /**
+     * Russian
+     */
+    RU_RU("RU-RU"),
+    
+    /**
+     * Turkish
+     */
+    TR_TR("TR-TR"),
+    
+    /**
+     * Polish
+     */
+    PL_PL("PL-PL"),
+    
+    /**
+     * Italian
+     */
+    IT_IT("IT-IT"),
+    
+    /**
+     * Swedish
+     */
+    SV_SE("SV-SE"),
+    
+    /**
+     * Portuguese
+     */
+    PT_PT("PT-PT"),
+    /**
+     * Brazilian Portuguese
+     */
     PT_BR("PT-BR"),
+    
+    /**
+     * Dutch
+     */
+    NL_NL("NL-NL"),
+    
+    /**
+     * Traditional Chinese
+     */
+    ZH_CN("ZH-CN"),
+    /**
+     * Thai Chinese
+     */
+    ZH_TW("ZH-TW"),
+    
+    /**
+     * Japanese
+     */
+    JA_JP("JA-JP"),
+    
+    /**
+     * Arabic
+     */
+    AR_SA("AR-SA"),
+    
+    /**
+     * Korean
+     */
+    KO_KR("KO-KR"),
+    
+    /**
+     * Czech
+     */
     CS_CZ("CS-CZ"),
+    
+    /**
+     * Danish
+     */
     DA_DK("DA-DK"),
-    NO_NO("NO-NO")
+    
+    /**
+     * Norwegian
+     */
+    NO_NO("NO-NO"),
     
     // future languages go here
     
@@ -73,27 +157,6 @@ public enum SdlLanguage {
         }
         return null;
     }
-    
-    public static ArrayAdapter<SdlLanguage> getListAdapter(Context context){
-    	ArrayAdapter<SdlLanguage> result = new ArrayAdapter<SdlLanguage>(context, android.R.layout.simple_list_item_1, values());
-    	return result;
-    }
-    
-    public static ArrayAdapter<SdlLanguage> getSpinnerAdapter(Context context){
-    	ArrayAdapter<SdlLanguage> result = new ArrayAdapter<SdlLanguage>(context, android.R.layout.simple_spinner_dropdown_item, values());
-    	return result;
-    }
-	
-	/**
-	 * Returns an array of the objects in this enum sorted in alphabetical order.
-	 * 
-	 * @return The sorted array
-	 */
-	public static SdlLanguage[] getSortedArray(){
-		SdlLanguage[] result = values();
-		Arrays.sort(result, new EnumComparator<SdlLanguage>());
-		return result;
-	}
 	
 	@Override
 	public String toString(){

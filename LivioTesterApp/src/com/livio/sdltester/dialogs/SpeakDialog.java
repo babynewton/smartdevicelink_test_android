@@ -5,13 +5,14 @@ import java.util.Vector;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlSpeechCapability;
+import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.TTSChunkFactory;
 import com.smartdevicelink.proxy.rpc.Speak;
@@ -36,21 +37,16 @@ public class SpeakDialog extends BaseOkCancelDialog{
 	protected void findViews(View view){
 		et_textToSpeak = (EditText) view.findViewById(R.id.et_textToSpeak);
 		spin_speechCapabilities = (Spinner) view.findViewById(R.id.spin_speechCapabilities);
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(context, android.R.layout.select_dialog_item);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		for(SdlSpeechCapability item : SdlSpeechCapability.values()){
-			adapter.add(item.getReadableName());
-		}
-		spin_speechCapabilities.setAdapter(adapter);
+		spin_speechCapabilities.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlSpeechCapability.values()));
 	}
 	
 	//dialog button listeners
 	private final DialogInterface.OnClickListener okButtonListener = new DialogInterface.OnClickListener() {
-		
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			final String ttsText = et_textToSpeak.getText().toString();
-			final SpeechCapabilities speechCapabilities = SdlSpeechCapability.lookupLegacyByReadableName(spin_speechCapabilities.getSelectedItem().toString());
+			final SdlSpeechCapability sdlSpeechCapabilities = (SdlSpeechCapability) spin_speechCapabilities.getSelectedItem();
+			final SpeechCapabilities speechCapabilities = SdlSpeechCapability.translateToLegacy(sdlSpeechCapabilities);
 			
 			if(ttsText.length() > 0){
 				Speak speak = new Speak();
@@ -61,7 +57,7 @@ public class SpeakDialog extends BaseOkCancelDialog{
 				notifyListener(speak);
 			}
 			else{
-				notifyListener(null);
+				Toast.makeText(context, "Must enter text to speak.", Toast.LENGTH_LONG).show();
 			}
 		}
 	};

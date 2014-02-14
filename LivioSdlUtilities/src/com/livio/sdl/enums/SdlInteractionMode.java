@@ -2,11 +2,29 @@ package com.livio.sdl.enums;
 
 import com.smartdevicelink.proxy.rpc.enums.InteractionMode;
 
+/**
+ * Represents different types of interaction modes that the user can utilize 
+ * when performing an interaction on a choice set list.
+ *
+ * @see InteractionMode 
+ *
+ * @author Mike Burke
+ *
+ */
 public enum SdlInteractionMode {
 
+	/**
+	 * Represents perform interactions that can only be controlled manually by button click events.
+	 */
 	MANUAL_ONLY("Click events"),
+	/**
+	 * Represents perform interactions that can only be controlled by voice-rec events.
+	 */
 	VOICE_REC_ONLY("Voice-rec events"),
-	BOTH("Both"),
+	/**
+	 * Represents perform interactions that can be controlled by click events and voice-rec events.
+	 */
+	BOTH("Click and voice-rec events"),
 	;
 	
 	private final String friendlyName;
@@ -15,40 +33,46 @@ public enum SdlInteractionMode {
 		this.friendlyName = str;
 	}
 	
+	/**
+	 * Translates an input SdlInteractionMode to its associated InteractionMode object.
+	 * 
+	 * @param from The SdlInteractionMode to translate
+	 * @return The InteractionMode object associated with the input SdlInteractionMode object
+	 */
+	public static InteractionMode translateToLegacy(SdlInteractionMode from){
+		switch(from){
+		case MANUAL_ONLY:
+			return InteractionMode.MANUAL_ONLY;
+		case VOICE_REC_ONLY:
+			return InteractionMode.VR_ONLY;
+		case BOTH:
+			return InteractionMode.BOTH;
+		default:
+			return null;
+		}
+	}
+	
+	/**
+	 * Translates an input InteractionMode to its associated SdlInteractionMode object.
+	 * 
+	 * @param from The InteractionMode to translate
+	 * @return The SdlInteractionMode object associated with the input InteractionMode object
+	 */
+	public static SdlInteractionMode translateFromLegacy(InteractionMode from){
+		switch(from){
+		case MANUAL_ONLY:
+			return MANUAL_ONLY;
+		case VR_ONLY:
+			return VOICE_REC_ONLY;
+		case BOTH:
+			return BOTH;
+		default:
+			return null;
+		}
+	}
+	
 	@Override
 	public String toString(){
 		return friendlyName;
-	}
-	
-	public static InteractionMode translateToLegacy(SdlInteractionMode from){
-		InteractionMode to = null;
-		
-		if(from == MANUAL_ONLY){
-			to = InteractionMode.MANUAL_ONLY;
-		}
-		else if(from == VOICE_REC_ONLY){
-			to = InteractionMode.VR_ONLY;
-		}
-		else if(from == BOTH){
-			to = InteractionMode.BOTH;
-		}
-		
-		return to;
-	}
-	
-	public static SdlInteractionMode translateFromLegacy(InteractionMode from){
-		SdlInteractionMode to = null;
-		
-		if(from == InteractionMode.MANUAL_ONLY){
-			to = MANUAL_ONLY;
-		}
-		else if(from == InteractionMode.VR_ONLY){
-			to = VOICE_REC_ONLY;
-		}
-		else if(from == InteractionMode.BOTH){
-			to = BOTH;
-		}
-		
-		return to;
 	}
 }

@@ -1,11 +1,21 @@
 package com.livio.sdl.enums;
 
-import java.util.Arrays;
-import java.util.EnumSet;
-
 import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
 
+/**
+ * Used in the Show command, the text alignment input tells the head-unit how
+ * to align the text that is being updated in the Show command.
+ * 
+ * @see TextAlignment
+ *
+ * @author Mike Burke
+ *
+ */
 public enum SdlTextAlignment {
+	/**
+	 * No change in alignment.
+	 */
+	NO_SELECTION("No selection"),
 	/**
 	 * Text aligned left.
 	 */
@@ -25,47 +35,44 @@ public enum SdlTextAlignment {
     private SdlTextAlignment(String readableName){
     	this.READABLE_NAME = readableName;
     }
-    
-    public String getReadableName(){
-    	return this.READABLE_NAME;
-    }
 
-    public static SdlTextAlignment lookupByReadableName(String readableName) {       	
-    	for (SdlTextAlignment anEnum : EnumSet.allOf(SdlTextAlignment.class)) {
-            if (anEnum.getReadableName().equals(readableName)) {
-                return anEnum;
-            }
-        }
-        return null;
+    /**
+     * Translates the input TextAlignment object into an SdlTextAlignment object.
+     * 
+     * @param input The TextAlignment object to translate
+     * @return The associated SdlTextAlignment object
+     */
+    public static SdlTextAlignment translateFromLegacy(TextAlignment input){
+    	switch(input){
+    	case LEFT_ALIGNED:
+    		return LEFT_ALIGNED;
+    	case RIGHT_ALIGNED:
+    		return RIGHT_ALIGNED;
+    	case CENTERED:
+    		return CENTERED;
+    	default:
+    		return null;
+    	}
     }
     
-    public static TextAlignment lookupLegacyByReadableName(String readableName){
-    	for (SdlTextAlignment anEnum : EnumSet.allOf(SdlTextAlignment.class)) {
-            if (anEnum.getReadableName().equals(readableName)) {
-                if(anEnum == LEFT_ALIGNED){
-                	return TextAlignment.LEFT_ALIGNED;
-                }
-                else if(anEnum == RIGHT_ALIGNED){
-                	return TextAlignment.RIGHT_ALIGNED;
-                }
-                else if(anEnum == CENTERED){
-                	return TextAlignment.CENTERED;
-                }
-            }
-        }
-        return null;
+    /**
+     * Translates the input SdlTextAlignment object into a TextAlignment object.
+     * 
+     * @param input The SdlTextAlignment object to translate
+     * @return The associated TextAlignment object
+     */
+    public static TextAlignment translateToLegacy(SdlTextAlignment input){
+    	switch(input){
+    	case LEFT_ALIGNED:
+    		return TextAlignment.LEFT_ALIGNED;
+    	case RIGHT_ALIGNED:
+    		return TextAlignment.RIGHT_ALIGNED;
+    	case CENTERED:
+    		return TextAlignment.CENTERED;
+    	default:
+    		return null;
+    	}
     }
-	
-	/**
-	 * Returns an array of the objects in this enum sorted in alphabetical order.
-	 * 
-	 * @return The sorted array
-	 */
-	public static SdlTextAlignment[] getSortedArray(){
-		SdlTextAlignment[] result = values();
-		Arrays.sort(result, new EnumComparator<SdlTextAlignment>());
-		return result;
-	}
     
     @Override
     public String toString(){

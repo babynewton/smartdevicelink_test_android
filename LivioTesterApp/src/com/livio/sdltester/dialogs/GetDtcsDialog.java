@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.text.InputFilter;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.livio.sdl.datatypes.MinMaxInputFilter;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
@@ -43,6 +44,9 @@ public class GetDtcsDialog extends BaseOkCancelDialog {
 				GetDTCs getDtcs = new GetDTCs();
 				getDtcs.setEcuName(Integer.parseInt(ecuName));
 				notifyListener(getDtcs);
+			}
+			else{
+				Toast.makeText(context, "Must enter an ECU name.", Toast.LENGTH_LONG).show();
 			}
 		}
 	};

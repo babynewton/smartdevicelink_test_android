@@ -13,10 +13,8 @@ import java.util.Comparator;
  *
  */
 public class EnumComparator<E extends Enum<E>> implements Comparator<E> {
-
 	@Override
 	public int compare(E lhs, E rhs) {
 		return lhs.toString().compareTo(rhs.toString());
 	}
-
 }

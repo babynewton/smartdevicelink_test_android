@@ -11,8 +11,17 @@ import android.widget.ListView;
 
 import com.livio.sdl.R;
 
+/**
+ * A generic, abstract class representing a ListView dialog that allows the user to select
+ * a single listview item.  The selected item is returned to the listener as a generic object.
+ *
+ * @author Mike Burke
+ *
+ * @param <E>
+ */
 public abstract class BaseSingleListViewDialog<E> extends BaseAlertDialog {
 
+	// since this class is abstract, we'll keep these variables protected so subclasses can access them directly
 	protected ListView listView;
 	protected ArrayAdapter<E> adapter;
 	protected E selectedItem;
@@ -32,6 +41,7 @@ public abstract class BaseSingleListViewDialog<E> extends BaseAlertDialog {
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				selectedItem = ((ArrayAdapter<E>) parent.getAdapter()).getItem(position);
 				notifyListener(selectedItem);
+				dismiss();
 			}
 		});
 	}

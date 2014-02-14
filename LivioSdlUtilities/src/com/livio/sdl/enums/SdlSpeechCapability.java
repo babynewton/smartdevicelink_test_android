@@ -1,22 +1,37 @@
 package com.livio.sdl.enums;
 
-import java.util.Arrays;
-import java.util.EnumSet;
-
 import com.smartdevicelink.proxy.rpc.enums.SpeechCapabilities;
 
+
 /**
- * Specifies the language to be used for TTS, VR, displayed messages/menus
- * <p>
+ * Specifies different types of text-to-speech capabilities available through SmartDeviceLink.  When
+ * an application wants the vehicle to speak something to the user, the application can deliver
+ * any of the input strings formatted according to the options in this enumerated class.
  * 
- * @since AppLink 1.0
- *
+ * @see SpeechCapabilities
+ * 
+ * @author Mike Burke
  */
 public enum SdlSpeechCapability {
+	/**
+	 * Represents a standard text-to-speech translation.
+	 */
 	TEXT("Text"),
-	SAPI_PHONEMES("SAPI Phonemes"), // TODO
+	/**
+	 * Represents a SAPI phoneme text string.
+	 */
+	SAPI_PHONEMES("SAPI Phonemes"),
+	/**
+	 * Represents a LHPLUS phoneme text string.
+	 */
 	LHPLUS_PHONEMES("LHPLUS Phonemes"),
+	/**
+	 * Represents a pre-recorded text entry stored exclusively on the head-unit.
+	 */
 	PRE_RECORDED("Pre-recorded"),
+	/**
+	 * Represents a period of silence, for example, a pause between sentences.
+	 */
 	SILENCE("Silence"),
     
     // future languages go here
@@ -28,54 +43,52 @@ public enum SdlSpeechCapability {
     private SdlSpeechCapability(String readableName) {
         this.READABLE_NAME = readableName;
     }
-	
-	//public member methods
-	public String getReadableName(){
-		return this.READABLE_NAME;
-	}
-
-    public static SdlSpeechCapability lookupByReadableName(String readableName) {       	
-    	for (SdlSpeechCapability anEnum : EnumSet.allOf(SdlSpeechCapability.class)) {
-            if (anEnum.getReadableName().equals(readableName)) {
-                return anEnum;
-            }
-        }
-        return null;
+    
+    /**
+     * Translates the input SpeechCapabilities object into an SdlSpeechCapability object.
+     * 
+     * @param input The SpeechCapabilities object to translate
+     * @return The translated SdlSpeechCapability object
+     */
+    public static SdlSpeechCapability translateFromLegacy(SpeechCapabilities input){
+    	switch(input){
+    	case TEXT:
+    		return TEXT;
+    	case LHPLUS_PHONEMES:
+    		return LHPLUS_PHONEMES;
+    	case SAPI_PHONEMES:
+    		return SAPI_PHONEMES;
+    	case SILENCE:
+    		return SILENCE;
+    	case PRE_RECORDED:
+    		return PRE_RECORDED;
+    	default:
+    		return null;
+    	}
     }
-
-    public static SpeechCapabilities lookupLegacyByReadableName(String readableName) {       	
-    	for (SdlSpeechCapability anEnum : EnumSet.allOf(SdlSpeechCapability.class)) {
-            if (anEnum.getReadableName().equals(readableName)) {
-                if(anEnum == TEXT){
-                	return SpeechCapabilities.TEXT;
-                }
-                else if(anEnum == SAPI_PHONEMES){
-                	return SpeechCapabilities.SAPI_PHONEMES;
-                }
-                else if(anEnum == LHPLUS_PHONEMES){
-                	return SpeechCapabilities.LHPLUS_PHONEMES;
-                }
-                else if(anEnum == PRE_RECORDED){
-                	return SpeechCapabilities.PRE_RECORDED;
-                }
-                else if(anEnum == SILENCE){
-                	return SpeechCapabilities.SILENCE;
-                }
-            }
-        }
-        return null;
+    
+    /**
+     * Translates the input SdlSpeechCapabilities object into a SpeechCapability object.
+     * 
+     * @param input The SdlSpeechCapabilities object to translate
+     * @return The translated SpeechCapability object
+     */
+    public static SpeechCapabilities translateToLegacy(SdlSpeechCapability input){
+    	switch(input){
+    	case TEXT:
+    		return SpeechCapabilities.TEXT;
+    	case LHPLUS_PHONEMES:
+    		return SpeechCapabilities.LHPLUS_PHONEMES;
+    	case SAPI_PHONEMES:
+    		return SpeechCapabilities.SAPI_PHONEMES;
+    	case SILENCE:
+    		return SpeechCapabilities.SILENCE;
+    	case PRE_RECORDED:
+    		return SpeechCapabilities.PRE_RECORDED;
+    	default:
+    		return null;
+    	}
     }
-	
-	/**
-	 * Returns an array of the objects in this enum sorted in alphabetical order.
-	 * 
-	 * @return The sorted array
-	 */
-	public static SdlSpeechCapability[] getSortedArray(){
-		SdlSpeechCapability[] result = values();
-		Arrays.sort(result, new EnumComparator<SdlSpeechCapability>());
-		return result;
-	}
 	
 	@Override
 	public String toString(){

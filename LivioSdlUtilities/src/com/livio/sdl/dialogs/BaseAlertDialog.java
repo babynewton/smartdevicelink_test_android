@@ -40,7 +40,7 @@ public abstract class BaseAlertDialog {
 	 */
 	protected abstract void findViews(View parent);
 	
-
+	// since this is an abstract class, we'll set all variables to protected scope in case subclasses want to use them directly
 	protected Context context;
 	protected AlertDialog dialog;
 	protected Listener listener;

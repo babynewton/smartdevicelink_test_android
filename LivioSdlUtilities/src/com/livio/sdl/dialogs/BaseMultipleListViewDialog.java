@@ -11,17 +11,25 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.livio.sdl.R;
+import com.livio.sdl.utils.AndroidUtils;
 
+/**
+ * A generic, abstract class representing a ListView dialog that allows the user to select
+ * multiple listview items.  Selected items are stored in a protected List<E> object
+ * called selectedItems, which can be used by subclasses of this class.
+ *
+ * @author Mike Burke
+ *
+ * @param <E>
+ */
 public abstract class BaseMultipleListViewDialog<E> extends BaseOkCancelDialog {
 
 	protected ListView listView;
-	protected ArrayAdapter<E> adapter;
 	protected List<E> selectedItems = new ArrayList<E>();
 	
 	public BaseMultipleListViewDialog(Context context, String title, List<E> items) {
 		super(context, title, R.layout.listview);
-		adapter = new ArrayAdapter<E>(context, android.R.layout.simple_list_item_multiple_choice, items);
-		listView.setAdapter(adapter);
+		listView.setAdapter(AndroidUtils.createMultipleListViewAdapter(context, items));
 	}
 
 	@Override
@@ -37,6 +45,13 @@ public abstract class BaseMultipleListViewDialog<E> extends BaseOkCancelDialog {
 		});
 	}
 	
+	/**
+	 * Toggles the input item in the list of selected items.  So, if the current item
+	 * was not selected, it is added to the list; if the current item was selected,
+	 * it is removed from the list.
+	 * 
+	 * @param item
+	 */
 	protected void toggleItem(E item){
 		final boolean alreadyInList = selectedItems.contains(item);
 		

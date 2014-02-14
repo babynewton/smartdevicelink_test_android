@@ -1,12 +1,9 @@
 package com.livio.sdltester.dialogs;
 
-import java.util.EnumSet;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.text.InputFilter;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
@@ -17,6 +14,7 @@ import com.livio.sdl.datatypes.MinMaxInputFilter;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlTextAlignment;
+import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.Show;
 
@@ -104,19 +102,15 @@ public class ShowDialog extends BaseOkCancelDialog{
 		// media clock timers
 		et_mediaClockMins = (EditText) view.findViewById(R.id.et_mediaClockMins);
 		et_mediaClockMins.setEnabled(check_mediaClock.isChecked());
-		et_mediaClockMins.setFilters(new InputFilter[]{new MinMaxInputFilter(0, 59)}); // text input filter - only allow 0-59 minutes
 		et_mediaClockSecs = (EditText) view.findViewById(R.id.et_mediaClockSecs);
 		et_mediaClockSecs.setEnabled(check_mediaClock.isChecked());
-		et_mediaClockSecs.setFilters(new InputFilter[]{new MinMaxInputFilter(0, 59)}); // text input filter - only allow 0-59 seconds
+		
+		InputFilter[] inputFilter = new InputFilter[]{new MinMaxInputFilter(0, 59)}; // text input filter - only allow 0-59 minutes
+		et_mediaClockMins.setFilters(inputFilter);
+		et_mediaClockSecs.setFilters(inputFilter);
 		
 		spin_textAlignment = (Spinner) view.findViewById(R.id.spin_textAlignment);
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(context, android.R.layout.select_dialog_item);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		adapter.add(context.getResources().getString(R.string.no_selection));
-		for (SdlTextAlignment anEnum : EnumSet.allOf(SdlTextAlignment.class)) {
-            adapter.add(anEnum.toString());
-        }
-		spin_textAlignment.setAdapter(adapter);
+		spin_textAlignment.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlTextAlignment.values()));
 	}
 	
 	//dialog button listeners
@@ -178,8 +172,8 @@ public class ShowDialog extends BaseOkCancelDialog{
 			}
 			
 			if(spin_textAlignment.getSelectedItemPosition() != 0){
-				String textAlignmentReadableName = spin_textAlignment.getSelectedItem().toString();
-				show.setAlignment(SdlTextAlignment.lookupLegacyByReadableName(textAlignmentReadableName));
+				SdlTextAlignment sdlAlignment = (SdlTextAlignment) spin_textAlignment.getSelectedItem();
+				show.setAlignment(SdlTextAlignment.translateToLegacy(sdlAlignment));
 			}
 
 			notifyListener(show);

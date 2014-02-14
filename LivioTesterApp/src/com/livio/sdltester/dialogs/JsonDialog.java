@@ -11,6 +11,8 @@ import com.livio.sdl.utils.SdlUtils;
 public class JsonDialog extends BaseTextViewDialog {
 	public JsonDialog(Context context, SdlLogMessage logMessage) {
 		super(context, SdlUtils.makeJsonTitle(logMessage.getCorrelationId()), logMessage.getJsonData());
+		
+		// click listener to close dialog when the text is clicked
 		tv.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {

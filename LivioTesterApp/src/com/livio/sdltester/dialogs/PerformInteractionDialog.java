@@ -7,7 +7,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -25,6 +24,7 @@ import com.livio.sdl.dialogs.MultipleListViewDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlInteractionMode;
 import com.livio.sdl.menu.MenuItem;
+import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.TTSChunkFactory;
 import com.smartdevicelink.proxy.rpc.PerformInteraction;
@@ -94,9 +94,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 		});
 		
 		// setup the spinner
-		ArrayAdapter<SdlInteractionMode> adapter = new ArrayAdapter<SdlInteractionMode>(context, android.R.layout.select_dialog_item, SdlInteractionMode.values());
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spin_interactionMode.setAdapter(adapter);
+		spin_interactionMode.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlInteractionMode.values()));
 		
 		check_timeoutEnabled.setOnCheckedChangeListener(this);
 		
@@ -152,15 +150,6 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	private final DialogInterface.OnClickListener okButtonListener = new DialogInterface.OnClickListener() {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-//			private EditText et_title, et_voicePrompt;
-//			private Button but_choiceSet;
-//			private Spinner spin_interactionMode;
-//			private TextView tv_interactionTimeout, tv_interactionTimeoutDuration;
-//			private CheckBox check_timeoutEnabled;
-//			private SeekBar seek_timeoutDuration;
-//			
-//			private List<MenuItem> selectedChoiceSets;
-			
 			if(selectedChoiceSets == null || selectedChoiceSets.size() == 0){
 				Toast.makeText(context, "Must select an interaction set in order to perform an interaction", Toast.LENGTH_LONG).show();
 			}
@@ -209,21 +198,12 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	/*
 	 * On Seek Bar Changed Listener Methods
 	 */
+	@Override public void onStartTrackingTouch(SeekBar seekBar) {}
+	@Override public void onStopTrackingTouch(SeekBar seekBar) {}
+	
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 		updateProgressText(progressToFloat(progress));
-	}
-
-	@Override
-	public void onStartTrackingTouch(SeekBar seekBar) {
-		// do nothing (required method for SeekBar listener)
-		
-	}
-
-	@Override
-	public void onStopTrackingTouch(SeekBar seekBar) {
-		// do nothing (required method for SeekBar listener)
-		
 	}
 
 }

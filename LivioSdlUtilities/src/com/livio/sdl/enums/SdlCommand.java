@@ -1,69 +1,203 @@
 package com.livio.sdl.enums;
 
-import java.util.Arrays;
-import java.util.HashMap;
 
 /**
- * This is an enumerated list of SYNC commands.  Each command should be built with a constructor
- * containing a world-readable name.  
- * 
- * The readable can be queried like this:
- * 
- * <code>
- *  SyncCommand.ALERT.getReadableName(); //returns "Alert" - Best Practice instead of toString(), which returns "ALERT"
- * </code>
- * 
- * Getting a list of names is better this way because it allows you to maintain coding standards for enums (all caps),
- * but still provide a world-readable string that can be used in menus or logs.  It also allows you to change the 
- * readable text in the future without causing errors in your users code by changing the enum values.
- * 
- * Since it will be useful to get a given SyncCommand from its readable name, this class also implements a HashMap
- * for reverse lookup.  This is particularly useful when a user selects an item from a list and the string from that
- * list is returned to you.  With that string, you can find the given enum value directly instead of having to 
- * iterate through every single enum searching for that string.  Using the HashMap is much more efficient, even if
- * it takes up a little bit of memory.  
- * 
- * If you have the name of a command, you can get its enum value like this:
- * 
- * <code>
- *  String readableName = SyncCommand.ALERT.getReadableName();
- *  SyncCommand alertCommand = SyncCommand.lookupByReadableName(readableName); //returns SyncCommand.ALERT
- * </code>
+ * This is an enumerated list of SDL commands, complete with world-readable names that can be used
+ * in dialogs and menus.
  * 
  * @author Mike Burke
  *
  */
 public enum SdlCommand{
-	// TODO - add Javadoc comments to these enum values
-	// TODO - only show commands that are currently working through the SDL protocol
+	/**
+	 * SDL Alert command shows a pop-up text and/or voice alert on the head-unit.
+	 * @see Alert
+	 */
 	ALERT ("Alert"),
+	/**
+	 * SDL Speak command performs a Text-to-Speech action on the input text and speaks the input to the user over the vehicle speakers.
+	 * @see Speak
+	 */
 	SPEAK ("Speak"),
+	/**
+	 * SDL Show command updates the main HMI template used for the application.  Show is capable of showing up to 4 lines of text.
+	 * @see Show
+	 */
 	SHOW ("Show"),
+	/**
+	 * SDL SubscribeButton command subscribes your application to receive hardware button-presses.  For example, when the application is in-use on the head-unit,
+	 * and the user presses the PRESET_0 button, your app can intercept that button press and take action on it.
+	 * @see SubscribeButton
+	 * @see UnsubscribeButton
+	 * @see SdlButton
+	 * @see ButtonName
+	 */
 	SUBSCRIBE_BUTTON ("Subscribe to Buttons"),
+	/**
+	 * SDL UnsubscribeButton command unsubscribes your application from any buttons that have been subscribed to.
+	 * @see UnsubscribeButton
+	 * @see SdlButton
+	 * @see ButtonName
+	 */
 	UNSUBSCRIBE_BUTTON ("Unsubscribe from Buttons"),
+	/**
+	 * SDL AddCommand command creates a software button that will be added into the app's menu on the head-unit.  Commands can be added to the root-level
+	 * menu or to submenus that have been added by the application.
+	 * @see AddCommand
+	 * @see DeleteCommand
+	 * @see MenuItem
+	 * @see CommandButton
+	 */
 	ADD_COMMAND ("Add a Command"),
+	/**
+	 * SDL DeleteCommand command deletes a command menu item that has been added by the application.
+	 * @see DeleteCommand
+	 * @see AddCommand
+	 */
 	DELETE_COMMAND ("Delete a Command"),
+	/**
+	 * SDL AddSubmenu command creates a menu object inside the application's main root-level menu on the head-unit.  Submenus can only be added to the
+	 * root-level menu, they cannot be nested.
+	 * @see AddSubmenu
+	 * @see DeleteSubmenu
+	 * @see MenuItem
+	 * @see SubmenuButton
+	 */
 	ADD_SUBMENU ("Add a Submenu"),
+	/**
+	 * SDL DeleteSubmenu command deletes a submenu menu item that has been added by the application.
+	 * @see DeleteSubmenu
+	 * @see AddSubmenu
+	 */
 	DELETE_SUB_MENU ("Delete a Submenu"),
+	/**
+	 * SDL SetGlobalProperties command manually sets global voice properties for your application.  For example,
+	 * this command allows the application to change voice prompts for when the user needs help or when a timeout occurs.
+	 * @see SetGlobalProperties
+	 * @see ResetGlobalProperties  
+	 */
 	SET_GLOBAL_PROPERTIES ("Set Global Properties"),
+	/**
+	 * SDL ResetGlobalProperties command resets global voice properties for your application to the vehicle's default settings.
+	 * @see ResetGlobalProperties
+	 * @see SetGlobalProperties
+	 */
 	RESET_GLOBAL_PROPERTIES ("Reset Global Properties"),
+	/**
+	 * SDL SetMediaClockTimer command allows media applications to set a counter that automatically counts up or counts down on the head-unit.  The command
+	 * also allows the application to pause, resume or clear a previously-existing counter.
+	 * @see SetMediaClockTimer
+	 */
 	SET_MEDIA_CLOCK_TIMER ("Set Media Clock Timer"),
+	/**
+	 * SDL CreateInteractionChoiceSet command allows the application to create a pop-up menu on the head-unit.  The set must add the various choices
+	 * available for the pop-up menu, including text and an image.
+	 * @see CreateInteractionChoiceSet
+	 * @see PerformInteraction
+	 * @see DeleteInteractionChoiceSet
+	 */
 	CREATE_INTERACTION_CHOICE_SET ("Create Interaction Choice Set"),
+	/**
+	 * SDL DeleteInteractionChoiceSet command allows the application to delete a choice set that has previously been added through the CreateInteractionChoiceSet command.
+	 * @see DeleteInteractionChoiceSet
+	 * @see CreateInteractionChoiceSet
+	 */
 	DELETE_INTERACTION_CHOICE_SET ("Delete Interaction Choice Set"),
+	/**
+	 * SDL PerformInteraction command allows the application to show 1 or more choice sets that have been added through the CreateInteractionChoiceSet command.
+	 * @see PerformInteraction
+	 * @see CreateInteractionChoiceSet
+	 */
 	PERFORM_INTERACTION ("Perform Interaction"),
+	/**
+	 * SDL Slider command allows an application to show a volume-style slider element on the head-unit.  The application can select how many ticks the slider should have,
+	 * the default selection for the timer and a timeout.
+	 * @see Slider
+	 */
 	SLIDER ("Slider"),
+	/**
+	 * SDL ScrollableMessage command allows an application to show a long message that the user may need to scroll through.  The message has the ability to show soft buttons
+	 * alongside the message.
+	 * @see ScrollableMessage
+	 */
 	SCROLLABLE_MESSAGE ("Scrollable Message"),
+	/**
+	 * SDL ChangeRegistration command allows the application to change the default language for the application on the head-unit.
+	 * @see ChangeRegistration
+	 */
 	CHANGE_REGISTRATION ("Change Registration"),
+	/**
+	 * SDL PutFile command allows the application to send files to be stored on the head-unit.  Bitmap, JPEG and PNG images can be sent, in addition to WAV or MP3 formatted audio.
+	 * @see PutFile
+	 * @see DeleteFile
+	 * @see ListFiles
+	 * @see SetAppIcon
+	 */
 	PUT_FILE ("Put File"),
+	/**
+	 * SDL DeleteFile command allows the application to delete files from the head-unit that were previously added to the head-unit through the PutFile command.
+	 * @see DeleteFile
+	 * @see PutFile
+	 * @see ListFiles
+	 */
 	DELETE_FILE ("Delete File"),
+	/**
+	 * SDL ListFiles command allows the application to retreive a list of files that have been added to the head-unit through the PutFile command.
+	 * @see ListFiles
+	 * @see PutFile
+	 * @see DeleteFile
+	 */
 	LIST_FILES ("List Files"),
+	/**
+	 * SDL SetAppIcon command allows the application to set an image to be associated with the application.  Desired image must first be sent through the PutFile command.
+	 * @see SetAppIcon
+	 * @see PutFile
+	 */
 	SET_APP_ICON ("Set App Icon"),
-	PERFORM_AUDIO_PASSTHRU ("Perform Audio Pass-through"),
-	END_AUDIO_PASSTHRU ("End Audio Pass-through"),
+	/**
+	 * SDL PerformAudioPassThru command allows vehicle voice-inputs from the user to be forwarded to the application.  This is useful if the application wants to perform
+	 * its own voice-rec implementation to decode user voice-inputs.
+	 * @see PerformAudioPassThru
+	 * @see EndAudioPassThru
+	 */
+	//PERFORM_AUDIO_PASSTHRU ("Perform Audio Pass-through"), // TODO - removing these commands because they don't make sense and I need clarification for what they actually do.
+	/**
+	 * SDL EndAudioPassThru command ends a voice-input session previously started through the PerformAudioPassThru command.
+	 */
+	//END_AUDIO_PASSTHRU ("End Audio Pass-through"), // TODO - removing these commands because they don't make sense and I need clarification for what they actually do.
+	/**
+	 * SDL SubscribeVehicleData command allows the application to subscribe for updates about various vehicle data.  For example, fuel state, tire pressure, airbag status and much
+	 * more information can be retrieved from the vehicle head-unit and used in the application.
+	 * @see SubscribeVehicleData
+	 * @see UnsubscribeVehicleData
+	 * @see GetVehicleData
+	 */
 	SUBSCRIBE_VEHICLE_DATA ("Subscribe to Vehicle Data"),
+	/**
+	 * SDL UnsubscribeVehicleData command allows the application to unsubscribe from any vehicle data that has been subscribed to through the SubscribeVehicleData command.
+	 * @see UnsubscribeVehicleData
+	 * @see SubscribeVehicleData
+	 * @see GetVehicleData
+	 */
 	UNSUBSCRIBE_VEHICLE_DATA ("Unsubscribe from Vehicle Data"),
+	/**
+	 * SDL GetVehicleData command allows the application to retrieve vehicle data from the head-unit.  Prior to sending this command, the application must first subscribe
+	 * for vehicle data through the SubscribeVehicleData command.
+	 * @see GetVehicleData
+	 * @see SubscribeVehicleData
+	 * @see UnsubcribeVehicleData
+	 */
 	GET_VEHICLE_DATA ("Get Vehicle Data"),
+	/**
+	 * SDL ReadDID command allows the application to query DIDs for a particular module.  DIDs contain useful information for each module, such as part numbers.
+	 * @see ReadDID
+	 */
 	READ_DIDS ("Read DIDs"),
+	/**
+	 * SDL GetDTCs command allows the application to query DTCs for a particular module.  DTCs contain diagnostic trouble codes that are set when something
+	 * goes wrong in a module.
+	 * @see GetDTCs
+	 */
 	GET_DTCS ("Get DTCs"),
 	//SHOW_CONSTANT_TBT ("Show Constant TBT"), //TODO - this command doesn't work on SDL core as of 1/23/2014
 	//ALERT_MANEUVER ("Alert Maneuver"), //TODO - this command doesn't work on SDL core as of 1/23/2014
@@ -75,79 +209,16 @@ public enum SdlCommand{
 	;
 	
 	// THIS IS AN ENUM, SO BASICALLY EVERYTHING SHOULD BE FINAL.
-	
-	//methods and anything that is not part of the enum can go down here.  Doesn't need to be
-	// in a different class or anything.  It's best to keep related items in the same class like this.
-	
-	private static final String COMMAND_ACTION_PREFIX = "com.ford.sync.action.command.";
-	
-	//This HashMap allows an easy reverse look-up to get the SyncCommand enum value for a given readable name.
-	// notice that it's static because we don't want to create an entire hashmap for every single enum value.
-	// we take a slight memory hit for storing this in memory, but performance of this will be drastically better
-	// than iterating through the enum values every time we want to reverse look-up (which will happen often).
-	private static HashMap<String, SdlCommand> reverseLookupMap;
-	
-	private final String READABLE_NAME;
+	private final String friendlyName;
 	
 	//constructor
 	private SdlCommand(String readableName){
-		this.READABLE_NAME = readableName;
+		this.friendlyName = readableName;
 	}
 	
 	@Override
 	public String toString(){
-		return this.READABLE_NAME;
+		return this.friendlyName;
 	}
-	
-	//public static methods
-	/**
-	 * Uses the SyncCommand static HashMap to perform a reverse look-up of the input
-	 * readable name.  If no value is found, it will return null.
-	 * 
-	 * @param name A SyncCommand readable name to look-up
-	 * @return The associated SyncCommand
-	 */
-	public static final SdlCommand lookupByReadableName(String name){
-		if(reverseLookupMap == null){
-			createReverseLookupMap();
-		}
-		
-		return reverseLookupMap.get(name);
-	}
-	
-	private static void createReverseLookupMap(){
-		reverseLookupMap = new HashMap<String, SdlCommand>(values().length);
-		for(SdlCommand enumValue : SdlCommand.values()){
-			//map the readable name back to the value, so we have an easy reverse look-up
-			reverseLookupMap.put(enumValue.toString(), enumValue);
-		}
-	}
-	
-	/**
-	 * Builds a string that represents an intent action for the input SYNC command.
-	 * 
-	 * @param command The SYNC command for which to build an action string
-	 * @return An action string to be used for intents
-	 */
-	public static final String syncCommandActionString(SdlCommand command){
-		StringBuilder strBuilder = new StringBuilder();
-		strBuilder.append(COMMAND_ACTION_PREFIX);
-		strBuilder.append(command.toString());
-		return strBuilder.toString();
-	}
-	
-	/**
-	 * Returns an array of the objects in this enum sorted in alphabetical order.
-	 * 
-	 * @return The sorted array
-	 */
-	public static SdlCommand[] getSortedArray(){
-		SdlCommand[] result = values();
-		Arrays.sort(result, new EnumComparator<SdlCommand>());
-		return result;
-	}
-	
-	
-	
 }
 

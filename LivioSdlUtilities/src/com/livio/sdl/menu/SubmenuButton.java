@@ -50,6 +50,12 @@ public class SubmenuButton extends MenuItem {
 		}
 	}
 	
+	/**
+	 * Returns a copy of the list of all children associated with this menu item.  If there
+	 * are no children associated with this menu item, this method will return an empty list.
+	 * 
+	 * @return A copy of the list of children
+	 */
 	public List<MenuItem> getChildren(){
 		if(children == null || children.size() <= 0){
 			return Collections.emptyList();

@@ -1,10 +1,24 @@
 package com.livio.sdl.enums;
 
-import java.util.Arrays;
 
+/**
+ * Represents the different types of connections that are available through SmartDeviceLink.
+ *
+ * @author Mike Burke
+ *
+ */
 public enum SdlTransportType {
+	/**
+	 * Represents a BlueTooth connection with SmartDeviceLink.
+	 */
 	BLUETOOTH("Bluetooth"),
+	/**
+	 * Represents a WiFi connection with SmartDeviceLink.
+	 */
 	WIFI("WiFi"),
+	/**
+	 * Represents a USB connection with SmartDeviceLink.
+	 */
 	USB("USB"),
 	
 	;
@@ -15,18 +29,8 @@ public enum SdlTransportType {
 		this.name = friendlyName;
 	}
 	
-	/**
-	 * Returns an array of the objects in this enum sorted in alphabetical order.
-	 * 
-	 * @return The sorted array
-	 */
-	public static SdlTransportType[] getSortedArray(){
-		SdlTransportType[] result = values();
-		Arrays.sort(result, new EnumComparator<SdlTransportType>());
-		return result;
-	}
-	
-	public String getFriendlyName(){
+	@Override
+	public String toString(){
 		return name;
 	}
 }

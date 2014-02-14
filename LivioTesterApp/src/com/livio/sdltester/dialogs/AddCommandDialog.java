@@ -1,5 +1,6 @@
 package com.livio.sdltester.dialogs;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -21,6 +22,7 @@ import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlImageType;
 import com.livio.sdl.menu.MenuItem;
+import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.AddCommand;
 import com.smartdevicelink.proxy.rpc.MenuParams;
@@ -55,18 +57,11 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 	}
 	
 	private void createAndSetAdapters(List<MenuItem> availableSubmenus){
-		subMenuAdapter = new ArrayAdapter<MenuItem>(context, android.R.layout.select_dialog_item);
-		subMenuAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		List<MenuItem> submenuList = new ArrayList<MenuItem>(availableSubmenus);
+		submenuList.add(0, new MenuItem("Root-level menu", 0, true));
+		spin_addCommand_submenus.setAdapter(AndroidUtils.createSpinnerAdapter(context, submenuList));
 		
-		subMenuAdapter.add(new MenuItem("Root-level menu", 0, true));
-		for(MenuItem menuButton : availableSubmenus){
-			subMenuAdapter.add(menuButton);
-		}
-		spin_addCommand_submenus.setAdapter(subMenuAdapter);
-		
-		imageTypeAdapter = new ArrayAdapter<SdlImageType>(context, android.R.layout.select_dialog_item, SdlImageType.values());
-		imageTypeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spin_addCommand_iconType.setAdapter(imageTypeAdapter);
+		spin_addCommand_iconType.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlImageType.values()));
 	}
 
 	@Override
@@ -134,7 +129,7 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 					notifyListener(result);
 				}
 				else{
-					notifyListener(null);
+					Toast.makeText(context, "Must enter command name.", Toast.LENGTH_LONG).show();
 				}
 			}
 		}

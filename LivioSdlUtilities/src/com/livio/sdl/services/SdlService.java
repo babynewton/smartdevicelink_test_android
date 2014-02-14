@@ -19,13 +19,13 @@ import android.widget.Toast;
 
 import com.livio.sdl.R;
 import com.livio.sdl.datatypes.IpAddress;
+import com.livio.sdl.datatypes.UpCounter;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.menu.CommandButton;
 import com.livio.sdl.menu.CommandButton.OnClickListener;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.menu.MenuManager;
 import com.livio.sdl.menu.SubmenuButton;
-import com.livio.sdl.utils.UpCounter;
 import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
@@ -512,6 +512,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		}
 		
 		setRequestSpecificParameters(command);
+		sendMessageResponse(command);
 		
 		try {
 			sdlProxy.sendRPCRequest(command);
