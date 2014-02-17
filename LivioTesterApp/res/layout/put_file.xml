@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical" 
+    android:paddingLeft="20dip" 
+    android:paddingRight="20dip" 
+    android:layout_marginLeft="10dip" 
+    android:layout_marginRight="10dip">
+
+    <ImageButton android:id="@+id/ib_putFile_selectAnImage"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:src="@drawable/select_an_image"
+        android:background="#00FFFFFF" />
+
+    <EditText android:id="@+id/et_putFile_imageName"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:freezesText="true"
+            android:inputType="textCapSentences"
+        android:hint="@string/sdl_image_name">
+
+        <requestFocus />
+    </EditText>
+
+    <CheckBox
+        android:id="@+id/cb_putFile_isPersistent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/put_file_persistent_file" />
+
+</LinearLayout>

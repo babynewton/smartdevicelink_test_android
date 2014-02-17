@@ -1,11 +1,14 @@
 package com.livio.sdl.utils;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.List;
 
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.widget.ArrayAdapter;
@@ -124,6 +127,21 @@ public abstract class AndroidUtils {
 	 */
 	public static <E> ArrayAdapter<E> createAdapter(Context context, int layoutId, List<E> items){
 		return new ArrayAdapter<E>(context, layoutId, items);
+	}
+	
+	/**
+	 * Converts and Android bitmap file to an array of raw bytes that are ready to be sent over bluetooth,
+	 * wifi, usb, etc.
+	 * 
+	 * @param bitmap The bitmap to translate
+	 * @param format The format of the bitmap
+	 * @return The raw byte representation of the bitmap
+	 */
+	public static byte[] bitmapToRawBytes(Bitmap bitmap, CompressFormat format){
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		bitmap.compress(format, 100, baos);
+		byte[] result = baos.toByteArray();
+		return result;
 	}
 	
 }

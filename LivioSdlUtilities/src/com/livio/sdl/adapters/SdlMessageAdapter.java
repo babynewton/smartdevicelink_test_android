@@ -1,4 +1,4 @@
-package com.livio.sdl;
+package com.livio.sdl.adapters;
 
 import java.util.List;
 
@@ -9,6 +9,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+
+import com.livio.sdl.R;
+import com.livio.sdl.SdlLogMessage;
 
 /**
  * A custom adapter class for showing SDL log messages in a listview.  The adapter shows the message

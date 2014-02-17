@@ -34,4 +34,8 @@
     <string name="perform_interaction_timeout">Interaction Timeout (in seconds)</string>
     <string name="perform_interaction_timeout_enabled">Interaction Timeout Enabled</string>
     <string name="interaction_list_none_added">No choice interaction sets have been added yet!</string>
+    
+<!--     Put File -->
+    <string name="put_file_persistent_file">Persistent File</string>
+    <string name="sdl_image_name">SDL Image Name</string>
 </resources>

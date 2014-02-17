@@ -44,6 +44,7 @@ import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSet;
 import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSetResponse;
 import com.smartdevicelink.proxy.rpc.DeleteCommand;
 import com.smartdevicelink.proxy.rpc.DeleteCommandResponse;
+import com.smartdevicelink.proxy.rpc.DeleteFile;
 import com.smartdevicelink.proxy.rpc.DeleteFileResponse;
 import com.smartdevicelink.proxy.rpc.DeleteInteractionChoiceSet;
 import com.smartdevicelink.proxy.rpc.DeleteInteractionChoiceSetResponse;
@@ -67,6 +68,7 @@ import com.smartdevicelink.proxy.rpc.OnTBTClientState;
 import com.smartdevicelink.proxy.rpc.OnVehicleData;
 import com.smartdevicelink.proxy.rpc.PerformAudioPassThruResponse;
 import com.smartdevicelink.proxy.rpc.PerformInteractionResponse;
+import com.smartdevicelink.proxy.rpc.PutFile;
 import com.smartdevicelink.proxy.rpc.PutFileResponse;
 import com.smartdevicelink.proxy.rpc.ReadDIDResponse;
 import com.smartdevicelink.proxy.rpc.ResetGlobalPropertiesResponse;
@@ -143,6 +145,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 * Message.what integer called when a ServiceMessages.REQUEST_INTERACTION_SETS message has been received.
 		 */
 		public static final int INTERACTION_SETS_RECEIVED = 8;
+		/**
+		 * Message.what integer called when a ServiceMessages.REQUEST_PUT_FILES message has been received.
+		 */
+		public static final int PUT_FILES_RECEIVED = 9;
 	}
 	
 	/**
@@ -188,6 +194,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 * Message.what integer commanding the service to respond with a list of interaction sets created so far.
 		 */
 		public static final int REQUEST_INTERACTION_SETS = 9;
+		/**
+		 * Message.what integer commanding the service to respond with a list of put file images added so far.
+		 */
+		public static final int REQUEST_PUT_FILES = 10;
 	}
 	
 	/**
@@ -224,6 +234,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected MenuManager choiceSetManager = new MenuManager();
 	protected SparseArray<RPCRequest> awaitingResponse = new SparseArray<RPCRequest>(1);
 	protected List<SdlButton> buttonSubscriptions = new ArrayList<SdlButton>();
+	protected List<String> addedImageNames = new ArrayList<String>();
 	
 	protected SmartDeviceLinkProxyALM sdlProxy = null; // the proxy object which sends our requests and receives responses
 	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
@@ -266,6 +277,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 				case ServiceMessages.REQUEST_INTERACTION_SETS:
 					interactionSetsRequested(msg.replyTo, msg.arg1);
 					break;
+				case ServiceMessages.REQUEST_PUT_FILES:
+					putFilesRequested(msg.replyTo, msg.arg1);
 				default:
 					break;
 			}
@@ -394,6 +407,13 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected void interactionSetsRequested(Messenger listener, int reqCode){
 		Message msg = Message.obtain(null, ClientMessages.INTERACTION_SETS_RECEIVED);
 		msg.obj = getInteractionSets();
+		msg.arg1 = reqCode;
+		sendMessageToClient(listener, msg);
+	}
+	
+	protected void putFilesRequested(Messenger listener, int reqCode){
+		Message msg = Message.obtain(null, ClientMessages.PUT_FILES_RECEIVED);
+		msg.obj = getPutFiles();
 		msg.arg1 = reqCode;
 		sendMessageToClient(listener, msg);
 	}
@@ -535,23 +555,23 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(name.equals(Names.AddCommand)){
 			((AddCommand) command).setCmdID(commandIdGenerator.next());
-			awaitingResponse.put(command.getCorrelationID(), command);
+			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.AddSubMenu)){
 			((AddSubMenu) command).setMenuID(commandIdGenerator.next());
-			awaitingResponse.put(command.getCorrelationID(), command);
+			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.DeleteCommand)){
-			awaitingResponse.put(command.getCorrelationID(), command);
+			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.DeleteSubMenu)){
-			awaitingResponse.put(command.getCorrelationID(), command);
+			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.SubscribeButton)){
-			awaitingResponse.put(command.getCorrelationID(), command);
+			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.UnsubscribeButton)){
-			awaitingResponse.put(command.getCorrelationID(), command);
+			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.CreateInteractionChoiceSet)){
 			CreateInteractionChoiceSet choiceSet = (CreateInteractionChoiceSet) command;
@@ -561,12 +581,38 @@ public class SdlService extends Service implements IProxyListenerALM{
 			for(Choice choice : choices){
 				choice.setChoiceID(commandIdGenerator.next());
 			}
-			
-			awaitingResponse.put(command.getCorrelationID(), command);
+
+			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.DeleteInteractionChoiceSet)){
-			awaitingResponse.put(command.getCorrelationID(), command);
+			addToRequestQueue(command);
 		}
+		else if(name.equals(Names.PutFile)){
+			addToRequestQueue(command);
+		}
+		else if(name.equals(Names.DeleteFile)){
+			addToRequestQueue(command);
+		}
+	}
+	
+	/**
+	 * Adds the input request to the queue of requests that are awaiting responses.
+	 * 
+	 * @param request The request to add
+	 */
+	protected void addToRequestQueue(RPCRequest request){
+		awaitingResponse.put(request.getCorrelationID(), request);
+	}
+	
+	/**
+	 * Removes the input request from the queue of requests that are awaiting responses.
+	 * 
+	 * @param request The request to remove
+	 */
+	protected RPCRequest removeFromRequestQueue(int key){
+		RPCRequest result = awaitingResponse.get(key);
+		awaitingResponse.remove(key);
+		return result;
 	}
 	
 	/**
@@ -696,6 +742,19 @@ public class SdlService extends Service implements IProxyListenerALM{
 	}
 	
 	/**
+	 * Creates a copy of the list of image names added so far.
+	 * 
+	 * @return The copied list of image names
+	 */
+	protected List<String> getPutFiles(){
+		if(addedImageNames == null || addedImageNames.size() <= 0){
+			return Collections.emptyList();
+		}
+		
+		return new ArrayList<String>(addedImageNames);
+	}
+	
+	/**
 	 * Called when app is first loaded and receives full HMI control 
 	 */
 	private void onAppLoaded(){
@@ -759,8 +818,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			
 			if(original != null){
 				MenuItem button = createMenuItem((AddCommand) original);
@@ -779,8 +837,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			if(original != null){
 				if(success){
 					int idToRemove = ((DeleteCommand) original).getCmdID();
@@ -798,8 +855,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			if(original != null){
 				MenuItem button = createMenuItem((AddSubMenu) original);
 				if(button != null){
@@ -817,8 +873,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			if(original != null){
 				int idToRemove = ((DeleteSubMenu) original).getMenuID();
 				menuManager.removeItem(idToRemove);
@@ -833,8 +888,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			if(original != null){
 				SdlButton button = SdlButton.translateFromLegacy(((SubscribeButton) original).getButtonName());
 				buttonSubscriptions.add(button);
@@ -850,8 +904,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			if(original != null){
 				SdlButton button = SdlButton.translateFromLegacy(((UnsubscribeButton) original).getButtonName());
 				buttonSubscriptions.remove(button);
@@ -867,8 +920,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			if(original != null){
 				// add the parent (choice set) item to the choice set manager
 				CreateInteractionChoiceSet choiceSet = (CreateInteractionChoiceSet) original;
@@ -894,13 +946,48 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		if(success){
 			int correlationId = response.getCorrelationID();
-			RPCRequest original = awaitingResponse.get(correlationId);
-			awaitingResponse.remove(correlationId);
+			RPCRequest original = removeFromRequestQueue(correlationId);
 			if(original != null){
 				// get the choice set ID from the original request and remove it from the choice set manager
 				DeleteInteractionChoiceSet choiceSet = (DeleteInteractionChoiceSet) original;
 				int choiceId = choiceSet.getInteractionChoiceSetID();
 				choiceSetManager.removeItem(choiceId);
+			}
+		}
+	}
+	
+	@Override 
+	public void onPutFileResponse(PutFileResponse response) {
+		sendMessageResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = removeFromRequestQueue(correlationId);
+			if(original != null){
+				// get the choice set ID from the original request and remove it from the choice set manager
+				PutFile putFile = (PutFile) original;
+				String putFileName = putFile.getSmartDeviceLinkFileName();
+				addedImageNames.add(putFileName);
+			}
+		}
+	}
+
+	@Override 
+	public void onDeleteFileResponse(DeleteFileResponse response) {
+		sendMessageResponse(response);
+		
+		boolean success = response.getSuccess();
+		
+		if(success){
+			int correlationId = response.getCorrelationID();
+			RPCRequest original = removeFromRequestQueue(correlationId);
+			if(original != null){
+				// get the choice set ID from the original request and remove it from the choice set manager
+				DeleteFile deleteFile = (DeleteFile) original;
+				String deleteFileName = deleteFile.getSmartDeviceLinkFileName();
+				addedImageNames.remove(deleteFileName);
 			}
 		}
 	}
@@ -920,8 +1007,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override public void onGetDTCsResponse(GetDTCsResponse response) {sendMessageResponse(response);}
 	@Override public void onPerformAudioPassThruResponse(PerformAudioPassThruResponse response) {sendMessageResponse(response);}
 	@Override public void onEndAudioPassThruResponse(EndAudioPassThruResponse response) {sendMessageResponse(response);}
-	@Override public void onPutFileResponse(PutFileResponse response) {sendMessageResponse(response);}
-	@Override public void onDeleteFileResponse(DeleteFileResponse response) {sendMessageResponse(response);}
 	@Override public void onListFilesResponse(ListFilesResponse response) {sendMessageResponse(response);}
 	@Override public void onSetAppIconResponse(SetAppIconResponse response) {sendMessageResponse(response);}
 	@Override public void onScrollableMessageResponse(ScrollableMessageResponse response) {sendMessageResponse(response);}

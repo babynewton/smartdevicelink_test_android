@@ -3,7 +3,10 @@ package com.livio.sdl.utils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.graphics.Bitmap.CompressFormat;
+
 import com.smartdevicelink.proxy.RPCMessage;
+import com.smartdevicelink.proxy.rpc.enums.FileType;
 
 /**
  * Contains static methods that are useful in working with SmartDeviceLink.
@@ -61,6 +64,25 @@ public abstract class SdlUtils {
 		}
 		
 		return new StringBuilder().append("Raw JSON (").append(correlationId).append(")").toString();
+	}
+	
+	/**
+	 * Converts an SDL file type to its associated CompressFormat.
+	 * 
+	 * @param type The file type to convert
+	 * @return The associated CompressFormat
+	 */
+	public static CompressFormat convertImageTypeToCompressFormat(FileType type){
+		switch(type){
+		case GRAPHIC_JPEG:
+			return CompressFormat.JPEG;
+		case GRAPHIC_PNG:
+			return CompressFormat.PNG;
+		case GRAPHIC_BMP:
+			return null; // TODO what's the compression format for a bitmap object?
+		default:
+			return null;
+		}
 	}
 
 }

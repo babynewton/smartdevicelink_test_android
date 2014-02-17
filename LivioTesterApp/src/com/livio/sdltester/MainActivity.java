@@ -4,7 +4,10 @@ package com.livio.sdltester;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -12,6 +15,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -27,8 +32,9 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlLogMessage;
-import com.livio.sdl.SdlMessageAdapter;
+import com.livio.sdl.adapters.SdlMessageAdapter;
 import com.livio.sdl.datatypes.IpAddress;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.ListViewDialog;
@@ -46,11 +52,13 @@ import com.livio.sdltester.dialogs.ChangeRegistrationDialog;
 import com.livio.sdltester.dialogs.ConnectingDialog;
 import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
 import com.livio.sdltester.dialogs.DeleteCommandDialog;
+import com.livio.sdltester.dialogs.DeleteFileDialog;
 import com.livio.sdltester.dialogs.DeleteInteractionDialog;
 import com.livio.sdltester.dialogs.DeleteSubmenuDialog;
 import com.livio.sdltester.dialogs.GetDtcsDialog;
 import com.livio.sdltester.dialogs.JsonDialog;
 import com.livio.sdltester.dialogs.PerformInteractionDialog;
+import com.livio.sdltester.dialogs.PutFileDialog;
 import com.livio.sdltester.dialogs.ReadDidsDialog;
 import com.livio.sdltester.dialogs.ScrollableMessageDialog;
 import com.livio.sdltester.dialogs.SdlAlertDialog;
@@ -61,6 +69,8 @@ import com.livio.sdltester.dialogs.SliderDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
+import com.smartdevicelink.proxy.rpc.ListFiles;
+import com.smartdevicelink.proxy.rpc.enums.FileType;
 
 
 public class MainActivity extends Activity{
@@ -74,19 +84,27 @@ public class MainActivity extends Activity{
 	 */
 	private static final class ResultCodes{
 		private static final class SubmenuResult{
-			private static final int ADD_COMMAND_DIALOG = 1;
-			private static final int DELETE_SUBMENU_DIALOG = 2;
+			private static final int ADD_COMMAND_DIALOG = 0;
+			private static final int DELETE_SUBMENU_DIALOG = 1;
 		}
 		private static final class CommandResult{
-			private static final int DELETE_COMMAND_DIALOG = 1;
+			private static final int DELETE_COMMAND_DIALOG = 0;
 		}
 		private static final class ButtonSubscriptionResult{
-			private static final int BUTTON_SUBSCRIBE = 1;
-			private static final int BUTTON_UNSUBSCRIBE = 2;
+			private static final int BUTTON_SUBSCRIBE = 0;
+			private static final int BUTTON_UNSUBSCRIBE = 1;
 		}
 		private static final class InteractionSetResult{
-			private static final int PERFORM_INTERACTION = 1;
-			private static final int DELETE_INTERACTION_SET = 2;
+			private static final int PERFORM_INTERACTION = 0;
+			private static final int DELETE_INTERACTION_SET = 1;
+		}
+		private static final class PutFileResult{
+			private static final int PUT_FILE = 0;
+			private static final int ADD_COMMAND = 1;
+			private static final int CHOICE_INTERACTION_SET = 2;
+			private static final int DELETE_FILE = 3;
+			private static final int SET_APP_ICON = 4;
+			private static final int SHOW = 5;
 		}
 	}
 	
@@ -104,6 +122,9 @@ public class MainActivity extends Activity{
 
     private BaseAlertDialog connectionDialog;
 	private ConnectingDialog connectingDialog;
+	
+	// cache for all images available to send to SDL service
+	private HashMap<String, SdlImageItem> imageCache;
 	
     /*
      * Target we publish for clients to send messages to IncomingHandler.
@@ -154,6 +175,9 @@ public class MainActivity extends Activity{
 				break;
 			case SdlService.ClientMessages.INTERACTION_SETS_RECEIVED:
 				onInteractionListReceived((List<MenuItem>) msg.obj, msg.arg1);
+				break;
+			case SdlService.ClientMessages.PUT_FILES_RECEIVED:
+				onPutFileListReceived((List<String>) msg.obj, msg.arg1);
 				break;
 			default:
 				break;
@@ -242,6 +266,19 @@ public class MainActivity extends Activity{
 	}
 	
 	/**
+	 * Sends a request for the most up-to-date list of images added so far with a request code so this
+	 * activity knows what to do when the response comes back.
+	 * 
+	 * @param reqCode The request code to associate with the request
+	 */
+	private void sendPutFileRequest(int reqCode){
+		Message msg = Message.obtain(null, SdlService.ServiceMessages.REQUEST_PUT_FILES);
+		msg.replyTo = mMessenger;
+		msg.arg1 = reqCode;
+		sendMessageToService(msg);
+	}
+	
+	/**
 	 * Adds the input RPCMessage to the list view.
 	 * 
 	 * @param request The message to log
@@ -307,8 +344,26 @@ public class MainActivity extends Activity{
 
 		SdlService.setDebug(true);
 		
+		createImageCache();
 		initViews();
 		doBindService();
+	}
+	
+	private void createImageCache(){
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				SdlTesterImageResource[] values = SdlTesterImageResource.values();
+				imageCache = new HashMap<String, SdlImageItem>(values.length);
+				for(SdlTesterImageResource img : values){
+					Bitmap bitmap = BitmapFactory.decodeResource(getResources(), img.getImageId());
+					String imageName = img.toString();
+					FileType imageType = img.getFileType();
+					SdlImageItem item = new SdlImageItem(bitmap, imageName, imageType);
+					imageCache.put(imageName, item);
+				}
+			}
+		}).start();
 	}
 
 	private void initViews(){		
@@ -498,6 +553,72 @@ public class MainActivity extends Activity{
 		default:
 			break;
 		}
+	}
+	
+	/**
+	 * Called when the up-to-date list of put file images have been received.  The request code can be used
+	 * to perform different operations based on the request code that is sent with the initial request.
+	 * 
+	 * @param putFileList The list of put file image names
+	 * @param reqCode The request code that was sent with the request
+	 */
+	private void onPutFileListReceived(List<String> putFileList, int reqCode){
+		List<SdlImageItem> availableItems;
+		
+		switch(reqCode){
+		case ResultCodes.PutFileResult.PUT_FILE:
+			availableItems = filterOut(putFileList);
+			if(availableItems.size() > 0){
+				createPutFileDialog(availableItems);
+			}
+			else{
+				Toast.makeText(this, "All images have been added!", Toast.LENGTH_LONG).show();
+			}
+			break;
+		case ResultCodes.PutFileResult.DELETE_FILE:
+			availableItems = new ArrayList<SdlImageItem>(putFileList.size());
+			for(String name : putFileList){
+				availableItems.add(imageCache.get(name));
+			}
+			
+			if(availableItems.size() > 0){
+				createDeleteFileDialog(availableItems);
+			}
+			else{
+				Toast.makeText(this, "No images have been added!", Toast.LENGTH_LONG).show();
+			}
+			break;
+		default:
+			break;
+		}
+	}
+	
+	/**
+	 * Filters out any images that have already been added through the PutFile command.
+	 * 
+	 * @param putFileList The list of images that have been added through the PutFile command
+	 * @return The list of images that have <b>not</b> been added through the PutFile command
+	 */
+	private List<SdlImageItem> filterOut(List<String> putFileList){
+		int itemsInFilteredList = imageCache.size() - putFileList.size();
+		if(itemsInFilteredList == 0){
+			return Collections.emptyList();
+		}
+		
+		// first, we'll grab all image cache keys (aka image names) into a copy 
+		Set<String> cacheKeys = new TreeSet<String>(imageCache.keySet());
+		// then, we'll remove all images that have been added
+		cacheKeys.removeAll(putFileList);
+		
+		
+		List<SdlImageItem> result = new ArrayList<SdlImageItem>(itemsInFilteredList);
+		
+		// now, we'll loop through the remaining image names and create a list from them
+		for(String name : cacheKeys){
+			result.add(imageCache.get(name));
+		}
+		
+		return result;
 	}
 	
 	/**
@@ -695,13 +816,24 @@ public class MainActivity extends Activity{
 		case SET_MEDIA_CLOCK_TIMER:
 			createSetMediaClockTimerDialog();
 			break;
+		case PUT_FILE:
+			// the put file dialog needs a list of images that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
+			sendPutFileRequest(ResultCodes.PutFileResult.PUT_FILE);
+			break;
+		case DELETE_FILE:
+			// the delete file dialog needs a list of images that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
+			sendPutFileRequest(ResultCodes.PutFileResult.DELETE_FILE);
+			break;
+		case LIST_FILES:
+			// list files command doesn't accept any parameters, so we can send it directly.
+			sendSdlMessageToService(new ListFiles());
+			break;
+		case SET_APP_ICON:
+			
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
-			
-		case PUT_FILE:
-		case DELETE_FILE:
-		case LIST_FILES:
-		case SET_APP_ICON:
 			
 		case SUBSCRIBE_VEHICLE_DATA:
 		case UNSUBSCRIBE_VEHICLE_DATA:
@@ -911,6 +1043,28 @@ public class MainActivity extends Activity{
 		BaseAlertDialog setMediaClockTimerDialog = new SetMediaClockTimerDialog(this);
 		setMediaClockTimerDialog.setListener(singleMessageListener);
 		setMediaClockTimerDialog.show();
+	}
+	
+	/**
+	 * Creates a put file dialog, allowing the user to manually send images through the PutFile command.
+	 * 
+	 * @param imagesAddedSoFar Images that have <b>not</b> already been added
+	 */
+	private void createPutFileDialog(List<SdlImageItem> imagesAddedSoFar){
+		BaseAlertDialog putFileDialog = new PutFileDialog(this, imagesAddedSoFar);
+		putFileDialog.setListener(singleMessageListener);
+		putFileDialog.show();
+	}
+	
+	/**
+	 * Creates a delete file dialog, allowing the user to manually delete files that have been added through the PutFile command.
+	 * 
+	 * @param imagesAddedSoFar The list of images that has been added so far
+	 */
+	private void createDeleteFileDialog(List<SdlImageItem> imagesAddedSoFar){
+		BaseAlertDialog putFileDialog = new DeleteFileDialog(this, imagesAddedSoFar);
+		putFileDialog.setListener(singleMessageListener);
+		putFileDialog.show();
 	}
 
 	@Override
