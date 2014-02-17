@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 
 public enum SdlTesterImageResource {
-	IC_CLOSE("Close", FileType.GRAPHIC_PNG, R.drawable.ic_close),
 	IC_APP_ICON("App Icon", FileType.GRAPHIC_PNG, R.drawable.ic_launcher),
 	IC_ADD("Add Item", FileType.GRAPHIC_PNG, R.drawable.add),
 	IC_ADD_TO_FAVORITES("Add to Favorites", FileType.GRAPHIC_PNG, R.drawable.add_to_favorites),

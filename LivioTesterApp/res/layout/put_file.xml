@@ -30,4 +30,10 @@
         android:layout_height="wrap_content"
         android:text="@string/put_file_persistent_file" />
 
+    <CheckBox
+        android:id="@+id/cb_putFile_addAll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add all images" />
+
 </LinearLayout>

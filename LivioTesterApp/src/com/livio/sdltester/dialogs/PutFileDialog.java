@@ -1,5 +1,6 @@
 package com.livio.sdltester.dialogs;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdl.utils.SdlUtils;
 import com.livio.sdltester.R;
+import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.rpc.PutFile;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 
@@ -32,18 +34,21 @@ public class PutFileDialog extends BaseOkCancelDialog {
 	private ImageButton ib_putFile_selectAnImage;
 	private EditText et_putFile_imageName;
 	private CheckBox cb_putFile_isPersistent;
+	private CheckBox cb_putFile_addAll;
 	
 	private SdlImageItem selectedImage = null;
+	private List<SdlImageItem> availableImages;
 	
 	public PutFileDialog(Context context, List<SdlImageItem> availableImages) {
 		super(context, DIALOG_TITLE, R.layout.put_file);
-		Collections.sort(availableImages, new SdlImageItemComparator());
-		setupViews(availableImages);
+		this.availableImages = availableImages;
+		Collections.sort(this.availableImages, new SdlImageItemComparator());
+		setupViews();
 		setPositiveButton(okButtonListener);
 		createDialog();
 	}
 	
-	private void setupViews(final List<SdlImageItem> availableImages){
+	private void setupViews(){
 		ib_putFile_selectAnImage.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -69,6 +74,7 @@ public class PutFileDialog extends BaseOkCancelDialog {
 	protected void findViews(View parent) {
 		et_putFile_imageName = (EditText) parent.findViewById(R.id.et_putFile_imageName);
 		cb_putFile_isPersistent = (CheckBox) parent.findViewById(R.id.cb_putFile_isPersistent);
+		cb_putFile_addAll = (CheckBox) parent.findViewById(R.id.cb_putFile_addAll);
 		ib_putFile_selectAnImage = (ImageButton) parent.findViewById(R.id.ib_putFile_selectAnImage);
 	}
 	
@@ -77,10 +83,28 @@ public class PutFileDialog extends BaseOkCancelDialog {
 		
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-			if(selectedImage != null){
+			List<RPCMessage> messages = new ArrayList<RPCMessage>(availableImages.size());
+			boolean persistentFile = cb_putFile_isPersistent.isChecked();
+			
+			if(cb_putFile_addAll.isChecked()){
+				for(SdlImageItem item : availableImages){
+					FileType type = item.getImageType();
+					CompressFormat format = SdlUtils.convertImageTypeToCompressFormat(type);
+					byte[] bitmapData = AndroidUtils.bitmapToRawBytes(item.getBitmap(), format); // TODO - encoding all these images is taking a long time. - add a loading() dialog.
+					
+					PutFile putFile = new PutFile();
+					putFile.setSmartDeviceLinkFileName(item.getImageName());
+					putFile.setFileType(item.getImageType());
+					putFile.setPersistentFile(persistentFile);
+					putFile.setBulkData(bitmapData);
+					messages.add(putFile);
+				}
+				
+				notifyListener(messages);
+			}
+			else if(selectedImage != null){
 				String name = et_putFile_imageName.getText().toString();
 				if(name.length() > 0){
-					boolean persistentFile = cb_putFile_isPersistent.isChecked();
 					FileType type = selectedImage.getImageType();
 					CompressFormat format = SdlUtils.convertImageTypeToCompressFormat(type);
 					byte[] bitmapData = AndroidUtils.bitmapToRawBytes(selectedImage.getBitmap(), format);
@@ -90,12 +114,16 @@ public class PutFileDialog extends BaseOkCancelDialog {
 					putFile.setFileType(type);
 					putFile.setPersistentFile(persistentFile);
 					putFile.setBulkData(bitmapData);
-					
-					notifyListener(putFile);
+					messages.add(putFile);
+
+					notifyListener(messages);
 				}
 				else{
 					Toast.makeText(context, "Must enter a name for the image.", Toast.LENGTH_LONG).show();
 				}
+			}
+			else{
+				Toast.makeText(context, "Must select an image to add.", Toast.LENGTH_LONG).show();
 			}
 		}
 	};

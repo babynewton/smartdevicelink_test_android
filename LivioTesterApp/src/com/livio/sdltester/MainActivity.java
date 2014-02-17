@@ -63,6 +63,7 @@ import com.livio.sdltester.dialogs.ReadDidsDialog;
 import com.livio.sdltester.dialogs.ScrollableMessageDialog;
 import com.livio.sdltester.dialogs.SdlAlertDialog;
 import com.livio.sdltester.dialogs.SdlConnectionDialog;
+import com.livio.sdltester.dialogs.SetAppIconDialog;
 import com.livio.sdltester.dialogs.SetMediaClockTimerDialog;
 import com.livio.sdltester.dialogs.ShowDialog;
 import com.livio.sdltester.dialogs.SliderDialog;
@@ -125,6 +126,7 @@ public class MainActivity extends Activity{
 	
 	// cache for all images available to send to SDL service
 	private HashMap<String, SdlImageItem> imageCache;
+	private List<MenuItem> submenuCache = null;
 	
     /*
      * Target we publish for clients to send messages to IncomingHandler.
@@ -452,7 +454,8 @@ public class MainActivity extends Activity{
 		
 		switch(reqCode){
 		case ResultCodes.SubmenuResult.ADD_COMMAND_DIALOG:
-			createAddCommandDialog(submenuList);
+			submenuCache = submenuList;
+			sendPutFileRequest(ResultCodes.PutFileResult.ADD_COMMAND);
 			break;
 		case ResultCodes.SubmenuResult.DELETE_SUBMENU_DIALOG:
 			if(submenuList.size() > 0){
@@ -567,7 +570,7 @@ public class MainActivity extends Activity{
 		
 		switch(reqCode){
 		case ResultCodes.PutFileResult.PUT_FILE:
-			availableItems = filterOut(putFileList);
+			availableItems = filterAddedItems(putFileList);
 			if(availableItems.size() > 0){
 				createPutFileDialog(availableItems);
 			}
@@ -576,10 +579,7 @@ public class MainActivity extends Activity{
 			}
 			break;
 		case ResultCodes.PutFileResult.DELETE_FILE:
-			availableItems = new ArrayList<SdlImageItem>(putFileList.size());
-			for(String name : putFileList){
-				availableItems.add(imageCache.get(name));
-			}
+			availableItems = filterUnaddedItems(putFileList);
 			
 			if(availableItems.size() > 0){
 				createDeleteFileDialog(availableItems);
@@ -587,6 +587,20 @@ public class MainActivity extends Activity{
 			else{
 				Toast.makeText(this, "No images have been added!", Toast.LENGTH_LONG).show();
 			}
+			break;
+		case ResultCodes.PutFileResult.SET_APP_ICON:
+			availableItems = filterUnaddedItems(putFileList);
+			
+			if(availableItems.size() > 0){
+				createSetAppIconDialog(availableItems);
+			}
+			else{
+				Toast.makeText(this, "No images have been added!", Toast.LENGTH_LONG).show();
+			}
+			break;
+		case ResultCodes.PutFileResult.ADD_COMMAND:
+			availableItems = filterUnaddedItems(putFileList);
+			createAddCommandDialog(submenuCache, availableItems);
 			break;
 		default:
 			break;
@@ -599,7 +613,7 @@ public class MainActivity extends Activity{
 	 * @param putFileList The list of images that have been added through the PutFile command
 	 * @return The list of images that have <b>not</b> been added through the PutFile command
 	 */
-	private List<SdlImageItem> filterOut(List<String> putFileList){
+	private List<SdlImageItem> filterAddedItems(List<String> putFileList){
 		int itemsInFilteredList = imageCache.size() - putFileList.size();
 		if(itemsInFilteredList == 0){
 			return Collections.emptyList();
@@ -618,6 +632,20 @@ public class MainActivity extends Activity{
 			result.add(imageCache.get(name));
 		}
 		
+		return result;
+	}
+	
+	/**
+	 * Filters out any images that have <b>not</b> been added through the PutFile command.
+	 * 
+	 * @param putFileList The list of images that have been added through the PutFile command
+	 * @return The list of images that have been added through the PutFile command
+	 */
+	private List<SdlImageItem> filterUnaddedItems(List<String> putFileList){
+		List<SdlImageItem> result = new ArrayList<SdlImageItem>(putFileList.size());
+		for(String name : putFileList){
+			result.add(imageCache.get(name));
+		}
 		return result;
 	}
 	
@@ -831,6 +859,10 @@ public class MainActivity extends Activity{
 			sendSdlMessageToService(new ListFiles());
 			break;
 		case SET_APP_ICON:
+			// the set app icon dialog needs a list of images that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
+			sendPutFileRequest(ResultCodes.PutFileResult.SET_APP_ICON);
+			break;
 			
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
@@ -848,9 +880,14 @@ public class MainActivity extends Activity{
 	// listener to be used when receiving a single RPCRequest from a dialog.
 	private final BaseAlertDialog.Listener singleMessageListener = new BaseAlertDialog.Listener() {
 		@Override
-		public void onResult(Object resultData) {
+		public void onResult(final Object resultData) {
 			if(resultData != null){
-				sendSdlMessageToService((RPCRequest) resultData);
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						sendSdlMessageToService((RPCRequest) resultData);
+					}
+				}).start();
 			}
 		}
 	};
@@ -858,13 +895,18 @@ public class MainActivity extends Activity{
 	// listener to be used when receiving a list of RPCRequests from a dialog.
 	private final BaseAlertDialog.Listener multipleMessageListener = new BaseAlertDialog.Listener() {
 		@Override
-		public void onResult(Object resultData) {
+		public void onResult(final Object resultData) {
 			if(resultData != null){
-				@SuppressWarnings("unchecked")
-				List<RPCRequest> msgList = (List<RPCRequest>) resultData;
-				for(RPCRequest request : msgList){
-					sendSdlMessageToService(request);
-				}
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						@SuppressWarnings("unchecked")
+						List<RPCRequest> msgList = (List<RPCRequest>) resultData;
+						for(RPCRequest request : msgList){
+							sendSdlMessageToService(request);
+						}
+					}
+				}).start();
 			}
 		}
 	};
@@ -923,8 +965,8 @@ public class MainActivity extends Activity{
 	 * 
 	 * @param allBanks The list used to populate the dialog
 	 */
-	private void createAddCommandDialog(List<MenuItem> allBanks){
-		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks);
+	private void createAddCommandDialog(List<MenuItem> allBanks, List<SdlImageItem> availableItems){
+		BaseAlertDialog addCommandDialog = new AddCommandDialog(this, allBanks, availableItems);
 		addCommandDialog.setListener(singleMessageListener);
 		addCommandDialog.show();
 	}
@@ -1052,19 +1094,30 @@ public class MainActivity extends Activity{
 	 */
 	private void createPutFileDialog(List<SdlImageItem> imagesAddedSoFar){
 		BaseAlertDialog putFileDialog = new PutFileDialog(this, imagesAddedSoFar);
-		putFileDialog.setListener(singleMessageListener);
+		putFileDialog.setListener(multipleMessageListener);
 		putFileDialog.show();
 	}
 	
 	/**
 	 * Creates a delete file dialog, allowing the user to manually delete files that have been added through the PutFile command.
 	 * 
-	 * @param imagesAddedSoFar The list of images that has been added so far
+	 * @param imagesAddedSoFar The list of images that have been added so far
 	 */
 	private void createDeleteFileDialog(List<SdlImageItem> imagesAddedSoFar){
-		BaseAlertDialog putFileDialog = new DeleteFileDialog(this, imagesAddedSoFar);
-		putFileDialog.setListener(singleMessageListener);
-		putFileDialog.show();
+		BaseAlertDialog deleteFileDialog = new DeleteFileDialog(this, imagesAddedSoFar);
+		deleteFileDialog.setListener(multipleMessageListener);
+		deleteFileDialog.show();
+	}
+	
+	/**
+	 * Creates a set app icon dialog, allowing the user to manually set their app icon based on images that have been added through the PutFile command.
+	 * 
+	 * @param imagesAddedSoFar The list of images that have been added so far
+	 */
+	private void createSetAppIconDialog(List<SdlImageItem> imagesAddedSoFar){
+		BaseAlertDialog setAppIconDialog = new SetAppIconDialog(this, imagesAddedSoFar);
+		setAppIconDialog.setListener(singleMessageListener);
+		setAppIconDialog.show();
 	}
 
 	@Override

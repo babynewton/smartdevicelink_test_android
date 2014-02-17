@@ -33,26 +33,9 @@
 			android:layout_height="wrap_content">
 		</Spinner>
 
-		<CheckBox
-		    android:id="@+id/check_addCommand_useIcon"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:checked="false"
-		    android:text="@string/use_artwork" />
-
-		<ImageView
-		    android:id="@+id/iv_addCommand_image"
-		    android:layout_width="wrap_content"
-		    android:layout_height="wrap_content"
-		    android:layout_gravity="center"/>
-
-        <TextView android:id="@+id/tv_imageType"
-            style="@style/small_header_text"
-            android:text="@string/add_command_image_type"/>
-
-		<Spinner
-		    android:id="@+id/spin_addCommand_iconType"
-		    android:layout_width="match_parent"
-		    android:layout_height="wrap_content" />
+		<Button android:id="@+id/but_addCommand_selectImage"
+	        android:layout_width="match_parent"
+	        android:layout_height="wrap_content"
+	        android:text="Add Command Image" />
 
 </LinearLayout>

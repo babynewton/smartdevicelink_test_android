@@ -6,86 +6,75 @@ import java.util.Vector;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
 import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlImageItem;
+import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
-import com.livio.sdl.enums.SdlImageType;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.AddCommand;
+import com.smartdevicelink.proxy.rpc.Image;
 import com.smartdevicelink.proxy.rpc.MenuParams;
+import com.smartdevicelink.proxy.rpc.enums.ImageType;
 
 public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedChangeListener{
-
-	// TODO - add ability to select an image without manually entering the text
-	// TODO - add ? icon next to static/dynamic and explain what the differences between the two are and what that means for devs
 	
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.ADD_COMMAND;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
-	private ArrayAdapter<MenuItem> subMenuAdapter;
-	private ArrayAdapter<SdlImageType> imageTypeAdapter;
-	
 	private EditText et_newCommand;
 	private EditText et_voiceRecKeyword;
 	
-	private ImageView iv_image;
-	private TextView tv_imageType;
-	
 	private Spinner spin_addCommand_submenus;
-	private Spinner spin_addCommand_iconType;
+	private Button but_addCommand_selectImage;
 	
-	private CheckBox check_addCommand_useIcon;
+	private SdlImageItem selectedImage;
 	
-	public AddCommandDialog(Context context, List<MenuItem> availableBanks) {
+	public AddCommandDialog(Context context, List<MenuItem> availableBanks, List<SdlImageItem> images) {
 		super(context, DIALOG_TITLE, R.layout.add_command);
-		createAndSetAdapters(availableBanks);
+		setupViews(availableBanks, images);
 		setPositiveButton(okButtonListener);
 		createDialog();
 	}
 	
-	private void createAndSetAdapters(List<MenuItem> availableSubmenus){
+	private void setupViews(List<MenuItem> availableSubmenus, final List<SdlImageItem> images){
 		List<MenuItem> submenuList = new ArrayList<MenuItem>(availableSubmenus);
 		submenuList.add(0, new MenuItem("Root-level menu", 0, true));
 		spin_addCommand_submenus.setAdapter(AndroidUtils.createSpinnerAdapter(context, submenuList));
 		
-		spin_addCommand_iconType.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlImageType.values()));
+		but_addCommand_selectImage.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
+				selectImageDialog.setListener(new BaseAlertDialog.Listener() {
+					@Override
+					public void onResult(Object resultData) {
+						selectedImage = (SdlImageItem) resultData;
+					}
+				});
+				selectImageDialog.show();
+			}
+		});
 	}
 
 	@Override
 	protected void findViews(View parent) {
-		et_newCommand = (EditText) view.findViewById(R.id.et_addCommand_commandName);
-		et_voiceRecKeyword = (EditText) view.findViewById(R.id.et_addCommand_voiceRecKeyword);
+		et_newCommand = (EditText) parent.findViewById(R.id.et_addCommand_commandName);
+		et_voiceRecKeyword = (EditText) parent.findViewById(R.id.et_addCommand_voiceRecKeyword);
 		
-		iv_image = (ImageView) view.findViewById(R.id.iv_addCommand_image);
+		spin_addCommand_submenus = (Spinner) parent.findViewById(R.id.spin_addCommand_submenus);
 		
-		tv_imageType = (TextView) view.findViewById(R.id.tv_imageType);
-		
-		spin_addCommand_submenus = (Spinner) view.findViewById(R.id.spin_addCommand_submenus);
-		spin_addCommand_iconType = (Spinner) view.findViewById(R.id.spin_addCommand_iconType);
-		
-		check_addCommand_useIcon = (CheckBox) view.findViewById(R.id.check_addCommand_useIcon);
-		check_addCommand_useIcon.setOnCheckedChangeListener(this);
-		enableIconViews(check_addCommand_useIcon.isChecked());
-	}
-	
-	private void enableIconViews(boolean enable){
-		int visibility = (enable) ? View.VISIBLE : View.GONE;
-		spin_addCommand_iconType.setVisibility(visibility);
-		iv_image.setVisibility(visibility);
-		tv_imageType.setVisibility(visibility);
+		but_addCommand_selectImage = (Button) parent.findViewById(R.id.but_addCommand_selectImage);
 	}
 	
 	//dialog button listeners
@@ -96,15 +85,8 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 				final String commandName = et_newCommand.getText().toString();
 				final String voiceRecKeyword   = et_voiceRecKeyword.getText().toString();
 				final MenuItem parentBank = (MenuItem) spin_addCommand_submenus.getSelectedItem();
-				Bitmap image = null;
-				SdlImageType imageType = null;
 				
 				if(commandName.length() > 0){
-					if(check_addCommand_useIcon.isChecked()){
-						image = null; // TODO - return the image that was selected
-						imageType = SdlImageType.lookupByReadableName(spin_addCommand_iconType.getSelectedItem().toString());
-					}
-					
 					AddCommand result = new AddCommand();
 					MenuParams menuParams = new MenuParams();
 					menuParams.setMenuName(commandName);
@@ -122,8 +104,11 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 						result.setVrCommands(vrCommands);
 					}
 					
-					if(image != null){
-						// TODO - add "Image" into the returned result
+					if(selectedImage != null){
+						Image image = new Image();
+						image.setImageType(ImageType.DYNAMIC);
+						image.setValue(selectedImage.getImageName());
+						result.setCmdIcon(image);
 					}
 					
 					notifyListener(result);
