@@ -7,11 +7,11 @@ import java.util.List;
 import android.content.Context;
 import android.content.DialogInterface;
 
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseMultipleListViewDialog;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.smartdevicelink.proxy.RPCRequest;
-import com.smartdevicelink.proxy.rpc.UnsubscribeButton;
 
 /**
  * Shows a dialog allowing the user to unsubscribe from buttons that have been subscribed to.  This class
@@ -50,9 +50,8 @@ public class ButtonUnsubscriptionDialog extends BaseMultipleListViewDialog<SdlBu
 				
 				// loop through the selected items and create RPC requests for each one since they can't be done in a batch.
 				for(SdlButton button : selectedItems){
-					UnsubscribeButton unsubscribeButton = new UnsubscribeButton();
-					unsubscribeButton.setButtonName(SdlButton.translateToLegacy(button));
-					buttonUnsubscribeMessages.add(unsubscribeButton);
+					RPCRequest temp = SdlRequestFactory.unsubscribeButton(SdlButton.translateToLegacy(button));
+					buttonUnsubscribeMessages.add(temp);
 				}
 				notifyListener(buttonUnsubscribeMessages);
 			}

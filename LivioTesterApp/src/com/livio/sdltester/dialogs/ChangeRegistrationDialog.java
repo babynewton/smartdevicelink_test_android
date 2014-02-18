@@ -6,12 +6,13 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlLanguage;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.ChangeRegistration;
+import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.enums.Language;
 
 public class ChangeRegistrationDialog extends BaseOkCancelDialog{
@@ -46,12 +47,8 @@ public class ChangeRegistrationDialog extends BaseOkCancelDialog{
 			final String language = spin_changeRegistration_language.getSelectedItem().toString();
 			final String hmiLanguage = spin_changeRegistration_hmiLanguage.getSelectedItem().toString();
 			
-			
-			ChangeRegistration cr = new ChangeRegistration();
-			cr.setLanguage(Language.valueForString(language));
-			cr.setHmiDisplayLanguage(Language.valueForString(hmiLanguage));
-			
-			notifyListener(cr);
+			RPCRequest result = SdlRequestFactory.changeRegistration(Language.valueForString(language), Language.valueForString(hmiLanguage));
+			notifyListener(result);
 		}
 	};
 	

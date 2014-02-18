@@ -1,4 +1,4 @@
-package com.livio.sdltester.dialogs;
+package com.livio.sdl.dialogs;
 
 import java.util.List;
 
@@ -8,7 +8,6 @@ import android.widget.ListView;
 import com.livio.sdl.R;
 import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.adapters.SdlImageAdapter;
-import com.livio.sdl.dialogs.BaseAlertDialog;
 
 public abstract class BaseImageListDialog extends BaseAlertDialog {
 

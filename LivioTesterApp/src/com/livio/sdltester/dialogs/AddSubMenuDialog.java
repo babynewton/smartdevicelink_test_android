@@ -6,10 +6,12 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlConstants;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.AddSubMenu;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class AddSubMenuDialog extends BaseOkCancelDialog{
 
@@ -35,14 +37,16 @@ public class AddSubMenuDialog extends BaseOkCancelDialog{
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			final String submenuName = et_submenuName.getText().toString();
+			final int position = SdlConstants.AddSubmenu.DEFAULT_POSITION;
 			
-			// set applicable data & return it to whoever's listening 
+			// all we need is a valid name
 			if(submenuName.length() > 0){
-				AddSubMenu rpcCommand = new AddSubMenu();
-				rpcCommand.setMenuName(submenuName);
+				// if we have it, create the request and send it to the listener
+				RPCRequest rpcCommand = SdlRequestFactory.addSubmenu(submenuName, position);
 				notifyListener(rpcCommand);
 			}
 			else{
+				// if we don't have a valid name, inform the user
 				Toast.makeText(context, "Must enter a submenu name.", Toast.LENGTH_LONG).show();
 			}
 		}

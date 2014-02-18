@@ -2,32 +2,28 @@ package com.livio.sdltester.dialogs;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlConstants;
 import com.livio.sdl.SdlImageItem;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.AddCommand;
-import com.smartdevicelink.proxy.rpc.Image;
-import com.smartdevicelink.proxy.rpc.MenuParams;
-import com.smartdevicelink.proxy.rpc.enums.ImageType;
+import com.smartdevicelink.proxy.RPCRequest;
 
-public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedChangeListener{
+public class AddCommandDialog extends BaseOkCancelDialog{
 	
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.ADD_COMMAND;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
@@ -76,9 +72,7 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 	protected void findViews(View parent) {
 		et_newCommand = (EditText) parent.findViewById(R.id.et_addCommand_commandName);
 		et_voiceRecKeyword = (EditText) parent.findViewById(R.id.et_addCommand_voiceRecKeyword);
-		
 		spin_addCommand_submenus = (Spinner) parent.findViewById(R.id.spin_addCommand_submenus);
-		
 		but_addCommand_selectImage = (Button) parent.findViewById(R.id.but_addCommand_selectImage);
 	}
 	
@@ -87,56 +81,26 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			if(listener != null){
+				// grab the data from the views
 				final String commandName = et_newCommand.getText().toString();
+				final int position = SdlConstants.AddCommand.DEFAULT_POSITION;
 				final String voiceRecKeyword   = et_voiceRecKeyword.getText().toString();
 				final MenuItem parentBank = (MenuItem) spin_addCommand_submenus.getSelectedItem();
+				final int parentId = (parentBank != null) ? parentBank.getId() : SdlConstants.AddCommand.INVALID_PARENT_ID; // TODO -1 is an invalid parent id, but this should be defined somewhere...
+				final String imageName = (selectedImage != null) ? selectedImage.getImageName() : null;
 				
+				// all we really need is a valid name
 				if(commandName.length() > 0){
-					AddCommand result = new AddCommand();
-					MenuParams menuParams = new MenuParams();
-					menuParams.setMenuName(commandName);
-					menuParams.setPosition(0); // TODO - get number of items in the list??? should I input function banks instead of menu buttons?
-					
-					// if we're adding to the root-level menu (id = 0), we don't need to set any id here
-					if(parentBank != null && parentBank.getId() != 0){
-						menuParams.setParentID(parentBank.getId());
-					}
-					result.setMenuParams(menuParams);
-					
-					if(voiceRecKeyword.length() > 0){
-						Vector<String> vrCommands = new Vector<String>(1);
-						vrCommands.add(voiceRecKeyword);
-						result.setVrCommands(vrCommands);
-					}
-					
-					if(selectedImage != null){
-						Image image = new Image();
-						image.setImageType(ImageType.DYNAMIC);
-						image.setValue(selectedImage.getImageName());
-						result.setCmdIcon(image);
-					}
-					
+					// if we have it, let's create our RPC object
+					RPCRequest result = SdlRequestFactory.addCommand(commandName, position, parentId, voiceRecKeyword, imageName);
 					notifyListener(result);
 				}
 				else{
+					// if we don't have a valid name, inform the user.
 					Toast.makeText(context, "Must enter command name.", Toast.LENGTH_LONG).show();
 				}
 			}
 		}
 	};
-
-	/*
-	 * Checkbox click listener methods
-	 */
-	@Override
-	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		// TODO - remove this code once images are supported.
-		if(isChecked){
-			Toast.makeText(context, context.getResources().getString(R.string.not_implemented), Toast.LENGTH_LONG).show();
-		}
-		
-		// TODO - bring this code back in once images are supported.
-//		enableIconViews(isChecked);
-	}
 	
 }

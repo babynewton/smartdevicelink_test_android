@@ -17,11 +17,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdltester.R;
+import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.Choice;
-import com.smartdevicelink.proxy.rpc.CreateInteractionChoiceSet;
 
 public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 	
@@ -115,31 +116,14 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 				
 				// make sure the choice at least has a name to display
 				if(choiceName.length() > 0){
-					Choice choice = new Choice();
-					choice.setMenuName(choiceName);
-					
-					Vector<String> vrCommands = new Vector<String>(); // TODO - allow CSV for multiple voice rec inputs
-					if(voiceRecKeyword.length() > 0){
-						vrCommands.add(voiceRecKeyword);
-					}
-					else{
-						vrCommands.add(choiceName);
-					}
-					
-					choice.setVrCommands(vrCommands);
-					
-					if(image != null){
-//						choice.setImage(image); TODO - add image once support is in place
-					}
-
+					Choice choice = SdlRequestFactory.choice(choiceName, voiceRecKeyword, null); // TODO implement images
 					choiceItems.add(choice);
 				}
 			}
 			
 			if(choiceItems.size() > 0){
-				CreateInteractionChoiceSet choiceSet = new CreateInteractionChoiceSet();
-				choiceSet.setChoiceSet(choiceItems);
-				notifyListener(choiceSet);
+				RPCRequest result = SdlRequestFactory.createInteractionChoiceSet(choiceItems);
+				notifyListener(result);
 			}
 			else{
 				Toast.makeText(context, "Must enter at least 1 choice name.", Toast.LENGTH_LONG).show();

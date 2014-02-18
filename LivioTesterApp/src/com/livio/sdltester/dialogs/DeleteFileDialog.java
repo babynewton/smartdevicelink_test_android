@@ -12,11 +12,12 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
 import com.livio.sdl.SdlImageItem;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.adapters.SdlImageAdapter;
+import com.livio.sdl.dialogs.BaseImageListDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
-import com.smartdevicelink.proxy.rpc.DeleteFile;
 
 public class DeleteFileDialog extends BaseImageListDialog {
 
@@ -46,15 +47,13 @@ public class DeleteFileDialog extends BaseImageListDialog {
 				
 				if(selectedName.equals(DELETE_ALL)){
 					for(SdlImageItem item : imageList){
-						DeleteFile deleteFile = new DeleteFile();
-						deleteFile.setSmartDeviceLinkFileName(item.getImageName());
-						messages.add(deleteFile);
+						RPCRequest request = SdlRequestFactory.deleteFile(item.getImageName());
+						messages.add(request);
 					}
 				}
 				else{
-					DeleteFile deleteFile = new DeleteFile();
-					deleteFile.setSmartDeviceLinkFileName(selectedItem.getImageName());
-					messages.add(deleteFile);
+					RPCRequest request = SdlRequestFactory.deleteFile(selectedItem.getImageName());
+					messages.add(request);
 				}
 
 				notifyListener(messages);

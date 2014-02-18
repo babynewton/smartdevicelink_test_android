@@ -9,12 +9,13 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.DeleteCommand;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class DeleteCommandDialog extends BaseAlertDialog{
 
@@ -40,9 +41,8 @@ public class DeleteCommandDialog extends BaseAlertDialog{
 				final MenuItem selectedButton = ((ArrayAdapter<MenuItem>) parent.getAdapter()).getItem(position);
 				final int commandId = selectedButton.getId();
 				
-				DeleteCommand deleteCommand = new DeleteCommand();
-				deleteCommand.setCmdID(commandId);
-				notifyListener(deleteCommand);
+				RPCRequest result = SdlRequestFactory.deleteCommand(commandId);
+				notifyListener(result);
 				dismiss();
 			}
 		});

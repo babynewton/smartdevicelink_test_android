@@ -1,6 +1,7 @@
 package com.livio.sdl;
 
 import com.smartdevicelink.proxy.RPCRequest;
+import com.smartdevicelink.proxy.RPCResponse;
 import com.smartdevicelink.proxy.constants.Names;
 import com.smartdevicelink.proxy.interfaces.IProxyListenerALM;
 import com.smartdevicelink.proxy.rpc.AddCommandResponse;
@@ -32,209 +33,174 @@ import com.smartdevicelink.proxy.rpc.UnsubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.enums.Result;
 
+/**
+ * A factory class to generate responses based on the input requests.
+ *
+ * @author Mike Burke
+ *
+ */
 public final class SdlResponseFactory {
 
 	private SdlResponseFactory() {}
 	
+	/**
+	 * Creates a generic "Success" response for the input request with no input checking.  The created
+	 * response is sent back to the appropriate method of the input listener.
+	 * 
+	 * @param request The request to respond to
+	 * @param listener The listener to inform when the response is complete
+	 */
 	public static void sendGenericResponseForRequest(RPCRequest request, IProxyListenerALM listener){
 		if(listener == null){
 			throw new NullPointerException();
 		}
-		
-		final boolean success = true;
-		final int correlationID = request.getCorrelationID();
+
 		final String reqName = request.getFunctionName();
-		final Result resCode = Result.SUCCESS;
+		final int correlationId = request.getCorrelationID();
 		
+		// this is really bad
 		if(reqName == Names.Alert){
 			AlertResponse result = new AlertResponse();
-			result.setSuccess(success);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onAlertResponse(result);
 		}
 		else if(reqName == Names.Speak){
 			SpeakResponse result = new SpeakResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onSpeakResponse(result);
 		}
 		else if(reqName == Names.Show){
 			ShowResponse result = new ShowResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onShowResponse(result);
 		}
 		else if(reqName == Names.SubscribeButton){
 			SubscribeButtonResponse result = new SubscribeButtonResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
+			setSuccessParams(result, correlationId);
 			listener.onSubscribeButtonResponse(result);
-			result.setResultCode(resCode);
 			
 		}
 		else if(reqName == Names.UnsubscribeButton){
 			UnsubscribeButtonResponse result = new UnsubscribeButtonResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onUnsubscribeButtonResponse(result);
 		}
 		else if(reqName == Names.AddCommand){
 			AddCommandResponse result = new AddCommandResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onAddCommandResponse(result);
 		}
 		else if(reqName == Names.DeleteCommand){
 			DeleteCommandResponse result = new DeleteCommandResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onDeleteCommandResponse(result);
 		}
 		else if(reqName == Names.AddSubMenu){
 			AddSubMenuResponse result = new AddSubMenuResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onAddSubMenuResponse(result);
 		}
 		else if(reqName == Names.DeleteSubMenu){
 			DeleteSubMenuResponse result = new DeleteSubMenuResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onDeleteSubMenuResponse(result);
 		}
 		else if(reqName == Names.SetGlobalProperties){
 			SetGlobalPropertiesResponse result = new SetGlobalPropertiesResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onSetGlobalPropertiesResponse(result);
 		}
 		else if(reqName == Names.ResetGlobalProperties){
 			ResetGlobalPropertiesResponse result = new ResetGlobalPropertiesResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onResetGlobalPropertiesResponse(result);
 		}
 		else if(reqName == Names.SetMediaClockTimer){
 			SetMediaClockTimerResponse result = new SetMediaClockTimerResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onSetMediaClockTimerResponse(result);
 		}
 		else if(reqName == Names.CreateInteractionChoiceSet){
 			CreateInteractionChoiceSetResponse result = new CreateInteractionChoiceSetResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onCreateInteractionChoiceSetResponse(result);
 		}
 		else if(reqName == Names.DeleteInteractionChoiceSet){
 			DeleteInteractionChoiceSetResponse result = new DeleteInteractionChoiceSetResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onDeleteInteractionChoiceSetResponse(result);
 		}
 		else if(reqName == Names.PerformInteraction){
 			PerformInteractionResponse result = new PerformInteractionResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onPerformInteractionResponse(result);
 		}
 		else if(reqName == Names.Slider){
 			SliderResponse result = new SliderResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onSliderResponse(result);
 		}
 		else if(reqName == Names.ScrollableMessage){
 			ScrollableMessageResponse result = new ScrollableMessageResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
+			setSuccessParams(result, correlationId);
 			listener.onScrollableMessageResponse(result);
 		}
 		else if(reqName == Names.ChangeRegistration){
 			ChangeRegistrationResponse result = new ChangeRegistrationResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onChangeRegistrationResponse(result);
 		}
 		else if(reqName == Names.PutFile){
 			PutFileResponse result = new PutFileResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onPutFileResponse(result);
 		}
 		else if(reqName == Names.DeleteFile){
 			DeleteFileResponse result = new DeleteFileResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onDeleteFileResponse(result);
 		}
 		else if(reqName == Names.ListFiles){
 			ListFilesResponse result = new ListFilesResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onListFilesResponse(result);
 		}
 		else if(reqName == Names.SetAppIcon){
 			SetAppIconResponse result = new SetAppIconResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onSetAppIconResponse(result);
 		}
 		else if(reqName == Names.SubscribeVehicleData){
 			SubscribeVehicleDataResponse result = new SubscribeVehicleDataResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onSubscribeVehicleDataResponse(result);
 		}
 		else if(reqName == Names.UnsubscribeVehicleData){
 			UnsubscribeVehicleDataResponse result = new UnsubscribeVehicleDataResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onUnsubscribeVehicleDataResponse(result);
 		}
 		else if(reqName == Names.GetVehicleData){
 			GetVehicleDataResponse result = new GetVehicleDataResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onGetVehicleDataResponse(result);
 		}
 		else if(reqName == Names.ReadDID){
 			ReadDIDResponse result = new ReadDIDResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onReadDIDResponse(result);
 		}
 		else if(reqName == Names.GetDTCs){
 			GetDTCsResponse result = new GetDTCsResponse();
-			result.setSuccess(true);
-			result.setCorrelationID(correlationID);
-			result.setResultCode(resCode);
+			setSuccessParams(result, correlationId);
 			listener.onGetDTCsResponse(result);
 		}
+	}
+	
+	private static void setSuccessParams(RPCResponse response, int correlationId){
+		response.setSuccess(true);
+		response.setCorrelationID(correlationId);
+		response.setResultCode(Result.SUCCESS);
 	}
 
 }

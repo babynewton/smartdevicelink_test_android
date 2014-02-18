@@ -7,11 +7,11 @@ import java.util.List;
 import android.content.Context;
 import android.content.DialogInterface;
 
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseMultipleListViewDialog;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.smartdevicelink.proxy.RPCRequest;
-import com.smartdevicelink.proxy.rpc.SubscribeButton;
 
 /**
  * Shows a dialog allowing the user to subscribe to buttons that haven't been subscribed to yet.  This class
@@ -50,9 +50,8 @@ public class ButtonSubscriptionDialog extends BaseMultipleListViewDialog<SdlButt
 				
 				// loop through the selected items and create RPC requests for each one since they can't be done in a batch.
 				for(SdlButton button : selectedItems){
-					SubscribeButton subscribeButton = new SubscribeButton();
-					subscribeButton.setButtonName(SdlButton.translateToLegacy(button));
-					buttonSubscribeMessages.add(subscribeButton);
+					RPCRequest temp = SdlRequestFactory.subscribeButton(SdlButton.translateToLegacy(button));
+					buttonSubscribeMessages.add(temp);
 				}
 				notifyListener(buttonSubscribeMessages);
 			}

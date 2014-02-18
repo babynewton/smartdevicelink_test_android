@@ -10,10 +10,11 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.livio.sdl.R;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseSingleListViewDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
-import com.smartdevicelink.proxy.rpc.DeleteInteractionChoiceSet;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class DeleteInteractionDialog extends BaseSingleListViewDialog<MenuItem> {
 
@@ -34,10 +35,8 @@ public class DeleteInteractionDialog extends BaseSingleListViewDialog<MenuItem> 
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				selectedItem = ((ArrayAdapter<MenuItem>) parent.getAdapter()).getItem(position);
 				
-				DeleteInteractionChoiceSet deleteInteraction = new DeleteInteractionChoiceSet();
-				deleteInteraction.setInteractionChoiceSetID(selectedItem.getId());
-				
-				notifyListener(deleteInteraction);
+				RPCRequest result = SdlRequestFactory.deleteInteractionChoiceSet(selectedItem.getId());
+				notifyListener(result);
 				dismiss();
 			}
 		});

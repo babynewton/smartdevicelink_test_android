@@ -10,6 +10,7 @@ import android.widget.ListView;
 
 import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.adapters.SdlImageAdapter;
+import com.livio.sdl.dialogs.BaseImageListDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.rpc.SetAppIcon;
