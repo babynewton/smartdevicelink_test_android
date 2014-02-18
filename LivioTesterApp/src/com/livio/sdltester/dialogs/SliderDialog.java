@@ -27,7 +27,7 @@ public class SliderDialog extends BaseOkCancelDialog {
 	
 	private static final int NUM_OF_TICKS_DEFAULT = 2;
 	private static final int START_POSITION_DEFAULT = 1;
-	private static final int TIMEOUT_DEFAULT = 1;
+	private static final int TIMEOUT_DEFAULT = 10;
 	
 	private static final int S_TO_MS_MULTIPLIER = 1000;
 	

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -27,7 +29,8 @@ public class DeleteFileDialog extends BaseImageListDialog {
 	public DeleteFileDialog(Context context, List<SdlImageItem> imageList) {
 		super(context, DIALOG_TITLE, imageList);
 		this.imageList = new ArrayList<SdlImageItem>(imageList);
-		((SdlImageAdapter)listview.getAdapter()).insert(new SdlImageItem(null, DELETE_ALL, null), 0);
+		Bitmap deleteAllImage = BitmapFactory.decodeResource(context.getResources(), R.drawable.ic_close);
+		((SdlImageAdapter)listview.getAdapter()).insert(new SdlImageItem(deleteAllImage, DELETE_ALL, null), 0);
 		createDialog();
 	}
 	

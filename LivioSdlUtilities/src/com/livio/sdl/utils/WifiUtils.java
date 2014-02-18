@@ -1,6 +1,6 @@
 package com.livio.sdl.utils;
 
-public abstract class WifiUtils {
+public final class WifiUtils {
 
 	private static final int IP_ADDRESS_MIN_LENGTH = 7;
 	private static final int IP_ADDRESS_MAX_LENGTH = 15;

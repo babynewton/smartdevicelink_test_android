@@ -55,14 +55,19 @@ public class AddCommandDialog extends BaseOkCancelDialog implements OnCheckedCha
 		but_addCommand_selectImage.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
-				selectImageDialog.setListener(new BaseAlertDialog.Listener() {
-					@Override
-					public void onResult(Object resultData) {
-						selectedImage = (SdlImageItem) resultData;
-					}
-				});
-				selectImageDialog.show();
+				if(images == null || images.size() <= 0){
+					Toast.makeText(context, "No images have been added to the system yet.", Toast.LENGTH_LONG).show();
+				}
+				else{
+					BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
+					selectImageDialog.setListener(new BaseAlertDialog.Listener() {
+						@Override
+						public void onResult(Object resultData) {
+							selectedImage = (SdlImageItem) resultData;
+						}
+					});
+					selectImageDialog.show();
+				}
 			}
 		});
 	}

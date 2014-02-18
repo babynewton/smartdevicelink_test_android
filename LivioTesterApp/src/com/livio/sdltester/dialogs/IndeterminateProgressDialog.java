@@ -3,12 +3,12 @@ package com.livio.sdltester.dialogs;
 import android.app.ProgressDialog;
 import android.content.Context;
 
-public class ConnectingDialog extends ProgressDialog{
+public class IndeterminateProgressDialog extends ProgressDialog{
 
-	public ConnectingDialog(Context context) {
+	public IndeterminateProgressDialog(Context context, String title) {
 		super(context);
 		setCancelable(false);
-		setMessage("Connecting");
+		setMessage(title);
 		setIndeterminate(true);
 		setTitle(null);
 	}

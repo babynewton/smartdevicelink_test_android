@@ -18,6 +18,7 @@ import android.util.SparseArray;
 import android.widget.Toast;
 
 import com.livio.sdl.R;
+import com.livio.sdl.SdlResponseFactory;
 import com.livio.sdl.datatypes.IpAddress;
 import com.livio.sdl.datatypes.UpCounter;
 import com.livio.sdl.enums.SdlButton;
@@ -88,7 +89,6 @@ import com.smartdevicelink.proxy.rpc.UnsubscribeButton;
 import com.smartdevicelink.proxy.rpc.UnsubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.UpdateTurnListResponse;
-import com.smartdevicelink.proxy.rpc.enums.HMILevel;
 import com.smartdevicelink.proxy.rpc.enums.Language;
 import com.smartdevicelink.transport.TCPTransportConfig;
 
@@ -118,37 +118,29 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 */
 		public static final int SDL_DISCONNECTED = 1;
 		/**
-		 * Message.what integer called when the application has been opened.
-		 */
-		public static final int ON_APP_OPENED = 2;
-		/**
-		 * Message.what integer called when a ServiceMessages.REQUEST_FOREGROUND_STATE message has been received.
-		 */
-		public static final int FOREGROUND_STATE_RECEIVED = 3;
-		/**
 		 * Message.what integer called when a RPCResponse result has been received.
 		 */
-		public static final int ON_MESSAGE_RESULT = 4;
+		public static final int ON_MESSAGE_RESULT = 2;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_SUBMENU_LIST message has been received.
 		 */
-		public static final int SUBMENU_LIST_RECEIVED = 5;
+		public static final int SUBMENU_LIST_RECEIVED = 3;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_COMMAND_LIST message has been received.
 		 */
-		public static final int COMMAND_LIST_RECEIVED = 6;
+		public static final int COMMAND_LIST_RECEIVED = 4;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_BUTTON_SUBSCRIPTIONS message has been received.
 		 */
-		public static final int BUTTON_SUBSCRIPTIONS_RECEIVED = 7;
+		public static final int BUTTON_SUBSCRIPTIONS_RECEIVED = 5;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_INTERACTION_SETS message has been received.
 		 */
-		public static final int INTERACTION_SETS_RECEIVED = 8;
+		public static final int INTERACTION_SETS_RECEIVED = 6;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_PUT_FILES message has been received.
 		 */
-		public static final int PUT_FILES_RECEIVED = 9;
+		public static final int PUT_FILES_RECEIVED = 7;
 	}
 	
 	/**
@@ -161,43 +153,51 @@ public class SdlService extends Service implements IProxyListenerALM{
 		/**
 		 * Message.what integer used to register your activity as a client bound to this service.
 		 */
-		public static final int REGISTER_CLIENT = 1;
+		public static final int REGISTER_CLIENT = 0;
 		/**
 		 * Message.what integer used to unregister your activity as a client bound to this service.
 		 */
-		public static final int UNREGISTER_CLIENT = 2;
+		public static final int UNREGISTER_CLIENT = 1;
 		/**
 		 * Message.what integer commanding the service to attempt an SDL connection.
 		 */
-		public static final int CONNECT = 3;
+		public static final int CONNECT = 2;
 		/**
 		 * Message.what integer commanding the service to disconnect an existing SDL connection.
 		 */
-		public static final int DISCONNECT = 4;
+		public static final int DISCONNECT = 3;
+		/**
+		 * Message.what integer commanding the service to reset the SDL connection.
+		 */
+		public static final int RESET = 4;
+		/**
+		 * Message.what integer setting the service to Offline mode.
+		 */
+		public static final int OFFLINE_MODE = 5;
 		/**
 		 * Message.what integer commanding the service to send an RPCRequest.
 		 */
-		public static final int SEND_MESSAGE = 5;
+		public static final int SEND_MESSAGE = 6;
 		/**
 		 * Message.what integer commanding the service to respond with a list of existing submenus that have been added.
 		 */
-		public static final int REQUEST_SUBMENU_LIST = 6;
+		public static final int REQUEST_SUBMENU_LIST = 7;
 		/**
 		 * Message.what integer commanding the service to respond with a list of existing commands that have been added.
 		 */
-		public static final int REQUEST_COMMAND_LIST = 7;
+		public static final int REQUEST_COMMAND_LIST = 8;
 		/**
 		 * Message.what integer commanding the service to respond with a list of buttons that have been subscribed to.
 		 */
-		public static final int REQUEST_BUTTON_SUBSCRIPTIONS = 8;
+		public static final int REQUEST_BUTTON_SUBSCRIPTIONS = 9;
 		/**
 		 * Message.what integer commanding the service to respond with a list of interaction sets created so far.
 		 */
-		public static final int REQUEST_INTERACTION_SETS = 9;
+		public static final int REQUEST_INTERACTION_SETS = 10;
 		/**
 		 * Message.what integer commanding the service to respond with a list of put file images added so far.
 		 */
-		public static final int REQUEST_PUT_FILES = 10;
+		public static final int REQUEST_PUT_FILES = 11;
 	}
 	
 	/**
@@ -225,10 +225,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 	/* ********** Instance variables ********** */
 	protected List<Messenger> clients = null; // list of bound clients
 	
-	protected UpCounter correlationIdGenerator; // id generator for correlation ids
-	protected UpCounter commandIdGenerator; // id generator for commands & submenus
-	protected boolean appHasForeground = false; // tracks app's foreground state
-	protected boolean appIsLoaded = false; // set to true once the app gets its first HMI update
+	protected UpCounter correlationIdGenerator = new UpCounter(100); // id generator for correlation ids
+	protected UpCounter commandIdGenerator = new UpCounter(100); // id generator for commands & submenus
 	
 	protected MenuManager menuManager = new MenuManager();
 	protected MenuManager choiceSetManager = new MenuManager();
@@ -239,6 +237,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected SmartDeviceLinkProxyALM sdlProxy = null; // the proxy object which sends our requests and receives responses
 	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
 	protected boolean isConnected = false;
+	protected boolean offlineMode = false;
 	
 	/* ********** Messenger methods to & from the client ********** */
 	
@@ -256,14 +255,28 @@ public class SdlService extends Service implements IProxyListenerALM{
 					unregisterClient(msg.replyTo);
 					break;
 				case ServiceMessages.CONNECT:
+					offlineMode = false;
+					initialize();
 					IpAddress inputIp = (IpAddress) msg.obj;
 					startSdlProxy(inputIp);
 					break;
 				case ServiceMessages.DISCONNECT:
+					offlineMode = true;
+					initialize();
+					stopSdlProxy();
+					sendMessageToRegisteredClients(Message.obtain(null, ClientMessages.SDL_DISCONNECTED));
+					break;
+				case ServiceMessages.RESET:
+					initialize();
+					resetProxy();
+					break;
+				case ServiceMessages.OFFLINE_MODE:
+					offlineMode = true;
+					initialize();
 					stopSdlProxy();
 					break;
 				case ServiceMessages.SEND_MESSAGE:
-					sendSdlCommand((RPCRequest) msg.obj);
+					onSendMessageReceived((RPCRequest) msg.obj);
 					break;
 				case ServiceMessages.REQUEST_SUBMENU_LIST:
 					submenuListRequested(msg.replyTo, msg.arg1);
@@ -349,17 +362,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	}
 	
 	/**
-	 * Sends the current app foreground state to all registered clients. 
-	 * 
-	 * @param foregroundState The current foreground state
-	 */
-	protected void foregroundStateRequested(Messenger listener){
-		Message msg = Message.obtain(null, ClientMessages.FOREGROUND_STATE_RECEIVED);
-		msg.obj = appHasForeground;
-		sendMessageToClient(listener, msg);
-	}
-	
-	/**
 	 * Sends the list of available sub-menus to the listening messenger client.
 	 * 
 	 * @param listener The client to reply to
@@ -429,14 +431,14 @@ public class SdlService extends Service implements IProxyListenerALM{
 	private void initialize(){
 		isConnected = false;
 		
-		correlationIdGenerator = new UpCounter(100);
-		commandIdGenerator = new UpCounter(100);
-		appHasForeground = false;
-		appIsLoaded = false;
+		correlationIdGenerator.reset();
+		commandIdGenerator.reset();
 		
 		menuManager.clear();
 		choiceSetManager.clear();
 		awaitingResponse.clear();
+		buttonSubscriptions.clear();
+		addedImageNames.clear();
 	}
 
 	@Override
@@ -518,24 +520,44 @@ public class SdlService extends Service implements IProxyListenerALM{
 	
 	/* ********** Proxy communication methods ********** */
 	/**
-	 * Sends an RPCRequest to the current SDL connection.
+	 * Called when a message to send is received, adds parameters where appropriate (correlation id,
+	 * command id, other command-specific parameters, etc).
 	 * 
 	 * @param command The request to send
 	 */
-	protected void sendSdlCommand(RPCRequest command){
+	protected void onSendMessageReceived(RPCRequest command){
 		if(command == null){
 			throw new NullPointerException("Cannot send a null command.");
 		}
 		
-		if(sdlProxy == null){
+		if(!offlineMode && sdlProxy == null){
 			throw new IllegalStateException("Proxy object is null, so no commands can be sent.");
 		}
 		
+		// set any request-specific parameters if needed
 		setRequestSpecificParameters(command);
+		
+		// after setting appropriate parameters, send the full, completed response back to the clients
 		sendMessageResponse(command);
 		
+		if(!offlineMode){
+			// send the request through SmartDeviceLink
+			sendRpcRequest(command);
+		}
+		else{
+			// in offline mode, we'll just send a "fake" success response.
+			SdlResponseFactory.sendGenericResponseForRequest(command, this);
+		}
+	}
+	
+	/**
+	 * Sends the input request to the connected SDL proxy instance.
+	 * 
+	 * @param request
+	 */
+	protected void sendRpcRequest(RPCRequest request){
 		try {
-			sdlProxy.sendRPCRequest(command);
+			sdlProxy.sendRPCRequest(request);
 		} catch (SmartDeviceLinkException e) {
 			e.printStackTrace();
 		}
@@ -753,14 +775,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		return new ArrayList<String>(addedImageNames);
 	}
-	
-	/**
-	 * Called when app is first loaded and receives full HMI control 
-	 */
-	private void onAppLoaded(){
-		Message msg = Message.obtain(null, ClientMessages.ON_APP_OPENED);
-		sendMessageToRegisteredClients(msg);
-	}
 
 	/* ********** IProxyListenerALM interface methods ********** */
 	
@@ -771,18 +785,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 			Message msg = Message.obtain(null, ClientMessages.SDL_CONNECTED);
 			sendMessageToRegisteredClients(msg);
 			isConnected = true;
-		}
-		
-		HMILevel hmiLevel = newStatus.getHmiLevel();
-		if(hmiLevel == HMILevel.HMI_FULL || hmiLevel == HMILevel.HMI_LIMITED || hmiLevel == HMILevel.HMI_BACKGROUND){
-			if(!appIsLoaded){
-				onAppLoaded();
-				appIsLoaded = true;
-			}
-			appHasForeground = true;
-		}
-		else{
-			appHasForeground = false;
 		}
 		
 		sendMessageResponse(newStatus);

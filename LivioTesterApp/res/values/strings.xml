@@ -8,11 +8,14 @@
     
 <!--     Menu Strings -->
     <string name="menu_connect">Connect to SDL</string>
+    <string name="menu_disconnect">Disconnect from SDL</string>
+    <string name="menu_reset">Reset SDL Connection</string>
     
 <!--     Dialog Strings -->
     <string name="sdl_command_dialog_title">Select an SDL Command:</string>
     
 <!--     SDL Connection -->
+    <string name="connection_status_format">Connection Status:</string>
     <string name="ip_address">IP Address</string>
     <string name="ip_port">IP Port</string>
     

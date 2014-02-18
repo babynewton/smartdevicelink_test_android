@@ -11,7 +11,7 @@ import android.content.SharedPreferences;
  * @author Mike Burke
  *
  */
-public abstract class ApplicationPreferences {
+public final class ApplicationPreferences {
 	
 	private ApplicationPreferences(){} // don't allow instantiation of static classes
 	

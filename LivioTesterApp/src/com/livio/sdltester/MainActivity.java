@@ -30,9 +30,11 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.livio.sdl.SdlImageItem;
+import com.livio.sdl.SdlImageItem.SdlImageItemComparator;
 import com.livio.sdl.SdlLogMessage;
 import com.livio.sdl.adapters.SdlMessageAdapter;
 import com.livio.sdl.datatypes.IpAddress;
@@ -49,13 +51,13 @@ import com.livio.sdltester.dialogs.AddSubMenuDialog;
 import com.livio.sdltester.dialogs.ButtonSubscriptionDialog;
 import com.livio.sdltester.dialogs.ButtonUnsubscriptionDialog;
 import com.livio.sdltester.dialogs.ChangeRegistrationDialog;
-import com.livio.sdltester.dialogs.ConnectingDialog;
 import com.livio.sdltester.dialogs.CreateInteractionChoiceSetDialog;
 import com.livio.sdltester.dialogs.DeleteCommandDialog;
 import com.livio.sdltester.dialogs.DeleteFileDialog;
 import com.livio.sdltester.dialogs.DeleteInteractionDialog;
 import com.livio.sdltester.dialogs.DeleteSubmenuDialog;
 import com.livio.sdltester.dialogs.GetDtcsDialog;
+import com.livio.sdltester.dialogs.IndeterminateProgressDialog;
 import com.livio.sdltester.dialogs.JsonDialog;
 import com.livio.sdltester.dialogs.PerformInteractionDialog;
 import com.livio.sdltester.dialogs.PutFileDialog;
@@ -109,20 +111,37 @@ public class MainActivity extends Activity{
 		}
 	}
 	
+	private static enum ConnectionStatus{
+		CONNECTED("Connected"),
+		OFFLINE_MODE("Offline Mode"),
+		;
+		
+		private final String friendlyName;
+		private ConnectionStatus(String friendlyName){
+			this.friendlyName = friendlyName;
+		}
+		
+		@Override
+		public String toString(){
+			return friendlyName;
+		}
+	}
+	
 	private static final int CONNECTING_DIALOG_TIMEOUT = 10000; // duration to attempt a connection (10s)
 	
-	private boolean offlineMode = false;
+	private String connectionStatusFormat;
 	
 	private ListView commandList;
+	private TextView tv_connectionStatus;
 	private SdlMessageAdapter listViewAdapter;
 	
 	/* Messenger for communicating with service. */
     private Messenger serviceMsgr = null;
     
-    private boolean isBound = false, isConnected = false;
+    private boolean isBound = false;
 
     private BaseAlertDialog connectionDialog;
-	private ConnectingDialog connectingDialog;
+	private IndeterminateProgressDialog connectingDialog;
 	
 	// cache for all images available to send to SDL service
 	private HashMap<String, SdlImageItem> imageCache;
@@ -140,14 +159,10 @@ public class MainActivity extends Activity{
 		public void handleMessage(Message msg) {
 			switch(msg.what){
 			case SdlService.ClientMessages.SDL_CONNECTED:
-				isConnected = true;
-				
-				// since we're connected now, we're no longer in offline mode
-				setOfflineMode(false);
+				updateConnectionStatus(ConnectionStatus.CONNECTED);
 				
 				// clear the command log since we're starting fresh from here
-				listViewAdapter.clear();
-				listViewAdapter.notifyDataSetChanged();
+				clearSdlLog();
 				
 				// dismiss the connecting dialog if it's showing
 				if(connectingDialog != null && connectingDialog.isShowing()){
@@ -155,13 +170,8 @@ public class MainActivity extends Activity{
 				}
 				break;
 			case SdlService.ClientMessages.SDL_DISCONNECTED:
-				isConnected = false;
-				Toast.makeText(MainActivity.this, getResources().getString(R.string.sdl_disconnected), Toast.LENGTH_LONG).show();
-				break;
-			case SdlService.ClientMessages.ON_APP_OPENED:
-				break;
-			case SdlService.ClientMessages.FOREGROUND_STATE_RECEIVED:
-				onForegroundStateReceived( (Boolean) msg.obj);
+				updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
+				clearSdlLog();
 				break;
 			case SdlService.ClientMessages.ON_MESSAGE_RESULT:
 				onMessageResponseReceived((RPCMessage) msg.obj);
@@ -194,13 +204,10 @@ public class MainActivity extends Activity{
 	 * @param msg The message to send
 	 */
 	private void sendMessageToService(Message msg){
-		// only send messages to the service if we are NOT in offline mode
-		if(!offlineMode){
-			try {
-				serviceMsgr.send(msg);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
+		try {
+			serviceMsgr.send(msg);
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -292,6 +299,11 @@ public class MainActivity extends Activity{
 		// after adding a new item, auto-scroll to the bottom of the list
 		commandList.setSelection(listViewAdapter.getCount() - 1);
 	}
+	
+	private void clearSdlLog(){
+		listViewAdapter.clear();
+		listViewAdapter.notifyDataSetChanged();
+	}
     
     /*
      * Class for interacting with the main interface of the service.
@@ -345,10 +357,11 @@ public class MainActivity extends Activity{
 		setContentView(R.layout.main);
 
 		SdlService.setDebug(true);
-		
+
 		createImageCache();
-		initViews();
+		init();
 		doBindService();
+		showSdlConnectionDialog();
 	}
 	
 	private void createImageCache(){
@@ -368,7 +381,7 @@ public class MainActivity extends Activity{
 		}).start();
 	}
 
-	private void initViews(){		
+	private void init(){		
 		findViewById(R.id.btn_main_sendMessage).setOnClickListener(
 			new View.OnClickListener() {
 				@Override
@@ -400,19 +413,21 @@ public class MainActivity extends Activity{
 				jsonDialog.show();
 			}
 		});
+		
+		tv_connectionStatus = (TextView) findViewById(R.id.tv_connectionStatus);
 	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-	}
-
-	@Override
-	protected void onResume() {
-		if(!isConnected && !offlineMode && (connectionDialog == null || !connectionDialog.isShowing()) ){
-			showSdlConnectionDialog();
+	
+	private void updateConnectionStatus(ConnectionStatus status){
+		if(connectionStatusFormat == null){
+			connectionStatusFormat = getResources().getString(R.string.connection_status_format);
 		}
-		super.onResume();
+		
+		if(status == ConnectionStatus.OFFLINE_MODE){
+			sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
+		}
+		
+		String text = new StringBuilder().append(connectionStatusFormat).append(" ").append(status.toString()).toString();
+		tv_connectionStatus.setText(text);
 	}
 
 	@Override
@@ -420,17 +435,6 @@ public class MainActivity extends Activity{
 		sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.DISCONNECT));
 		doUnbindService();
 		super.onDestroy();
-	}
-	
-	/* ********** SDL Service request callbacks ********** */
-	
-	/**
-	 * Called when the current foreground state has been updated.
-	 * 
-	 * @param foregroundState True if the app is in the foreground on the head-unit, false otherwise
-	 */
-	private void onForegroundStateReceived(boolean foregroundState){
-		// TODO - change foreground state from a request-response model to an autoresponse model
 	}
 	
 	/**
@@ -580,6 +584,7 @@ public class MainActivity extends Activity{
 			break;
 		case ResultCodes.PutFileResult.DELETE_FILE:
 			availableItems = filterUnaddedItems(putFileList);
+			Collections.sort(availableItems, new SdlImageItemComparator());
 			
 			if(availableItems.size() > 0){
 				createDeleteFileDialog(availableItems);
@@ -670,22 +675,6 @@ public class MainActivity extends Activity{
 	}
 	
 	/**
-	 * Sets offline mode so that messages are not sent to the SDL service.  This allows
-	 * the app to run successfully without being connected to SDL core.
-	 * 
-	 * @param enable
-	 */
-	private void setOfflineMode(boolean enable){
-		if(offlineMode != enable){
-			offlineMode = enable;
-			String enableStr = (enable) ? "enabled" : "disabled";
-			String toastMsg = new StringBuilder().append("Offline mode ").append(enableStr).toString();
-			Toast.makeText(MainActivity.this, toastMsg, Toast.LENGTH_SHORT).show();
-			// TODO - implement offline mode in SDL service so we can still receive (fake) responses and still see some data being updated in offline mode
-		}
-	}
-	
-	/**
 	 * Shows the SDL connection dialog, which allows the user to enter the IP address for the core component they would like to connect to.
 	 */
 	private void showSdlConnectionDialog(){
@@ -709,7 +698,7 @@ public class MainActivity extends Activity{
 			public void onResult(Object resultData) {
 				IpAddress result = (IpAddress) resultData;
 				if(result == null){
-					setOfflineMode(true);
+					updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
 					return;
 				}
 				
@@ -725,7 +714,7 @@ public class MainActivity extends Activity{
 					MyApplicationPreferences.saveTcpPort(MainActivity.this, portString);
 					
 					// show an indeterminate connecting dialog
-					connectingDialog = new ConnectingDialog(MainActivity.this);
+					connectingDialog = new IndeterminateProgressDialog(MainActivity.this, "Connecting");
 					connectingDialog.show();
 					
 					// and start a timeout thread in case the connection isn't successful
@@ -740,7 +729,13 @@ public class MainActivity extends Activity{
 									// if we made it here without being interrupted, the connection was unsuccessful - dismiss the dialog and enter offline mode
 									connectingDialog.dismiss();
 									Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
-									setOfflineMode(true);
+									sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
+									runOnUiThread(new Runnable() {
+										@Override
+										public void run() {
+											updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
+										}
+									});
 								}
 							} catch (InterruptedException e) {
 								// do nothing
@@ -1132,8 +1127,13 @@ public class MainActivity extends Activity{
 		int menuItemId = item.getItemId();
 		switch(menuItemId){
 		case R.id.menu_connect:
-			setOfflineMode(false);
 			showSdlConnectionDialog();
+			return true;
+		case R.id.menu_disconnect:
+			sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.DISCONNECT));
+			return true;
+		case R.id.menu_reset:
+			sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.RESET));
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);

@@ -21,7 +21,7 @@ import android.widget.ArrayAdapter;
  * @author Mike Burke
  *
  */
-public abstract class AndroidUtils {
+public final class AndroidUtils {
 
 	private AndroidUtils(){} // don't allow instantiation of static classes
 	

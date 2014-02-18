@@ -6,7 +6,7 @@ package com.livio.sdl.utils;
  * @author Mike Burke
  *
  */
-public abstract class StringUtils {
+public final class StringUtils {
 	
 	private StringUtils(){}
 	

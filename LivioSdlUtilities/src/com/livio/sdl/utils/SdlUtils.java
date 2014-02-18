@@ -14,7 +14,7 @@ import com.smartdevicelink.proxy.rpc.enums.FileType;
  * @author Mike Burke
  *
  */
-public abstract class SdlUtils {
+public final class SdlUtils {
 	private static final int NUMBER_OF_INDENTS = 4;
 	
 	private SdlUtils(){}
