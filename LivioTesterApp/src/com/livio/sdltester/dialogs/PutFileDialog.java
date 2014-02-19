@@ -9,7 +9,6 @@ import java.util.Set;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Bitmap.CompressFormat;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.CheckBox;
@@ -21,15 +20,15 @@ import android.widget.Toast;
 
 import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlImageItem.SdlImageItemComparator;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
+import com.livio.sdl.dialogs.ImageListDialog;
 import com.livio.sdl.enums.SdlCommand;
-import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdl.utils.SdlUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCMessage;
-import com.smartdevicelink.proxy.rpc.PutFile;
-import com.smartdevicelink.proxy.rpc.enums.FileType;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class PutFileDialog extends BaseOkCancelDialog {
 
@@ -70,9 +69,7 @@ public class PutFileDialog extends BaseOkCancelDialog {
 			new Thread(new Runnable() {
 				@Override
 				public void run() {
-					FileType type = item.getImageType();
-					CompressFormat format = SdlUtils.convertImageTypeToCompressFormat(type);
-					byte[] bitmapData = AndroidUtils.bitmapToRawBytes(item.getBitmap(), format);
+					byte[] bitmapData = SdlUtils.bitmapToByteArray(item.getBitmap(), item.getImageType());
 					addDataToMap(item, bitmapData);
 				}
 			}).start();
@@ -148,12 +145,8 @@ public class PutFileDialog extends BaseOkCancelDialog {
 				
 				while(iterator.hasNext()){
 					SdlImageItem item = iterator.next();
-					PutFile putFile = new PutFile();
-					putFile.setSmartDeviceLinkFileName(item.getImageName());
-					putFile.setFileType(item.getImageType());
-					putFile.setPersistentFile(persistentFile);
-					putFile.setBulkData(bitmapRawByteMap.get(item));
-					messages.add(putFile);
+					RPCRequest result = SdlRequestFactory.putFile(item.getImageName(), item.getImageType(), persistentFile, bitmapRawByteMap.get(item));
+					messages.add(result);
 				}
 				
 				notifyListener(messages);
@@ -161,12 +154,8 @@ public class PutFileDialog extends BaseOkCancelDialog {
 			else if(selectedImage != null){
 				String name = et_putFile_imageName.getText().toString();
 				if(name.length() > 0){
-					PutFile putFile = new PutFile();
-					putFile.setSmartDeviceLinkFileName(name);
-					putFile.setFileType(selectedImage.getImageType());
-					putFile.setPersistentFile(persistentFile);
-					putFile.setBulkData(bitmapRawByteMap.get(selectedImage));
-					messages.add(putFile);
+					RPCRequest result = SdlRequestFactory.putFile(name, selectedImage.getImageType(), persistentFile, bitmapRawByteMap.get(selectedImage));
+					messages.add(result);
 
 					notifyListener(messages);
 				}

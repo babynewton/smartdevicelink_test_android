@@ -1,7 +1,5 @@
 package com.livio.sdltester.dialogs;
 
-import java.util.Vector;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
@@ -9,14 +7,13 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlSpeechCapability;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.TTSChunkFactory;
-import com.smartdevicelink.proxy.rpc.Speak;
-import com.smartdevicelink.proxy.rpc.TTSChunk;
+import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.enums.SpeechCapabilities;
 
 public class SpeakDialog extends BaseOkCancelDialog{
@@ -48,17 +45,22 @@ public class SpeakDialog extends BaseOkCancelDialog{
 			final SdlSpeechCapability sdlSpeechCapabilities = (SdlSpeechCapability) spin_speechCapabilities.getSelectedItem();
 			final SpeechCapabilities speechCapabilities = SdlSpeechCapability.translateToLegacy(sdlSpeechCapabilities);
 			
-			if(ttsText.length() > 0){
-				Speak speak = new Speak();
-				Vector<TTSChunk> ttsChunks = new Vector<TTSChunk>(1);
-				ttsChunks.add(TTSChunkFactory.createChunk(speechCapabilities, ttsText));
-				speak.setTtsChunks(ttsChunks);
-				
-				notifyListener(speak);
+			if(speechCapabilities != SpeechCapabilities.SILENCE){
+				if(ttsText.length() > 0){
+					RPCRequest result = SdlRequestFactory.speak(ttsText, speechCapabilities);
+					notifyListener(result);
+				}
+				else{
+					Toast.makeText(context, "Must enter text to speak.", Toast.LENGTH_LONG).show();
+				}
 			}
 			else{
-				Toast.makeText(context, "Must enter text to speak.", Toast.LENGTH_LONG).show();
+				RPCRequest result = SdlRequestFactory.speak(ttsText, speechCapabilities);
+				notifyListener(result);
 			}
+			
+			
+			
 		}
 	};
 	

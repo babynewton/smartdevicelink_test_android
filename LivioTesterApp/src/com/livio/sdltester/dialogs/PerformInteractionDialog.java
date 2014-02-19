@@ -18,6 +18,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlConstants;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.dialogs.MultipleListViewDialog;
@@ -26,8 +28,7 @@ import com.livio.sdl.enums.SdlInteractionMode;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.TTSChunkFactory;
-import com.smartdevicelink.proxy.rpc.PerformInteraction;
+import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.enums.InteractionMode;
 
 public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCheckedChangeListener, OnSeekBarChangeListener{
@@ -36,18 +37,18 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
 	//set up your min & max time allowed here.
-	private static final int MINIMUM_ALERT_TONE_TIME = 5; // 5.0 seconds
-	private static final int MAXIMUM_ALERT_TONE_TIME = 100;// 100.0 seconds
+	private static final int MINIMUM_TIMEOUT = SdlConstants.PerformInteractionConstants.MINIMUM_TIMEOUT;
+	private static final int MAXIMUM_TIMEOUT = SdlConstants.PerformInteractionConstants.MAXIMUM_TIMEOUT;
 	
 	//seekbar can only start at 0, so we have to do all these stupid adjustments everywhere...
 	@SuppressWarnings("unused")
-	private static final int MAX_SEEKBAR_PROGRESS = MAXIMUM_ALERT_TONE_TIME - MINIMUM_ALERT_TONE_TIME;
+	private static final int MAX_SEEKBAR_PROGRESS = MAXIMUM_TIMEOUT - MINIMUM_TIMEOUT;
 
 	//this is your default selection for tone duration.  again, divide by 10 for the actual time in seconds.
-	private static final int DEFAULT_TONE_DURATION = 30;  // 30.0 seconds
+	private static final int DEFAULT_TIMEOUT = 30;  // 30.0 seconds
 	
 	//another stupid adjustment.  your default selection must be offset by the minimum value since seekbars can only start at 0
-	private static final int ADJUSTED_DEFAULT_TONE_DURATION = DEFAULT_TONE_DURATION - MINIMUM_ALERT_TONE_TIME;
+	private static final int ADJUSTED_DEFAULT_TIMEOUT = DEFAULT_TIMEOUT - MINIMUM_TIMEOUT;
 	
 	// a seekbar cannot do decimal points, so it currently ranges 5-100, which is then
 	// divided by 1.0f to give us a number of seconds, rounded to 1.0 seconds.
@@ -99,7 +100,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 		check_timeoutEnabled.setOnCheckedChangeListener(this);
 		
 		seek_timeoutDuration.setOnSeekBarChangeListener(this);
-		seek_timeoutDuration.setProgress(DEFAULT_TONE_DURATION - MINIMUM_ALERT_TONE_TIME);
+		seek_timeoutDuration.setProgress(DEFAULT_TIMEOUT - MINIMUM_TIMEOUT);
 	}
 
 	@Override
@@ -115,7 +116,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 		seek_timeoutDuration = (SeekBar) parent.findViewById(R.id.seek_performInteraction_timeoutDuration);
 		
 		//make initial updates to the UI using default values
-		updateProgressText(progressToFloat(ADJUSTED_DEFAULT_TONE_DURATION));
+		updateProgressText(progressToFloat(ADJUSTED_DEFAULT_TIMEOUT));
 		enableDuration(check_timeoutEnabled.isChecked());
 	}
 
@@ -143,7 +144,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	}
 	
 	private static int adjustedProgress(int progress){
-		return progress + MINIMUM_ALERT_TONE_TIME;
+		return progress + MINIMUM_TIMEOUT;
 	}
 	
 	// dialog button listeners
@@ -156,33 +157,23 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 			else{
 				String title = et_title.getText().toString();
 				String voicePrompt = et_voicePrompt.getText().toString();
+				
 				boolean timeoutEnabled = check_timeoutEnabled.isChecked();
+				int timeout = SdlConstants.PerformInteractionConstants.INVALID_TIMEOUT;
+				if(timeoutEnabled){
+					timeout = progressInMs(seek_timeoutDuration.getProgress());
+				}
+				
 				SdlInteractionMode sdlInteractionMode = (SdlInteractionMode) spin_interactionMode.getAdapter().getItem(spin_interactionMode.getSelectedItemPosition());
 				InteractionMode interactionMode = SdlInteractionMode.translateToLegacy(sdlInteractionMode);
+				
 				Vector<Integer> choiceSetIds = new Vector<Integer>(selectedChoiceSets.size());
 				for(MenuItem item : selectedChoiceSets){
 					choiceSetIds.add(item.getId());
 				}
 				
-				if(title.length() <= 0){
-					title = " ";
-				}
-				
-				if(voicePrompt.length() <= 0){
-					voicePrompt = " ";
-				}
-				
-				PerformInteraction performInteraction = new PerformInteraction();
-				performInteraction.setInitialText(title);
-				performInteraction.setInitialPrompt(TTSChunkFactory.createSimpleTTSChunks(voicePrompt));
-				performInteraction.setInteractionMode(interactionMode);
-				performInteraction.setInteractionChoiceSetIDList(choiceSetIds);
-				if(timeoutEnabled){
-					int timeoutInMs = progressInMs(seek_timeoutDuration.getProgress());
-					performInteraction.setTimeout(timeoutInMs);
-				}
-				
-				notifyListener(performInteraction);
+				RPCRequest result = SdlRequestFactory.performInteraction(title, voicePrompt, choiceSetIds, interactionMode, timeout);
+				notifyListener(result);
 			}
 		}
 	};

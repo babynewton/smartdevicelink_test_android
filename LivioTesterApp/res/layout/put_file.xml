@@ -8,6 +8,12 @@
     android:layout_marginLeft="10dip" 
     android:layout_marginRight="10dip">
 
+    <CheckBox
+        android:id="@+id/cb_putFile_addAll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add all images" />
+
     <ImageButton android:id="@+id/ib_putFile_selectAnImage"
         android:layout_width="match_parent"
         android:layout_height="240dp"
@@ -29,11 +35,5 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/put_file_persistent_file" />
-
-    <CheckBox
-        android:id="@+id/cb_putFile_addAll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Add all images" />
 
 </LinearLayout>

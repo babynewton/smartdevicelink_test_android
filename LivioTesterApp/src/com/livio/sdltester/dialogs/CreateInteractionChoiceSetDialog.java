@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
+import com.livio.sdl.utils.SdlUtils;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.Choice;
@@ -116,7 +117,7 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 				
 				// make sure the choice at least has a name to display
 				if(choiceName.length() > 0){
-					Choice choice = SdlRequestFactory.choice(choiceName, voiceRecKeyword, null); // TODO implement images
+					Choice choice = SdlUtils.createChoice(choiceName, voiceRecKeyword, null); // TODO implement images
 					choiceItems.add(choice);
 				}
 			}

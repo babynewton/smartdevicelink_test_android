@@ -9,11 +9,12 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 
 import com.livio.sdl.SdlImageItem;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.adapters.SdlImageAdapter;
 import com.livio.sdl.dialogs.BaseImageListDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.SetAppIcon;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class SetAppIconDialog extends BaseImageListDialog {
 
@@ -33,9 +34,8 @@ public class SetAppIconDialog extends BaseImageListDialog {
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				SdlImageItem selectedItem = ((SdlImageAdapter) parent.getAdapter()).getItem(position);
 				
-				SetAppIcon setAppIcon = new SetAppIcon();
-				setAppIcon.setSmartDeviceLinkFileName(selectedItem.getImageName());
-				notifyListener(setAppIcon);
+				RPCRequest result = SdlRequestFactory.setAppIcon(selectedItem.getImageName());
+				notifyListener(result);
 
 				dismiss();
 			}

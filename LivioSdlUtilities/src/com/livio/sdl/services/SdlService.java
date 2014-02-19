@@ -100,6 +100,11 @@ import com.smartdevicelink.transport.TCPTransportConfig;
  *
  */
 public class SdlService extends Service implements IProxyListenerALM{
+	// TODO - if a request is in the awaiting response queue for more than (5? 10?) seconds, assume the connection was lost and send DISCONNECT message.
+	// TODO - track current language registration so the dialog can be initialized with the current values
+	
+	
+	
 	/* ********** Nested Classes ********** */
 	
 	/**

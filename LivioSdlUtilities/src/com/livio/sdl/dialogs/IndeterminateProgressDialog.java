@@ -1,4 +1,4 @@
-package com.livio.sdltester.dialogs;
+package com.livio.sdl.dialogs;
 
 import android.app.ProgressDialog;
 import android.content.Context;

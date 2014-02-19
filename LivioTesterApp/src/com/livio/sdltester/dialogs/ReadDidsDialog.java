@@ -1,7 +1,5 @@
 package com.livio.sdltester.dialogs;
 
-import java.util.Vector;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.text.InputFilter;
@@ -9,19 +7,21 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlConstants;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.datatypes.MinMaxInputFilter;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.ReadDID;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class ReadDidsDialog extends BaseOkCancelDialog {
 
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.READ_DIDS;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
-	private static final int MIN_ECU_NUMBER = 0;
-	private static final int MAX_ECU_NUMBER = 65535;
+	private static final int MIN_ECU_NUMBER = SdlConstants.ReadDidsConstants.MINIMUM_ECU_ID;
+	private static final int MAX_ECU_NUMBER = SdlConstants.ReadDidsConstants.MAXIMUM_ECU_ID;
 	
 	private EditText et_ecuName, et_didLocation;
 	
@@ -46,13 +46,8 @@ public class ReadDidsDialog extends BaseOkCancelDialog {
 			final String ecuName = et_ecuName.getText().toString();
 			final String didLocation = et_didLocation.getText().toString();
 			if(ecuName.length() > 0 && didLocation.length() > 0){
-				Vector<Integer> didIds = new Vector<Integer>(); // TODO - make this dynamic so users can enter multiple DID locations.
-				didIds.add(Integer.parseInt(didLocation));
-				
-				ReadDID readDid = new ReadDID();
-				readDid.setEcuName(Integer.parseInt(ecuName));
-				readDid.setDidLocation(didIds);
-				notifyListener(readDid);
+				RPCRequest result = SdlRequestFactory.readDid(Integer.parseInt(ecuName), Integer.parseInt(didLocation));
+				notifyListener(result);
 			}
 			else{
 				Toast.makeText(context, "Must enter ECU name & DID location.", Toast.LENGTH_LONG).show();

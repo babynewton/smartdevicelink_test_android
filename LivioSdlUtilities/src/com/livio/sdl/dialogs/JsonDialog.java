@@ -1,11 +1,10 @@
-package com.livio.sdltester.dialogs;
+package com.livio.sdl.dialogs;
 
 import android.content.Context;
 import android.view.View;
 import android.view.View.OnClickListener;
 
 import com.livio.sdl.SdlLogMessage;
-import com.livio.sdl.dialogs.BaseTextViewDialog;
 import com.livio.sdl.utils.SdlUtils;
 
 public class JsonDialog extends BaseTextViewDialog {

@@ -11,20 +11,28 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.livio.sdl.SdlConstants;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.datatypes.MinMaxInputFilter;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlUpdateMode;
 import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.SetMediaClockTimer;
-import com.smartdevicelink.proxy.rpc.StartTime;
+import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.enums.UpdateMode;
 
 public class SetMediaClockTimerDialog extends BaseOkCancelDialog {
 
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.SET_MEDIA_CLOCK_TIMER;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
+
+	private static final int HOURS_MIN = SdlConstants.SetMediaClockTimerConstants.HOURS_MINIMUM;
+	private static final int HOURS_MAX = SdlConstants.SetMediaClockTimerConstants.HOURS_MAXIMUM;
+	private static final int MINS_MIN = SdlConstants.SetMediaClockTimerConstants.MINUTES_MINIMUM;
+	private static final int MINS_MAX = SdlConstants.SetMediaClockTimerConstants.MINUTES_MAXIMUM;
+	private static final int SECS_MIN = SdlConstants.SetMediaClockTimerConstants.SECONDS_MINIMUM;
+	private static final int SECS_MAX = SdlConstants.SetMediaClockTimerConstants.SECONDS_MAXIMUM;
 	
 	private Spinner spin_mediaClock_type;
 	private EditText et_mediaClock_hrs, et_mediaClock_mins, et_mediaClock_secs;
@@ -52,11 +60,11 @@ public class SetMediaClockTimerDialog extends BaseOkCancelDialog {
 		});
 		
 		et_mediaClock_hrs = (EditText) parent.findViewById(R.id.et_mediaClockHours);
-		et_mediaClock_hrs.setFilters(new InputFilter[]{new MinMaxInputFilter(0, 59)});
+		et_mediaClock_hrs.setFilters(new InputFilter[]{new MinMaxInputFilter(HOURS_MIN, HOURS_MAX)});
 		et_mediaClock_mins = (EditText) parent.findViewById(R.id.et_mediaClockMins);
-		et_mediaClock_mins.setFilters(new InputFilter[]{new MinMaxInputFilter(0, 59)});
+		et_mediaClock_mins.setFilters(new InputFilter[]{new MinMaxInputFilter(MINS_MIN, MINS_MAX)});
 		et_mediaClock_secs = (EditText) parent.findViewById(R.id.et_mediaClockSecs);
-		et_mediaClock_secs.setFilters(new InputFilter[]{new MinMaxInputFilter(0, 59)});
+		et_mediaClock_secs.setFilters(new InputFilter[]{new MinMaxInputFilter(SECS_MIN, SECS_MAX)});
 		
 		tv_mediaClock_clock = (TextView) parent.findViewById(R.id.tv_mediaClock_clock);
 		
@@ -79,8 +87,7 @@ public class SetMediaClockTimerDialog extends BaseOkCancelDialog {
 		public void onClick(DialogInterface dialog, int which) {
 			SdlUpdateMode mode = (SdlUpdateMode) spin_mediaClock_type.getSelectedItem();
 			UpdateMode legacyMode = SdlUpdateMode.translateToLegacy(mode);
-			SetMediaClockTimer result = new SetMediaClockTimer();
-			result.setUpdateMode(legacyMode);
+			RPCRequest result;
 			
 			if(mode == SdlUpdateMode.COUNT_UP || mode == SdlUpdateMode.COUNT_DOWN){
 				String hours = et_mediaClock_hrs.getText().toString();
@@ -91,13 +98,11 @@ public class SetMediaClockTimerDialog extends BaseOkCancelDialog {
 				hours = (hours.length() > 0) ? hours : "0";
 				mins = (mins.length() > 0) ? mins : "0";
 				secs = (secs.length() > 0) ? secs : "0";
-				
-				StartTime startTime = new StartTime();
-				startTime.setHours(Integer.parseInt(hours));
-				startTime.setMinutes(Integer.parseInt(mins));
-				startTime.setSeconds(Integer.parseInt(secs));
-				
-				result.setStartTime(startTime);
+
+				result = SdlRequestFactory.setMediaClockTimer(legacyMode, Integer.parseInt(hours), Integer.parseInt(mins), Integer.parseInt(secs));
+			}
+			else{
+				result = SdlRequestFactory.setMediaClockTimer(legacyMode);
 			}
 			
 			notifyListener(result);

@@ -17,6 +17,7 @@ import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
+import com.livio.sdl.dialogs.ImageListDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.utils.AndroidUtils;
@@ -45,7 +46,7 @@ public class AddCommandDialog extends BaseOkCancelDialog{
 	
 	private void setupViews(List<MenuItem> availableSubmenus, final List<SdlImageItem> images){
 		List<MenuItem> submenuList = new ArrayList<MenuItem>(availableSubmenus);
-		submenuList.add(0, new MenuItem("Root-level menu", 0, true));
+		submenuList.add(0, new MenuItem("Root-level menu", SdlConstants.AddCommandConstants.ROOT_PARENT_ID, true));
 		spin_addCommand_submenus.setAdapter(AndroidUtils.createSpinnerAdapter(context, submenuList));
 		
 		but_addCommand_selectImage.setOnClickListener(new OnClickListener() {
@@ -83,10 +84,10 @@ public class AddCommandDialog extends BaseOkCancelDialog{
 			if(listener != null){
 				// grab the data from the views
 				final String commandName = et_newCommand.getText().toString();
-				final int position = SdlConstants.AddCommand.DEFAULT_POSITION;
+				final int position = SdlConstants.AddCommandConstants.DEFAULT_POSITION;
 				final String voiceRecKeyword   = et_voiceRecKeyword.getText().toString();
 				final MenuItem parentBank = (MenuItem) spin_addCommand_submenus.getSelectedItem();
-				final int parentId = (parentBank != null) ? parentBank.getId() : SdlConstants.AddCommand.INVALID_PARENT_ID; // TODO -1 is an invalid parent id, but this should be defined somewhere...
+				final int parentId = (parentBank != null) ? parentBank.getId() : SdlConstants.AddCommandConstants.INVALID_PARENT_ID; // TODO -1 is an invalid parent id, but this should be defined somewhere...
 				final String imageName = (selectedImage != null) ? selectedImage.getImageName() : null;
 				
 				// all we really need is a valid name

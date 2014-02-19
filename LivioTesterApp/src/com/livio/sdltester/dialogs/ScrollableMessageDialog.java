@@ -9,11 +9,15 @@ import android.widget.EditText;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.livio.sdl.SdlConstants;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
+import com.livio.sdl.utils.MathUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.ScrollableMessage;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class ScrollableMessageDialog extends BaseOkCancelDialog {
 
@@ -23,8 +27,9 @@ public class ScrollableMessageDialog extends BaseOkCancelDialog {
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
 	private static final int TIMEOUT_DEFAULT = 30;
-	private static final int TIMEOUT_MIN = 1;
-	private static final int S_TO_MS_MULTIPLIER = 1000;
+	private static final int TIMEOUT_MIN = SdlConstants.ScrollableMessageConstants.TIMEOUT_MINIMUM;
+	private static final int TIMEOUT_MAX = SdlConstants.ScrollableMessageConstants.TIMEOUT_MAXIMUM;
+	private static final int LENGTH_MAX = SdlConstants.ScrollableMessageConstants.MESSAGE_LENGTH_MAX;
 	
 	private EditText et_scrollableMessage_text;
 	private TextView tv_timeout;
@@ -55,6 +60,7 @@ public class ScrollableMessageDialog extends BaseOkCancelDialog {
 		updateTimeoutText(TIMEOUT_DEFAULT);
 		
 		seek_timeout = (SeekBar) parent.findViewById(R.id.seek_scrollableMessage_timeout);
+		seek_timeout.setMax(TIMEOUT_MAX - TIMEOUT_MIN);
 		seek_timeout.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override public void onStopTrackingTouch(SeekBar seekBar) {}
 			@Override public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -77,17 +83,19 @@ public class ScrollableMessageDialog extends BaseOkCancelDialog {
 		public void onClick(DialogInterface dialog, int which) {
 			String message = et_scrollableMessage_text.getText().toString();
 			int timeout = seek_timeout.getProgress() + TIMEOUT_MIN;
-			timeout *= S_TO_MS_MULTIPLIER; // convert s to ms
+			timeout = MathUtils.convertSecsToMillisecs(timeout);
 			
 			if(message.length() <= 0){
 				message = " ";
 			}
+			// if the message is too long, we'll just chop off the end
+			else if(message.length() > LENGTH_MAX){
+				Toast.makeText(context, "Text was too long, extra characters are being dropped.", Toast.LENGTH_LONG).show();
+				message = message.substring(0, LENGTH_MAX);
+			}
 			
-			ScrollableMessage scrollableMessage = new ScrollableMessage();
-			scrollableMessage.setScrollableMessageBody(message);
-			scrollableMessage.setTimeout(timeout);
-			
-			notifyListener(scrollableMessage);
+			RPCRequest result = SdlRequestFactory.scrollableMessage(message, timeout);
+			notifyListener(result);
 		}
 	};
 

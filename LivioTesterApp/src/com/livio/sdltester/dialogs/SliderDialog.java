@@ -1,7 +1,5 @@
 package com.livio.sdltester.dialogs;
 
-import java.util.Vector;
-
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
@@ -11,25 +9,28 @@ import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 
+import com.livio.sdl.SdlConstants;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
+import com.livio.sdl.utils.MathUtils;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.Slider;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class SliderDialog extends BaseOkCancelDialog {
 
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.SLIDER;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
-	private static final int NUM_OF_TICKS_MIN = 2;
-	private static final int START_POSITION_MIN = 1;
-	private static final int TIMEOUT_MIN = 1;
+	private static final int NUM_OF_TICKS_MIN = SdlConstants.SliderConstants.NUM_OF_TICKS_MIN;
+	private static final int NUM_OF_TICKS_MAX = SdlConstants.SliderConstants.NUM_OF_TICKS_MAX;
+	private static final int START_POSITION_MIN = SdlConstants.SliderConstants.START_POSITION_MIN;
+	private static final int TIMEOUT_MIN = SdlConstants.SliderConstants.TIMEOUT_MIN;
+	private static final int TIMEOUT_MAX = SdlConstants.SliderConstants.TIMEOUT_MAX;
 	
-	private static final int NUM_OF_TICKS_DEFAULT = 2;
+	private static final int NUM_OF_TICKS_DEFAULT = 10;
 	private static final int START_POSITION_DEFAULT = 1;
 	private static final int TIMEOUT_DEFAULT = 10;
-	
-	private static final int S_TO_MS_MULTIPLIER = 1000;
 	
 	private EditText et_slider_title, et_slider_footer;
 	private SeekBar seek_slider_numOfTicks, seek_slider_startPosition, seek_slider_timeout;
@@ -61,6 +62,7 @@ public class SliderDialog extends BaseOkCancelDialog {
 		updateTimeout(TIMEOUT_DEFAULT);
 
 		seek_slider_numOfTicks = (SeekBar) parent.findViewById(R.id.seek_slider_numOfTicks);
+		seek_slider_numOfTicks.setMax(NUM_OF_TICKS_MAX - NUM_OF_TICKS_MIN);
 		seek_slider_numOfTicks.setProgress(NUM_OF_TICKS_DEFAULT - NUM_OF_TICKS_MIN);
 		seek_slider_numOfTicks.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override public void onStopTrackingTouch(SeekBar seekBar) {}
@@ -87,6 +89,7 @@ public class SliderDialog extends BaseOkCancelDialog {
 		});
 		
 		seek_slider_timeout = (SeekBar) parent.findViewById(R.id.seek_slider_timeout);
+		seek_slider_timeout.setMax(TIMEOUT_MAX - TIMEOUT_MIN);
 		seek_slider_timeout.setProgress(TIMEOUT_DEFAULT - TIMEOUT_MIN);
 		seek_slider_timeout.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override public void onStopTrackingTouch(SeekBar seekBar) {}
@@ -129,7 +132,7 @@ public class SliderDialog extends BaseOkCancelDialog {
 			int startPosition = seek_slider_startPosition.getProgress() + START_POSITION_MIN;
 			
 			int timeout = seek_slider_timeout.getProgress() + TIMEOUT_MIN;
-			timeout *= S_TO_MS_MULTIPLIER; // convert timeout from s to ms
+			timeout = MathUtils.convertSecsToMillisecs(timeout);
 			
 			if(sliderTitle.length() <= 0){
 				sliderTitle = " ";
@@ -138,17 +141,8 @@ public class SliderDialog extends BaseOkCancelDialog {
 				sliderFooter = " ";
 			}
 			
-			Vector<String> sliderFooterVector = new Vector<String>(1);
-			sliderFooterVector.add(sliderFooter);
-			
-			Slider slider = new Slider();
-			slider.setNumTicks(numOfTicks);
-			slider.setPosition(startPosition);
-			slider.setTimeout(timeout);
-			slider.setSliderHeader(sliderTitle);
-			slider.setSliderFooter(sliderFooterVector);
-			
-			notifyListener(slider);
+			RPCRequest result = SdlRequestFactory.slider(sliderTitle, sliderFooter, numOfTicks, startPosition, timeout);
+			notifyListener(result);
 		}
 	};
 

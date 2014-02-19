@@ -9,11 +9,12 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseSingleListViewDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdltester.R;
-import com.smartdevicelink.proxy.rpc.DeleteSubMenu;
+import com.smartdevicelink.proxy.RPCRequest;
 
 public class DeleteSubmenuDialog extends BaseSingleListViewDialog<MenuItem>{
 
@@ -35,9 +36,10 @@ public class DeleteSubmenuDialog extends BaseSingleListViewDialog<MenuItem>{
 				final MenuItem selectedButton = ((ArrayAdapter<MenuItem>) parent.getAdapter()).getItem(position);
 				final int menuId = selectedButton.getId();
 				
-				DeleteSubMenu deleteCommand = new DeleteSubMenu();
-				deleteCommand.setMenuID(menuId);
-				notifyListener(deleteCommand);
+				RPCRequest request = SdlRequestFactory.deleteSubmenu(menuId);
+				notifyListener(request);
+				
+				// since this isn't an ok/cancel dialog, we must dismiss the dialog when an item is selected
 				dismiss();
 			}
 		});

@@ -37,7 +37,7 @@ public class AddSubMenuDialog extends BaseOkCancelDialog{
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			final String submenuName = et_submenuName.getText().toString();
-			final int position = SdlConstants.AddSubmenu.DEFAULT_POSITION;
+			final int position = SdlConstants.AddSubmenuConstants.DEFAULT_POSITION;
 			
 			// all we need is a valid name
 			if(submenuName.length() > 0){
