@@ -142,6 +142,7 @@ public class MainActivity extends Activity{
 
     private BaseAlertDialog connectionDialog;
 	private IndeterminateProgressDialog connectingDialog;
+	private Timeout connectionTimeout;
 	
 	// cache for all images available to send to SDL service
 	private HashMap<String, SdlImageItem> imageCache;
@@ -168,8 +169,12 @@ public class MainActivity extends Activity{
 				if(connectingDialog != null && connectingDialog.isShowing()){
 					connectingDialog.dismiss();
 				}
+				if(connectionTimeout != null){
+					connectionTimeout.cancel();
+				}
 				break;
 			case SdlService.ClientMessages.SDL_DISCONNECTED:
+				resetService();
 				updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
 				clearSdlLog();
 				break;
@@ -285,6 +290,15 @@ public class MainActivity extends Activity{
 		msg.replyTo = mMessenger;
 		msg.arg1 = reqCode;
 		sendMessageToService(msg);
+	}
+	
+	/**
+	 * Resets the SDL service.
+	 */
+	private void resetService(){
+		Intent sdlService = new Intent(MainActivity.this, SdlService.class);
+		stopService(sdlService);
+		startService(sdlService);
 	}
 	
 	/**
@@ -575,7 +589,6 @@ public class MainActivity extends Activity{
 		switch(reqCode){
 		case ResultCodes.PutFileResult.PUT_FILE:
 			availableItems = filterAddedItems(putFileList);
-			Collections.sort(availableItems, new SdlImageItemComparator());
 			
 			if(availableItems.size() > 0){
 				createPutFileDialog(availableItems);
@@ -586,7 +599,6 @@ public class MainActivity extends Activity{
 			break;
 		case ResultCodes.PutFileResult.DELETE_FILE:
 			availableItems = filterUnaddedItems(putFileList);
-			Collections.sort(availableItems, new SdlImageItemComparator());
 			
 			if(availableItems.size() > 0){
 				createDeleteFileDialog(availableItems);
@@ -597,7 +609,6 @@ public class MainActivity extends Activity{
 			break;
 		case ResultCodes.PutFileResult.SET_APP_ICON:
 			availableItems = filterUnaddedItems(putFileList);
-			Collections.sort(availableItems, new SdlImageItemComparator());
 			
 			if(availableItems.size() > 0){
 				createSetAppIconDialog(availableItems);
@@ -609,6 +620,10 @@ public class MainActivity extends Activity{
 		case ResultCodes.PutFileResult.ADD_COMMAND:
 			availableItems = filterUnaddedItems(putFileList);
 			createAddCommandDialog(submenuCache, availableItems);
+			break;
+		case ResultCodes.PutFileResult.SHOW:
+			availableItems = filterUnaddedItems(putFileList);
+			createShowDialog(availableItems);
 			break;
 		default:
 			break;
@@ -639,6 +654,8 @@ public class MainActivity extends Activity{
 		for(String name : cacheKeys){
 			result.add(imageCache.get(name));
 		}
+
+		Collections.sort(result, new SdlImageItemComparator());
 		
 		return result;
 	}
@@ -654,6 +671,8 @@ public class MainActivity extends Activity{
 		for(String name : putFileList){
 			result.add(imageCache.get(name));
 		}
+		
+		Collections.sort(result, new SdlImageItemComparator());
 		return result;
 	}
 	
@@ -721,7 +740,7 @@ public class MainActivity extends Activity{
 					connectingDialog.show();
 					
 					// and start a timeout thread in case the connection isn't successful
-					new Timeout(CONNECTING_DIALOG_TIMEOUT, new Timeout.Listener() {
+					connectionTimeout = new Timeout(CONNECTING_DIALOG_TIMEOUT, new Timeout.Listener() {
 						@Override public void onTimeoutCancelled() {}
 						
 						@Override
@@ -732,10 +751,11 @@ public class MainActivity extends Activity{
 							}
 							
 							Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
-							
-							finish(); // TODO - SDL is freezing up the main thread here... so, there isn't really much I can do besides close the app... or is there?
+							sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
+							updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
 						}
-					}).start();
+					});
+					connectionTimeout.start();
 					
 					// message the SDL service, telling it to attempt a connection with the input IP address
 					Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
@@ -771,7 +791,9 @@ public class MainActivity extends Activity{
 			createSpeakDialog();
 			break;
 		case SHOW:
-			createShowDialog();
+			// the put file dialog needs a list of images that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
+			sendPutFileRequest(ResultCodes.PutFileResult.SHOW);
 			break;
 		case SUBSCRIBE_BUTTON:
 			// the subscribe button dialog needs a list of buttons that have been subscribed to so far, so let's request
@@ -920,8 +942,8 @@ public class MainActivity extends Activity{
 	/**
 	 * Creates a show dialog, allowing the user to manually send a show command.
 	 */	
-	private void createShowDialog(){
-		BaseAlertDialog showDialog = new ShowDialog(this);
+	private void createShowDialog(List<SdlImageItem> images){
+		BaseAlertDialog showDialog = new ShowDialog(this, images);
 		showDialog.setListener(singleMessageListener);
 		showDialog.show();
 	}

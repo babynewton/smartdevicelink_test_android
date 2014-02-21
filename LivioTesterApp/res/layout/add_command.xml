@@ -36,6 +36,6 @@
 		<Button android:id="@+id/but_addCommand_selectImage"
 	        android:layout_width="match_parent"
 	        android:layout_height="wrap_content"
-	        android:text="Add Command Image" />
+	        android:text="@string/add_image" />
 
 </LinearLayout>

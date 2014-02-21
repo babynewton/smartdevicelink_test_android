@@ -10,22 +10,19 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
-import android.util.SparseArray;
 import android.widget.Toast;
 
-import com.livio.sdl.R;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.menu.CommandButton;
 import com.livio.sdl.menu.CommandButton.OnClickListener;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.menu.MenuManager;
 import com.livio.sdl.menu.SubmenuButton;
-import com.livio.sdl.utils.Timeout;
+import com.livio.sdl.utils.SdlResponseTracker;
 import com.livio.sdl.utils.UpCounter;
 import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
@@ -37,6 +34,7 @@ import com.smartdevicelink.proxy.rpc.AddCommand;
 import com.smartdevicelink.proxy.rpc.AddCommandResponse;
 import com.smartdevicelink.proxy.rpc.AddSubMenu;
 import com.smartdevicelink.proxy.rpc.AddSubMenuResponse;
+import com.smartdevicelink.proxy.rpc.Alert;
 import com.smartdevicelink.proxy.rpc.AlertManeuverResponse;
 import com.smartdevicelink.proxy.rpc.AlertResponse;
 import com.smartdevicelink.proxy.rpc.ChangeRegistrationResponse;
@@ -68,11 +66,13 @@ import com.smartdevicelink.proxy.rpc.OnPermissionsChange;
 import com.smartdevicelink.proxy.rpc.OnTBTClientState;
 import com.smartdevicelink.proxy.rpc.OnVehicleData;
 import com.smartdevicelink.proxy.rpc.PerformAudioPassThruResponse;
+import com.smartdevicelink.proxy.rpc.PerformInteraction;
 import com.smartdevicelink.proxy.rpc.PerformInteractionResponse;
 import com.smartdevicelink.proxy.rpc.PutFile;
 import com.smartdevicelink.proxy.rpc.PutFileResponse;
 import com.smartdevicelink.proxy.rpc.ReadDIDResponse;
 import com.smartdevicelink.proxy.rpc.ResetGlobalPropertiesResponse;
+import com.smartdevicelink.proxy.rpc.ScrollableMessage;
 import com.smartdevicelink.proxy.rpc.ScrollableMessageResponse;
 import com.smartdevicelink.proxy.rpc.SetAppIconResponse;
 import com.smartdevicelink.proxy.rpc.SetDisplayLayoutResponse;
@@ -80,6 +80,7 @@ import com.smartdevicelink.proxy.rpc.SetGlobalPropertiesResponse;
 import com.smartdevicelink.proxy.rpc.SetMediaClockTimerResponse;
 import com.smartdevicelink.proxy.rpc.ShowConstantTBTResponse;
 import com.smartdevicelink.proxy.rpc.ShowResponse;
+import com.smartdevicelink.proxy.rpc.Slider;
 import com.smartdevicelink.proxy.rpc.SliderResponse;
 import com.smartdevicelink.proxy.rpc.SpeakResponse;
 import com.smartdevicelink.proxy.rpc.SubscribeButton;
@@ -235,7 +236,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 	
 	protected MenuManager menuManager = new MenuManager();
 	protected MenuManager choiceSetManager = new MenuManager();
-	protected SparseArray<RPCRequest> awaitingResponse = new SparseArray<RPCRequest>(1);
+//	protected SparseArray<RPCRequest> awaitingResponse = new SparseArray<RPCRequest>(1);
+	protected SdlResponseTracker responseTracker;
 	protected List<SdlButton> buttonSubscriptions = new ArrayList<SdlButton>();
 	protected List<String> addedImageNames = new ArrayList<String>();
 	
@@ -436,12 +438,28 @@ public class SdlService extends Service implements IProxyListenerALM{
 	private void initialize(){
 		isConnected = false;
 		
+		if(responseTracker == null){
+			responseTracker = new SdlResponseTracker(new SdlResponseTracker.Listener() {
+				@Override
+				public void onRequestTimedOut() {
+					if(isConnected && !offlineMode){
+						// if any sdl request times out, we will assume we disconnected.
+						Toast.makeText(SdlService.this, "A request timed out.  You may need to re-start SDL core.", Toast.LENGTH_LONG).show();
+						Message msg = Message.obtain(null, ClientMessages.SDL_DISCONNECTED);
+						sendMessageToRegisteredClients(msg);
+					}
+				}
+			});
+		}
+		else{
+			responseTracker.clear();
+		}
+		
 		correlationIdGenerator.reset();
 		commandIdGenerator.reset();
 		
 		menuManager.clear();
 		choiceSetManager.clear();
-		awaitingResponse.clear();
 		buttonSubscriptions.clear();
 		addedImageNames.clear();
 	}
@@ -461,29 +479,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 */
 	protected void startSdlProxy(final IpAddress inputIp){
 		if(sdlProxy == null){
-			Thread thread = new Thread(new Runnable() {
-				@Override
-				public void run() {
-					Looper.prepare();
-					Timeout timeout = new Timeout(10000, new Timeout.Listener() {
-						@Override public void onTimeoutCancelled() {}
-						
-						@Override
-						public void onTimeoutCompleted() {
-							Thread thisThread = Thread.currentThread();
-							if(thisThread != null && thisThread.isAlive()){
-								thisThread.interrupt();
-							}
-						}
-						
-					});
-					timeout.start();
-					sdlProxy = createSdlProxyObject(inputIp);
-					timeout.cancel();
-					Looper.loop();
-				}
-			});
-			thread.start();
+			sdlProxy = createSdlProxyObject(inputIp);
 		}
 	}
 	
@@ -504,6 +500,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 			result = new SmartDeviceLinkProxyALM((IProxyListenerALM)this, null, appName, null, null,
 					null, IS_MEDIA_APP, null, DEFAULT_LANGUAGE, DEFAULT_LANGUAGE, APP_ID,
 					null, false, false, new TCPTransportConfig(tcpPort, ipAddress, WIFI_AUTO_RECONNECT));
+			currentIp = inputIp;
 		} catch (SmartDeviceLinkException e) {
 			e.printStackTrace();
 		}
@@ -533,7 +530,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * used again.
 	 */
 	protected void stopSdlProxy(){
-		if(sdlProxy != null){
+		if(sdlProxy != null && sdlProxy.getIsConnected() && sdlProxy.getAppInterfaceRegistered()){
 			try {
 				sdlProxy.dispose();
 			} catch (SmartDeviceLinkException e) {
@@ -636,11 +633,29 @@ public class SdlService extends Service implements IProxyListenerALM{
 			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.PutFile)){
+			// since putfile requests could take a bit longer, we'll expand the timeout a bit
 			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.DeleteFile)){
 			addToRequestQueue(command);
 		}
+		else if(name.equals(Names.Alert)){
+			int timeout = ((Alert) command).getDuration();
+			addToRequestQueue(command, (timeout + SdlConstants.AlertConstants.EXPECTED_REPSONSE_TIME_OFFSET));
+		}
+		else if(name.equals(Names.PerformInteraction)){
+			int timeout = ((PerformInteraction) command).getTimeout();
+			addToRequestQueue(command, (timeout + SdlConstants.PerformInteractionConstants.EXPECTED_REPSONSE_TIME_OFFSET));
+		}
+		else if(name.equals(Names.ScrollableMessage)){
+			int timeout = ((ScrollableMessage) command).getTimeout();
+			addToRequestQueue(command, (timeout + SdlConstants.ScrollableMessageConstants.EXPECTED_REPSONSE_TIME_OFFSET));
+		}
+		else if(name.equals(Names.Slider)){
+			int timeout = ((Slider) command).getTimeout();
+			addToRequestQueue(command, (timeout + SdlConstants.SliderConstants.EXPECTED_REPSONSE_TIME_OFFSET));
+		}
+		
 	}
 	
 	/**
@@ -649,7 +664,17 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * @param request The request to add
 	 */
 	protected void addToRequestQueue(RPCRequest request){
-		awaitingResponse.put(request.getCorrelationID(), request);
+		responseTracker.add(request);
+	}
+	
+	/**
+	 * Adds the input request to the queue of requests that are awaiting responses.
+	 * 
+	 * @param request The request to add
+	 * @param timeout A timeout that exceeds the expected timeout of the request
+	 */
+	protected void addToRequestQueue(RPCRequest request, int timeout){
+		responseTracker.add(request, timeout);
 	}
 	
 	/**
@@ -658,9 +683,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * @param request The request to remove
 	 */
 	protected RPCRequest removeFromRequestQueue(int key){
-		RPCRequest result = awaitingResponse.get(key);
-		awaitingResponse.remove(key);
-		return result;
+		return responseTracker.remove(key);
 	}
 	
 	/**
@@ -841,18 +864,14 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onAddCommandResponse(AddCommandResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			
-			if(original != null){
-				MenuItem button = createMenuItem((AddCommand) original);
-				if(button != null){
-					menuManager.addItem(button);
-				}
+		if(response.getSuccess() && original != null){
+			MenuItem button = createMenuItem((AddCommand) original);
+			if(button != null){
+				menuManager.addItem(button);
 			}
 		}
 	}
@@ -860,17 +879,14 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onDeleteCommandResponse(DeleteCommandResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				if(success){
-					int idToRemove = ((DeleteCommand) original).getCmdID();
-					menuManager.removeItem(idToRemove);
-				}
+		if(response.getSuccess() && original != null){
+			if(response.getSuccess()){
+				int idToRemove = ((DeleteCommand) original).getCmdID();
+				menuManager.removeItem(idToRemove);
 			}
 		}
 	}
@@ -878,17 +894,14 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onAddSubMenuResponse(AddSubMenuResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				MenuItem button = createMenuItem((AddSubMenu) original);
-				if(button != null){
-					menuManager.addItem(button);
-				}
+		if(response.getSuccess() && original != null){
+			MenuItem button = createMenuItem((AddSubMenu) original);
+			if(button != null){
+				menuManager.addItem(button);
 			}
 		}
 	}
@@ -896,72 +909,60 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override
 	public void onDeleteSubMenuResponse(DeleteSubMenuResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				int idToRemove = ((DeleteSubMenu) original).getMenuID();
-				menuManager.removeItem(idToRemove);
-			}
+		if(response.getSuccess() && original != null){
+			int idToRemove = ((DeleteSubMenu) original).getMenuID();
+			menuManager.removeItem(idToRemove);
 		}
 	}
 	@Override
 	public void onSubscribeButtonResponse(SubscribeButtonResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				SdlButton button = SdlButton.translateFromLegacy(((SubscribeButton) original).getButtonName());
-				buttonSubscriptions.add(button);
-			}
+		if(response.getSuccess() && original != null){
+			SdlButton button = SdlButton.translateFromLegacy(((SubscribeButton) original).getButtonName());
+			buttonSubscriptions.add(button);
 		}
 	}
 	
 	@Override
 	public void onUnsubscribeButtonResponse(UnsubscribeButtonResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				SdlButton button = SdlButton.translateFromLegacy(((UnsubscribeButton) original).getButtonName());
-				buttonSubscriptions.remove(button);
-			}
+		if(response.getSuccess() && original != null){
+			SdlButton button = SdlButton.translateFromLegacy(((UnsubscribeButton) original).getButtonName());
+			buttonSubscriptions.remove(button);
 		}
 	}
 
 	@Override 
 	public void onCreateInteractionChoiceSetResponse(CreateInteractionChoiceSetResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				// add the parent (choice set) item to the choice set manager
-				CreateInteractionChoiceSet choiceSet = (CreateInteractionChoiceSet) original;
-				MenuItem item = createMenuItem(choiceSet);
+		if(response.getSuccess() && original != null){
+			// add the parent (choice set) item to the choice set manager
+			CreateInteractionChoiceSet choiceSet = (CreateInteractionChoiceSet) original;
+			MenuItem item = createMenuItem(choiceSet);
+			choiceSetManager.addItem(item);
+			
+			// then, add all the parent's children to the choice set manager
+			final int parentId = choiceSet.getInteractionChoiceSetID();
+			Vector<Choice> children = choiceSet.getChoiceSet();
+			for(Choice child : children){
+				item = createMenuItem(child, parentId);
 				choiceSetManager.addItem(item);
-				
-				// then, add all the parent's children to the choice set manager
-				final int parentId = choiceSet.getInteractionChoiceSetID();
-				Vector<Choice> children = choiceSet.getChoiceSet();
-				for(Choice child : children){
-					item = createMenuItem(child, parentId);
-					choiceSetManager.addItem(item);
-				}
 			}
 		}
 	}
@@ -969,60 +970,80 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override 
 	public void onDeleteInteractionChoiceSetResponse(DeleteInteractionChoiceSetResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				// get the choice set ID from the original request and remove it from the choice set manager
-				DeleteInteractionChoiceSet choiceSet = (DeleteInteractionChoiceSet) original;
-				int choiceId = choiceSet.getInteractionChoiceSetID();
-				choiceSetManager.removeItem(choiceId);
-			}
+		if(response.getSuccess() && original != null){
+			// get the choice set ID from the original request and remove it from the choice set manager
+			DeleteInteractionChoiceSet choiceSet = (DeleteInteractionChoiceSet) original;
+			int choiceId = choiceSet.getInteractionChoiceSetID();
+			choiceSetManager.removeItem(choiceId);
 		}
 	}
 	
 	@Override 
 	public void onPutFileResponse(PutFileResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				// get the choice set ID from the original request and remove it from the choice set manager
-				PutFile putFile = (PutFile) original;
-				String putFileName = putFile.getSmartDeviceLinkFileName();
-				addedImageNames.add(putFileName);
-			}
+		if(response.getSuccess() && original != null){
+			// get the choice set ID from the original request and remove it from the choice set manager
+			PutFile putFile = (PutFile) original;
+			String putFileName = putFile.getSmartDeviceLinkFileName();
+			addedImageNames.add(putFileName);
 		}
 	}
 
 	@Override 
 	public void onDeleteFileResponse(DeleteFileResponse response) {
 		sendMessageResponse(response);
+
+		int correlationId = response.getCorrelationID();
+		RPCRequest original = removeFromRequestQueue(correlationId);
 		
-		boolean success = response.getSuccess();
-		
-		if(success){
-			int correlationId = response.getCorrelationID();
-			RPCRequest original = removeFromRequestQueue(correlationId);
-			if(original != null){
-				// get the choice set ID from the original request and remove it from the choice set manager
-				DeleteFile deleteFile = (DeleteFile) original;
-				String deleteFileName = deleteFile.getSmartDeviceLinkFileName();
-				addedImageNames.remove(deleteFileName);
-			}
+		if(response.getSuccess() && original != null){
+			// get the choice set ID from the original request and remove it from the choice set manager
+			DeleteFile deleteFile = (DeleteFile) original;
+			String deleteFileName = deleteFile.getSmartDeviceLinkFileName();
+			addedImageNames.remove(deleteFileName);
 		}
+	}
+	@Override
+	public void onAlertResponse(AlertResponse response) {
+		sendMessageResponse(response);
+		
+		int correlationId = response.getCorrelationID();
+		removeFromRequestQueue(correlationId);
+	}
+	
+	@Override 
+	public void onPerformInteractionResponse(PerformInteractionResponse response) {
+		sendMessageResponse(response);
+		
+		int correlationId = response.getCorrelationID();
+		removeFromRequestQueue(correlationId);
+	}
+
+	@Override 
+	public void onSliderResponse(SliderResponse response) {
+		sendMessageResponse(response);
+		
+		int correlationId = response.getCorrelationID();
+		removeFromRequestQueue(correlationId);
+	}
+
+	@Override 
+	public void onScrollableMessageResponse(ScrollableMessageResponse response) {
+		sendMessageResponse(response);
+		
+		int correlationId = response.getCorrelationID();
+		removeFromRequestQueue(correlationId);
 	}
 	
 	@Override public void onGenericResponse(GenericResponse response) {sendMessageResponse(response);}
-	@Override public void onAlertResponse(AlertResponse response) {sendMessageResponse(response);}
-	@Override public void onPerformInteractionResponse(PerformInteractionResponse response) {sendMessageResponse(response);}
 	@Override public void onResetGlobalPropertiesResponse(ResetGlobalPropertiesResponse response) {sendMessageResponse(response);}
 	@Override public void onSetGlobalPropertiesResponse(SetGlobalPropertiesResponse response) {sendMessageResponse(response);}
 	@Override public void onSetMediaClockTimerResponse(SetMediaClockTimerResponse response) {sendMessageResponse(response);}
@@ -1037,10 +1058,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override public void onEndAudioPassThruResponse(EndAudioPassThruResponse response) {sendMessageResponse(response);}
 	@Override public void onListFilesResponse(ListFilesResponse response) {sendMessageResponse(response);}
 	@Override public void onSetAppIconResponse(SetAppIconResponse response) {sendMessageResponse(response);}
-	@Override public void onScrollableMessageResponse(ScrollableMessageResponse response) {sendMessageResponse(response);}
 	@Override public void onChangeRegistrationResponse(ChangeRegistrationResponse response) {sendMessageResponse(response);}
 	@Override public void onSetDisplayLayoutResponse(SetDisplayLayoutResponse response) {sendMessageResponse(response);}
-	@Override public void onSliderResponse(SliderResponse response) {sendMessageResponse(response);}
 	@Override public void onAlertManeuverResponse(AlertManeuverResponse response) {sendMessageResponse(response);}
 	@Override public void onShowConstantTBTResponse(ShowConstantTBTResponse response) {sendMessageResponse(response);}
 	@Override public void onUpdateTurnListResponse(UpdateTurnListResponse response) {sendMessageResponse(response);}

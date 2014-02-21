@@ -40,6 +40,8 @@ public final class SdlConstants {
 		public static final int MINIMUM_TIMEOUT = 5; // seconds
 		public static final int MAXIMUM_TIMEOUT = 100; // seconds
 		public static final int INVALID_TIMEOUT = -1; 
+		
+		public static final int EXPECTED_REPSONSE_TIME_OFFSET = 2000; // ms, or 2 s
 	}
 	
 	public static final class ReadDidsConstants{
@@ -59,6 +61,8 @@ public final class SdlConstants {
 		public static final int TIMEOUT_MAXIMUM = 65; // seconds
 		
 		public static final int MESSAGE_LENGTH_MAX = 500; // characters
+		
+		public static final int EXPECTED_REPSONSE_TIME_OFFSET = 2000; // ms, or 2 s
 	}
 	
 	public static final class AlertConstants{
@@ -66,6 +70,8 @@ public final class SdlConstants {
 		
 		public static final int ALERT_TIME_MINIMUM = 3; // seconds
 		public static final int ALERT_TIME_MAXIMUM = 10; // seconds
+		
+		public static final int EXPECTED_REPSONSE_TIME_OFFSET = 2000; // ms, or 2 s
 	}
 	
 	public static final class SetMediaClockTimerConstants{
@@ -88,6 +94,8 @@ public final class SdlConstants {
 		public static final int START_POSITION_MAX = NUM_OF_TICKS_MAX;
 		public static final int TIMEOUT_MIN = 1; // second
 		public static final int TIMEOUT_MAX = 65; // seconds
+		
+		public static final int EXPECTED_REPSONSE_TIME_OFFSET = 2000; // ms, or 2 s
 	}
 
 }

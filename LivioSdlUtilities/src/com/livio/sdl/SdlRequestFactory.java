@@ -17,6 +17,7 @@ import com.smartdevicelink.proxy.rpc.DeleteFile;
 import com.smartdevicelink.proxy.rpc.DeleteInteractionChoiceSet;
 import com.smartdevicelink.proxy.rpc.DeleteSubMenu;
 import com.smartdevicelink.proxy.rpc.GetDTCs;
+import com.smartdevicelink.proxy.rpc.Image;
 import com.smartdevicelink.proxy.rpc.PerformInteraction;
 import com.smartdevicelink.proxy.rpc.PutFile;
 import com.smartdevicelink.proxy.rpc.ReadDID;
@@ -335,7 +336,7 @@ public final class SdlRequestFactory {
 		return setMediaClockTimer(mode, null);
 	}
 	
-	public static RPCRequest show(String line1, String line2, String line3, String line4, String statusBar, TextAlignment alignment){
+	public static RPCRequest show(String line1, String line2, String line3, String line4, String statusBar, TextAlignment alignment, String imageName){
 		Show result = new Show();
 		if(line1 != null && line1.length() > 0){
 			result.setMainField1(line1);
@@ -354,6 +355,10 @@ public final class SdlRequestFactory {
 		}
 		if(alignment != null){
 			result.setAlignment(alignment);
+		}
+		if(imageName != null){
+			Image image = SdlUtils.dynamicImage(imageName);
+			result.setGraphic(image);
 		}
 		
 		return result;

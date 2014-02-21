@@ -34,7 +34,7 @@ import com.smartdevicelink.proxy.rpc.enums.InteractionMode;
 
 public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCheckedChangeListener, OnSeekBarChangeListener{
 
-	private static final SdlCommand SYNC_COMMAND = SdlCommand.ALERT;
+	private static final SdlCommand SYNC_COMMAND = SdlCommand.PERFORM_INTERACTION;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	
 	//set up your min & max time allowed here.

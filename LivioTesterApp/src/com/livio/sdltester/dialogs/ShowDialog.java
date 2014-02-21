@@ -1,16 +1,24 @@
 package com.livio.sdltester.dialogs;
 
+import java.util.List;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.Spinner;
 
+import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlRequestFactory;
+import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
+import com.livio.sdl.dialogs.ImageListDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlTextAlignment;
 import com.livio.sdl.utils.AndroidUtils;
@@ -25,11 +33,31 @@ public class ShowDialog extends BaseOkCancelDialog{
 
 	private CheckBox check_show1, check_show2, check_show3, check_show4, check_statusBar;
 	private EditText et_show1, et_show2, et_show3, et_show4, et_statusBar;
+	private Button but_addImage;
 	private Spinner spin_textAlignment;
+	private SdlImageItem selectedImage;
 	
-	public ShowDialog(Context context){
+	public ShowDialog(final Context context, final List<SdlImageItem> images){
 		super(context, DIALOG_TITLE, R.layout.show);
 		setPositiveButton(okButtonListener);
+		but_addImage.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				if(images == null || images.size() <= 0){
+					Toast.makeText(context, "No images have been added to the system yet.", Toast.LENGTH_LONG).show();
+				}
+				else{
+					BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
+					selectImageDialog.setListener(new BaseAlertDialog.Listener() {
+						@Override
+						public void onResult(Object resultData) {
+							selectedImage = (SdlImageItem) resultData;
+						}
+					});
+					selectImageDialog.show();
+				}
+			}
+		});
 		createDialog();
 	}
 	
@@ -84,6 +112,8 @@ public class ShowDialog extends BaseOkCancelDialog{
 		
 		spin_textAlignment = (Spinner) view.findViewById(R.id.spin_textAlignment);
 		spin_textAlignment.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlTextAlignment.values()));
+		
+		but_addImage = (Button) view.findViewById(R.id.but_showImage);
 	}
 	
 	//dialog button listeners
@@ -91,7 +121,7 @@ public class ShowDialog extends BaseOkCancelDialog{
 		
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
-			String line1 = null, line2 = null, line3 = null, line4 = null, statusBar = null;
+			String line1 = null, line2 = null, line3 = null, line4 = null, statusBar = null, imageName = null;
 			TextAlignment alignment = null;
 			
 			if(et_show1.isEnabled()){
@@ -133,8 +163,12 @@ public class ShowDialog extends BaseOkCancelDialog{
 				SdlTextAlignment sdlAlignment = (SdlTextAlignment) spin_textAlignment.getSelectedItem();
 				alignment = SdlTextAlignment.translateToLegacy(sdlAlignment);
 			}
+			
+			if(selectedImage != null){
+				imageName = selectedImage.getImageName();
+			}
 
-			RPCRequest result = SdlRequestFactory.show(line1, line2, line3, line4, statusBar, alignment);
+			RPCRequest result = SdlRequestFactory.show(line1, line2, line3, line4, statusBar, alignment, imageName);
 			notifyListener(result);
 		}
 	};

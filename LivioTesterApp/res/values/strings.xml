@@ -42,4 +42,5 @@
 <!--     Put File -->
     <string name="put_file_persistent_file">Persistent File</string>
     <string name="sdl_image_name">SDL Image Name</string>
+    <string name="add_image">Add Image</string>
 </resources>
