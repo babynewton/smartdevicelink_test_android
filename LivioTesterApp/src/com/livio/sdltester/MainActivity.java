@@ -20,7 +20,6 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -33,11 +32,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.livio.sdl.IpAddress;
 import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlImageItem.SdlImageItemComparator;
 import com.livio.sdl.SdlLogMessage;
+import com.livio.sdl.SdlService;
 import com.livio.sdl.adapters.SdlMessageAdapter;
-import com.livio.sdl.datatypes.IpAddress;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.IndeterminateProgressDialog;
 import com.livio.sdl.dialogs.JsonDialog;
@@ -46,7 +46,7 @@ import com.livio.sdl.enums.EnumComparator;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
-import com.livio.sdl.services.SdlService;
+import com.livio.sdl.utils.Timeout;
 import com.livio.sdl.utils.WifiUtils;
 import com.livio.sdltester.dialogs.AddCommandDialog;
 import com.livio.sdltester.dialogs.AddSubMenuDialog;
@@ -575,6 +575,8 @@ public class MainActivity extends Activity{
 		switch(reqCode){
 		case ResultCodes.PutFileResult.PUT_FILE:
 			availableItems = filterAddedItems(putFileList);
+			Collections.sort(availableItems, new SdlImageItemComparator());
+			
 			if(availableItems.size() > 0){
 				createPutFileDialog(availableItems);
 			}
@@ -595,6 +597,7 @@ public class MainActivity extends Activity{
 			break;
 		case ResultCodes.PutFileResult.SET_APP_ICON:
 			availableItems = filterUnaddedItems(putFileList);
+			Collections.sort(availableItems, new SdlImageItemComparator());
 			
 			if(availableItems.size() > 0){
 				createSetAppIconDialog(availableItems);
@@ -718,29 +721,19 @@ public class MainActivity extends Activity{
 					connectingDialog.show();
 					
 					// and start a timeout thread in case the connection isn't successful
-					new Thread(new Runnable() {
+					new Timeout(CONNECTING_DIALOG_TIMEOUT, new Timeout.Listener() {
+						@Override public void onTimeoutCancelled() {}
+						
 						@Override
-						public void run() {
-							Looper.prepare();
-							try {
-								Thread.sleep(CONNECTING_DIALOG_TIMEOUT);
-								
-								if(connectingDialog != null && connectingDialog.isShowing()){
-									// if we made it here without being interrupted, the connection was unsuccessful - dismiss the dialog and enter offline mode
-									connectingDialog.dismiss();
-									Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
-									sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
-									runOnUiThread(new Runnable() {
-										@Override
-										public void run() {
-											updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
-										}
-									});
-								}
-							} catch (InterruptedException e) {
-								// do nothing
+						public void onTimeoutCompleted() {
+							if(connectingDialog != null && connectingDialog.isShowing()){
+								// if we made it here without being interrupted, the connection was unsuccessful - dismiss the dialog and enter offline mode
+								connectingDialog.dismiss();
 							}
-							Looper.loop();
+							
+							Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
+							sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
+							updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
 						}
 					}).start();
 					
@@ -1123,6 +1116,25 @@ public class MainActivity extends Activity{
 	}
 
 	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		android.view.MenuItem connectToSdl = (android.view.MenuItem) menu.findItem(R.id.menu_connect);
+		android.view.MenuItem disconnectFromSdl = (android.view.MenuItem) menu.findItem(R.id.menu_disconnect);
+		android.view.MenuItem resetSdl = (android.view.MenuItem) menu.findItem(R.id.menu_reset);
+		android.view.MenuItem clearListView = (android.view.MenuItem) menu.findItem(R.id.menu_clear_list);
+		
+		// show/hide connect/disconnect menu items
+		boolean connected = tv_connectionStatus.getText().toString().contains(ConnectionStatus.CONNECTED.friendlyName);
+		connectToSdl.setVisible(!connected); // if we are not connected, show the connect item
+		disconnectFromSdl.setVisible(connected); // if we are connected, show the disconnect item
+		resetSdl.setVisible(connected); // if we are connected, show reset SDL item
+		
+		boolean listHasItems = (listViewAdapter != null && listViewAdapter.getCount() > 0);
+		clearListView.setVisible(listHasItems); // if the list has items, show the clear list item
+		
+		return true;
+	}
+
+	@Override
 	public boolean onOptionsItemSelected(android.view.MenuItem item) {
 		int menuItemId = item.getItemId();
 		switch(menuItemId){
@@ -1134,6 +1146,9 @@ public class MainActivity extends Activity{
 			return true;
 		case R.id.menu_reset:
 			sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.RESET));
+			return true;
+		case R.id.menu_clear_list:
+			clearSdlLog();
 			return true;
 		default:
 			return super.onOptionsItemSelected(item);

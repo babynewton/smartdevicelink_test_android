@@ -14,6 +14,7 @@ import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.utils.MathUtils;
+import com.livio.sdl.viewhelpers.SeekBarCalculator;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
 
@@ -35,6 +36,7 @@ public class SliderDialog extends BaseOkCancelDialog {
 	private EditText et_slider_title, et_slider_footer;
 	private SeekBar seek_slider_numOfTicks, seek_slider_startPosition, seek_slider_timeout;
 	private TextView tv_slider_numOfTicks, tv_slider_startPosition, tv_slider_timeout;
+	private SeekBarCalculator numOfTicksCalculator, startPositionCalculator, timeoutCalculator;
 	
 	private String numOfTicks, startPosition, timeout;
 	
@@ -46,6 +48,10 @@ public class SliderDialog extends BaseOkCancelDialog {
 
 	@Override
 	protected void findViews(View parent) {
+		numOfTicksCalculator = new SeekBarCalculator(NUM_OF_TICKS_MIN, NUM_OF_TICKS_MAX);
+		startPositionCalculator = new SeekBarCalculator(START_POSITION_MIN, NUM_OF_TICKS_MAX);
+		timeoutCalculator = new SeekBarCalculator(TIMEOUT_MIN, TIMEOUT_MAX);
+		
 		Resources res = context.getResources();
 		numOfTicks = res.getString(R.string.slider_ticks);
 		startPosition= res.getString(R.string.slider_start_position);
@@ -62,42 +68,42 @@ public class SliderDialog extends BaseOkCancelDialog {
 		updateTimeout(TIMEOUT_DEFAULT);
 
 		seek_slider_numOfTicks = (SeekBar) parent.findViewById(R.id.seek_slider_numOfTicks);
-		seek_slider_numOfTicks.setMax(NUM_OF_TICKS_MAX - NUM_OF_TICKS_MIN);
-		seek_slider_numOfTicks.setProgress(NUM_OF_TICKS_DEFAULT - NUM_OF_TICKS_MIN);
+		seek_slider_numOfTicks.setMax(numOfTicksCalculator.getMaxProgress());
+		seek_slider_numOfTicks.setProgress(numOfTicksCalculator.calculateProgress(NUM_OF_TICKS_DEFAULT));
 		seek_slider_numOfTicks.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override public void onStopTrackingTouch(SeekBar seekBar) {}
 			@Override public void onStartTrackingTouch(SeekBar seekBar) {}
 			
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				int adjustedProgress = progress + NUM_OF_TICKS_MIN;
+				int adjustedProgress = (int) numOfTicksCalculator.calculateValue(progress);
 				updateTicks(adjustedProgress);
 				updateStartPositionMax(adjustedProgress);
 			}
 		});
 		
 		seek_slider_startPosition = (SeekBar) parent.findViewById(R.id.seek_slider_startPosition);
-		seek_slider_startPosition.setProgress(START_POSITION_DEFAULT - START_POSITION_MIN);
+		seek_slider_startPosition.setProgress(startPositionCalculator.calculateProgress(START_POSITION_DEFAULT));
 		seek_slider_startPosition.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override public void onStopTrackingTouch(SeekBar seekBar) {}
 			@Override public void onStartTrackingTouch(SeekBar seekBar) {}
 			
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				updateStartPosition(progress + START_POSITION_MIN);
+				updateStartPosition((int) startPositionCalculator.calculateValue(progress));
 			}
 		});
 		
 		seek_slider_timeout = (SeekBar) parent.findViewById(R.id.seek_slider_timeout);
-		seek_slider_timeout.setMax(TIMEOUT_MAX - TIMEOUT_MIN);
-		seek_slider_timeout.setProgress(TIMEOUT_DEFAULT - TIMEOUT_MIN);
+		seek_slider_timeout.setMax(timeoutCalculator.getMaxProgress());
+		seek_slider_timeout.setProgress(timeoutCalculator.calculateProgress(TIMEOUT_DEFAULT));
 		seek_slider_timeout.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override public void onStopTrackingTouch(SeekBar seekBar) {}
 			@Override public void onStartTrackingTouch(SeekBar seekBar) {}
 			
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				updateTimeout(progress + TIMEOUT_MIN);
+				updateTimeout((int) timeoutCalculator.calculateValue(progress));
 			}
 		});
 		
@@ -113,8 +119,8 @@ public class SliderDialog extends BaseOkCancelDialog {
 	}
 	
 	private void updateStartPositionMax(int numOfTicks){
-		int adjustedNumOfTicks = numOfTicks - 1;
-		seek_slider_startPosition.setMax(adjustedNumOfTicks);
+		startPositionCalculator.setMaxValue(numOfTicks);
+		seek_slider_startPosition.setMax(startPositionCalculator.getMaxProgress());
 	}
 	
 	private void updateTimeout(int newTimeout){
@@ -128,10 +134,10 @@ public class SliderDialog extends BaseOkCancelDialog {
 			String sliderTitle = et_slider_title.getText().toString();
 			String sliderFooter = et_slider_footer.getText().toString();
 
-			int numOfTicks = seek_slider_numOfTicks.getProgress() + NUM_OF_TICKS_MIN;
-			int startPosition = seek_slider_startPosition.getProgress() + START_POSITION_MIN;
+			int numOfTicks = (int) numOfTicksCalculator.calculateValue(seek_slider_numOfTicks.getProgress());
+			int startPosition = (int) startPositionCalculator.calculateValue(seek_slider_startPosition.getProgress());
 			
-			int timeout = seek_slider_timeout.getProgress() + TIMEOUT_MIN;
+			int timeout = (int) timeoutCalculator.calculateValue(seek_slider_timeout.getProgress());
 			timeout = MathUtils.convertSecsToMillisecs(timeout);
 			
 			if(sliderTitle.length() <= 0){

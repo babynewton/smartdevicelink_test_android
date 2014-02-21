@@ -1,4 +1,4 @@
-package com.livio.sdl.datatypes;
+package com.livio.sdl.utils;
 
 /**
  * Represents an abstract integer counter.

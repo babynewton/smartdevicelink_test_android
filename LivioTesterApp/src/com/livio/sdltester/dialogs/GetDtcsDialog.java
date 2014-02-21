@@ -9,9 +9,9 @@ import android.widget.Toast;
 
 import com.livio.sdl.SdlConstants;
 import com.livio.sdl.SdlRequestFactory;
-import com.livio.sdl.datatypes.MinMaxInputFilter;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
+import com.livio.sdl.viewhelpers.MinMaxInputFilter;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
 

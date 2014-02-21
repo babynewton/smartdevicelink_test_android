@@ -1,4 +1,4 @@
-package com.livio.sdl.datatypes;
+package com.livio.sdl.utils;
 
 /**
  * Represents a simple down-counter.  The down-counter can be initialized with

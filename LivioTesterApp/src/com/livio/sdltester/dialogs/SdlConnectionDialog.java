@@ -6,7 +6,7 @@ import android.content.DialogInterface;
 import android.view.View;
 import android.widget.EditText;
 
-import com.livio.sdl.datatypes.IpAddress;
+import com.livio.sdl.IpAddress;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdltester.R;
 

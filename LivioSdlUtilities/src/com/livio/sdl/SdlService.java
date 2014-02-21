@@ -1,4 +1,4 @@
-package com.livio.sdl.services;
+package com.livio.sdl;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,15 +18,13 @@ import android.util.SparseArray;
 import android.widget.Toast;
 
 import com.livio.sdl.R;
-import com.livio.sdl.SdlResponseFactory;
-import com.livio.sdl.datatypes.IpAddress;
-import com.livio.sdl.datatypes.UpCounter;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.menu.CommandButton;
 import com.livio.sdl.menu.CommandButton.OnClickListener;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.menu.MenuManager;
 import com.livio.sdl.menu.SubmenuButton;
+import com.livio.sdl.utils.UpCounter;
 import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;

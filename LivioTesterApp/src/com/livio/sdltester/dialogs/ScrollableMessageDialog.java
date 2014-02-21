@@ -16,6 +16,7 @@ import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.utils.MathUtils;
+import com.livio.sdl.viewhelpers.SeekBarCalculator;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
 
@@ -35,6 +36,7 @@ public class ScrollableMessageDialog extends BaseOkCancelDialog {
 	private TextView tv_timeout;
 	private SeekBar seek_timeout;
 	private String timeoutBaseStr;
+	private SeekBarCalculator progressCalculator;
 	
 	public ScrollableMessageDialog(Context context) {
 		super(context, DIALOG_TITLE, R.layout.scrollable_message);
@@ -45,6 +47,7 @@ public class ScrollableMessageDialog extends BaseOkCancelDialog {
 	@Override
 	protected void findViews(View parent) {
 		timeoutBaseStr = context.getResources().getString(R.string.timeout);
+		progressCalculator = new SeekBarCalculator(TIMEOUT_MIN, TIMEOUT_MAX);
 		
 		et_scrollableMessage_text = (EditText) parent.findViewById(R.id.et_scrollableMessage_text);
 		
@@ -60,17 +63,17 @@ public class ScrollableMessageDialog extends BaseOkCancelDialog {
 		updateTimeoutText(TIMEOUT_DEFAULT);
 		
 		seek_timeout = (SeekBar) parent.findViewById(R.id.seek_scrollableMessage_timeout);
-		seek_timeout.setMax(TIMEOUT_MAX - TIMEOUT_MIN);
+		seek_timeout.setMax(progressCalculator.getMaxProgress());
 		seek_timeout.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
 			@Override public void onStopTrackingTouch(SeekBar seekBar) {}
 			@Override public void onStartTrackingTouch(SeekBar seekBar) {}
 			
 			@Override
 			public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				updateTimeoutText(progress + TIMEOUT_MIN);
+				updateTimeoutText((int) progressCalculator.calculateValue(progress));
 			}
 		});
-		seek_timeout.setProgress(TIMEOUT_DEFAULT - TIMEOUT_MIN);
+		seek_timeout.setProgress(progressCalculator.calculateProgress(TIMEOUT_DEFAULT));
 	}
 	
 	private void updateTimeoutText(int timeout){
@@ -82,7 +85,7 @@ public class ScrollableMessageDialog extends BaseOkCancelDialog {
 		@Override
 		public void onClick(DialogInterface dialog, int which) {
 			String message = et_scrollableMessage_text.getText().toString();
-			int timeout = seek_timeout.getProgress() + TIMEOUT_MIN;
+			int timeout = (int) progressCalculator.calculateValue(seek_timeout.getProgress());
 			timeout = MathUtils.convertSecsToMillisecs(timeout);
 			
 			if(message.length() <= 0){

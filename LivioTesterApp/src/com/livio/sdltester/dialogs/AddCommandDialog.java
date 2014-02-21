@@ -87,7 +87,7 @@ public class AddCommandDialog extends BaseOkCancelDialog{
 				final int position = SdlConstants.AddCommandConstants.DEFAULT_POSITION;
 				final String voiceRecKeyword   = et_voiceRecKeyword.getText().toString();
 				final MenuItem parentBank = (MenuItem) spin_addCommand_submenus.getSelectedItem();
-				final int parentId = (parentBank != null) ? parentBank.getId() : SdlConstants.AddCommandConstants.INVALID_PARENT_ID; // TODO -1 is an invalid parent id, but this should be defined somewhere...
+				final int parentId = (parentBank != null) ? parentBank.getId() : SdlConstants.AddCommandConstants.INVALID_PARENT_ID;
 				final String imageName = (selectedImage != null) ? selectedImage.getImageName() : null;
 				
 				// all we really need is a valid name

@@ -1,4 +1,4 @@
-package com.livio.sdl.datatypes;
+package com.livio.sdl;
 
 /**
  * Represents an IP address and port number as 2 strings - one string for the address

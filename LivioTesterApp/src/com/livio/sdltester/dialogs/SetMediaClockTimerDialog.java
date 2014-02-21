@@ -13,11 +13,11 @@ import android.widget.TextView;
 
 import com.livio.sdl.SdlConstants;
 import com.livio.sdl.SdlRequestFactory;
-import com.livio.sdl.datatypes.MinMaxInputFilter;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlUpdateMode;
 import com.livio.sdl.utils.AndroidUtils;
+import com.livio.sdl.viewhelpers.MinMaxInputFilter;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.enums.UpdateMode;

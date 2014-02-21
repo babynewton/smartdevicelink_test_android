@@ -1,4 +1,4 @@
-package com.livio.sdl.datatypes;
+package com.livio.sdl.viewhelpers;
 
 import android.text.InputFilter;
 import android.text.Spanned;

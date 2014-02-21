@@ -32,7 +32,7 @@
             </intent-filter>
         </activity>
         
-        <service android:name="com.livio.sdl.services.SdlService" />
+        <service android:name="com.livio.sdl.SdlService" />
         
     </application>
 

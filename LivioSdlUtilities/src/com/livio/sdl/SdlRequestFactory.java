@@ -41,8 +41,6 @@ import com.smartdevicelink.proxy.rpc.enums.UpdateMode;
 public final class SdlRequestFactory {
 	
 	public SdlRequestFactory() {}
-	
-	// TODO - write factory methods to create different types of commands.  Everything should return RPCRequest type
 	// TODO - comments
 
 	public static RPCRequest addCommand(String name, int position, int parentId, String vrCommands, String imageName){

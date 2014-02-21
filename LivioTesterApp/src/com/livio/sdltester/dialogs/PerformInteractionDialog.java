@@ -27,6 +27,7 @@ import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlInteractionMode;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.utils.AndroidUtils;
+import com.livio.sdl.viewhelpers.SeekBarCalculator;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.enums.InteractionMode;
@@ -39,23 +40,9 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	//set up your min & max time allowed here.
 	private static final int MINIMUM_TIMEOUT = SdlConstants.PerformInteractionConstants.MINIMUM_TIMEOUT;
 	private static final int MAXIMUM_TIMEOUT = SdlConstants.PerformInteractionConstants.MAXIMUM_TIMEOUT;
-	
-	//seekbar can only start at 0, so we have to do all these stupid adjustments everywhere...
-	@SuppressWarnings("unused")
-	private static final int MAX_SEEKBAR_PROGRESS = MAXIMUM_TIMEOUT - MINIMUM_TIMEOUT;
 
 	//this is your default selection for tone duration.  again, divide by 10 for the actual time in seconds.
 	private static final int DEFAULT_TIMEOUT = 30;  // 30.0 seconds
-	
-	//another stupid adjustment.  your default selection must be offset by the minimum value since seekbars can only start at 0
-	private static final int ADJUSTED_DEFAULT_TIMEOUT = DEFAULT_TIMEOUT - MINIMUM_TIMEOUT;
-	
-	// a seekbar cannot do decimal points, so it currently ranges 5-100, which is then
-	// divided by 1.0f to give us a number of seconds, rounded to 1.0 seconds.
-	private static final float TENS_PLACE_DENOMINATOR = 1.0f;
-	
-	//multiplier to convert progress of seek bar (0-50) to milliseconds
-	private static final int PROGRESS_TO_MILLISEC_MULTIPLIER = 1000;
 	
 	private EditText et_title, et_voicePrompt;
 	private Button but_choiceSet;
@@ -63,6 +50,8 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	private TextView tv_interactionTimeout, tv_interactionTimeoutDuration;
 	private CheckBox check_timeoutEnabled;
 	private SeekBar seek_timeoutDuration;
+	private SeekBarCalculator progressCalculator;
+	private String secondsStr;
 	
 	private List<MenuItem> selectedChoiceSets;
 	
@@ -100,11 +89,14 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 		check_timeoutEnabled.setOnCheckedChangeListener(this);
 		
 		seek_timeoutDuration.setOnSeekBarChangeListener(this);
-		seek_timeoutDuration.setProgress(DEFAULT_TIMEOUT - MINIMUM_TIMEOUT);
+		seek_timeoutDuration.setProgress(progressCalculator.calculateProgress(DEFAULT_TIMEOUT));
 	}
 
 	@Override
 	protected void findViews(View parent) {
+		progressCalculator = new SeekBarCalculator(MINIMUM_TIMEOUT, MAXIMUM_TIMEOUT);
+		secondsStr = context.getResources().getString(R.string.units_seconds);
+		
 		et_title = (EditText) parent.findViewById(R.id.et_performInteraction_title);
 		et_voicePrompt = (EditText) parent.findViewById(R.id.et_performInteraction_voicePrompt);
 		tv_interactionTimeout = (TextView) parent.findViewById(R.id.tv_performInteraction_timeoutTitle);
@@ -116,14 +108,14 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 		seek_timeoutDuration = (SeekBar) parent.findViewById(R.id.seek_performInteraction_timeoutDuration);
 		
 		//make initial updates to the UI using default values
-		updateProgressText(progressToFloat(ADJUSTED_DEFAULT_TIMEOUT));
+		updateProgressText(DEFAULT_TIMEOUT);
 		enableDuration(check_timeoutEnabled.isChecked());
 	}
 
 	private void updateProgressText(float progress){
 		StringBuilder strBuilder = new StringBuilder();
 		strBuilder.append(progress);
-		strBuilder.append(context.getResources().getString(R.string.units_seconds));
+		strBuilder.append(secondsStr);
 		tv_interactionTimeoutDuration.setText(strBuilder.toString());
 	}
 	
@@ -132,19 +124,6 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 		tv_interactionTimeout.setVisibility(visibility);
 		tv_interactionTimeoutDuration.setVisibility(visibility);
 		seek_timeoutDuration.setVisibility(visibility);
-	}
-	
-	//static methods
-	private static int progressInMs(int progress){
-		return adjustedProgress(progress)  * PROGRESS_TO_MILLISEC_MULTIPLIER;
-	}
-	
-	private static float progressToFloat(int progress){
-		return adjustedProgress(progress) / TENS_PLACE_DENOMINATOR;
-	}
-	
-	private static int adjustedProgress(int progress){
-		return progress + MINIMUM_TIMEOUT;
 	}
 	
 	// dialog button listeners
@@ -161,7 +140,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 				boolean timeoutEnabled = check_timeoutEnabled.isChecked();
 				int timeout = SdlConstants.PerformInteractionConstants.INVALID_TIMEOUT;
 				if(timeoutEnabled){
-					timeout = progressInMs(seek_timeoutDuration.getProgress());
+					timeout = progressCalculator.calculateProgress(seek_timeoutDuration.getProgress());
 				}
 				
 				SdlInteractionMode sdlInteractionMode = (SdlInteractionMode) spin_interactionMode.getAdapter().getItem(spin_interactionMode.getSelectedItemPosition());
@@ -194,7 +173,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	
 	@Override
 	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-		updateProgressText(progressToFloat(progress));
+		updateProgressText(progressCalculator.calculateValue(progress));
 	}
 
 }
