@@ -10,6 +10,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
@@ -24,6 +25,7 @@ import com.livio.sdl.menu.CommandButton.OnClickListener;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.menu.MenuManager;
 import com.livio.sdl.menu.SubmenuButton;
+import com.livio.sdl.utils.Timeout;
 import com.livio.sdl.utils.UpCounter;
 import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
@@ -457,9 +459,31 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * 
 	 * @param inputIp The IP address to attempt a connection on
 	 */
-	protected void startSdlProxy(IpAddress inputIp){
+	protected void startSdlProxy(final IpAddress inputIp){
 		if(sdlProxy == null){
-			sdlProxy = createSdlProxyObject(inputIp);
+			Thread thread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					Looper.prepare();
+					Timeout timeout = new Timeout(10000, new Timeout.Listener() {
+						@Override public void onTimeoutCancelled() {}
+						
+						@Override
+						public void onTimeoutCompleted() {
+							Thread thisThread = Thread.currentThread();
+							if(thisThread != null && thisThread.isAlive()){
+								thisThread.interrupt();
+							}
+						}
+						
+					});
+					timeout.start();
+					sdlProxy = createSdlProxyObject(inputIp);
+					timeout.cancel();
+					Looper.loop();
+				}
+			});
+			thread.start();
 		}
 	}
 	
@@ -480,7 +504,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 			result = new SmartDeviceLinkProxyALM((IProxyListenerALM)this, null, appName, null, null,
 					null, IS_MEDIA_APP, null, DEFAULT_LANGUAGE, DEFAULT_LANGUAGE, APP_ID,
 					null, false, false, new TCPTransportConfig(tcpPort, ipAddress, WIFI_AUTO_RECONNECT));
-			currentIp = inputIp;
 		} catch (SmartDeviceLinkException e) {
 			e.printStackTrace();
 		}

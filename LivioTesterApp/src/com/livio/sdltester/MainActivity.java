@@ -732,8 +732,8 @@ public class MainActivity extends Activity{
 							}
 							
 							Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
-							sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
-							updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
+							
+							finish(); // TODO - SDL is freezing up the main thread here... so, there isn't really much I can do besides close the app... or is there?
 						}
 					}).start();
 					

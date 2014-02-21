@@ -8,9 +8,14 @@ import org.json.JSONObject;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 
+import com.livio.sdl.IpAddress;
+import com.livio.sdl.R;
 import com.livio.sdl.SdlConstants;
+import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
+import com.smartdevicelink.proxy.SmartDeviceLinkProxyALM;
 import com.smartdevicelink.proxy.TTSChunkFactory;
+import com.smartdevicelink.proxy.interfaces.IProxyListenerALM;
 import com.smartdevicelink.proxy.rpc.Choice;
 import com.smartdevicelink.proxy.rpc.Image;
 import com.smartdevicelink.proxy.rpc.MenuParams;
@@ -19,6 +24,7 @@ import com.smartdevicelink.proxy.rpc.TTSChunk;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 import com.smartdevicelink.proxy.rpc.enums.ImageType;
 import com.smartdevicelink.proxy.rpc.enums.SpeechCapabilities;
+import com.smartdevicelink.transport.TCPTransportConfig;
 
 /**
  * Contains static methods that are useful in working with SmartDeviceLink.
