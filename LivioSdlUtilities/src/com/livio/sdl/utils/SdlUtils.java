@@ -144,10 +144,7 @@ public final class SdlUtils {
 	 * @return A vector of voice-rec strings
 	 */
 	public static Vector<String> voiceRecognitionVector(String input){
-		// TODO support CSV input string
-		Vector<String> result = new Vector<String>(1);
-		result.add(input);
-		return result;
+		return StringUtils.toVector(input);
 	}
 	
 	/**
@@ -205,7 +202,7 @@ public final class SdlUtils {
 	 * @return The created vector of TTSChunk objects
 	 */
 	public static Vector<TTSChunk> createTextToSpeechVector(String input){
-		return TTSChunkFactory.createSimpleTTSChunks(input); // TODO support CSV input string
+		return createTextToSpeechVector(input, SpeechCapabilities.TEXT);
 	}
 	
 	/**
@@ -218,8 +215,13 @@ public final class SdlUtils {
 	 * @return The created vector of TTSChunk objects
 	 */
 	public static Vector<TTSChunk> createTextToSpeechVector(String input, SpeechCapabilities speechCapabilities){
-		Vector<TTSChunk> result = new Vector<TTSChunk>(1); // TODO support CSV input string
-		result.add(TTSChunkFactory.createChunk(speechCapabilities, input));
+		Vector<String> inputStrings = StringUtils.toVector(input);
+		Vector<TTSChunk> result = new Vector<TTSChunk>(inputStrings.size());
+		
+		for(String str : inputStrings){
+			result.add(TTSChunkFactory.createChunk(speechCapabilities, str));
+		}
+		
 		return result;
 	}
 	

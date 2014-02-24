@@ -6,19 +6,25 @@ import java.util.Vector;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.graphics.Bitmap;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlRequestFactory;
+import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.BaseOkCancelDialog;
+import com.livio.sdl.dialogs.ImageListDialog;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.utils.SdlUtils;
 import com.livio.sdltester.R;
@@ -41,9 +47,15 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 	private LinearLayout ll_itemList;
 	private Button but_addItem;
 	
-	public CreateInteractionChoiceSetDialog(Context context){
+	private BaseAlertDialog imageDialog = null;
+	private List<SdlImageItem> allImages;
+	private SparseArray<SdlImageItem> selectedImages;
+	
+	public CreateInteractionChoiceSetDialog(Context context, List<SdlImageItem> images){
 		super(context, DIALOG_TITLE, R.layout.create_choice_interaction_set);
 		setPositiveButton(okButtonListener);
+		this.allImages = images;
+		inflateChoiceView();
 		createDialog();
 	}
 
@@ -54,32 +66,75 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 		but_addItem.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-				
-				int itemNumber = getChoiceCount()+1;
-				if(itemNumber > MAX_CHOICES){
-					Toast.makeText(context, context.getResources().getString(R.string.max_choices), Toast.LENGTH_LONG).show();
-					return;
-				}
-				
-				final View viewToAdd = inflater.inflate(R.layout.choice_set_item, null);
-				TextView tv_itemNumber = (TextView) viewToAdd.findViewById(R.id.tv_choiceItemNumber);
-				tv_itemNumber.setText(createItemNumberText(itemNumber));
-				
-				ImageButton ib_close = (ImageButton) viewToAdd.findViewById(R.id.ib_close);
-				ib_close.setVisibility(View.VISIBLE);
-				ib_close.setOnClickListener(new OnClickListener() {
-					@Override
-					public void onClick(View v) {
-						ll_itemList.removeView(viewToAdd);
-						adjustItemNumbers();
-					}
-				});
-				
-				int index = getChoiceCount();
-				ll_itemList.addView(viewToAdd, index);
+				inflateChoiceView();
 			}
 		});
+	}
+	
+	private void inflateChoiceView(){
+		LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		
+		final int itemNumber = getChoiceCount()+1;
+		if(itemNumber > MAX_CHOICES){
+			Toast.makeText(context, context.getResources().getString(R.string.max_choices), Toast.LENGTH_LONG).show();
+			return;
+		}
+		
+		final View viewToAdd = inflater.inflate(R.layout.choice_set_item, null);
+		TextView tv_itemNumber = (TextView) viewToAdd.findViewById(R.id.tv_choiceItemNumber);
+		tv_itemNumber.setText(createItemNumberText(itemNumber));
+		
+		ImageButton ib_close = (ImageButton) viewToAdd.findViewById(R.id.ib_close);
+		int visibility = (itemNumber == 1) ? View.GONE : View.VISIBLE;
+		ib_close.setVisibility(visibility);
+		ib_close.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				ll_itemList.removeView(viewToAdd);
+				adjustItemNumbers();
+			}
+		});
+		
+		final EditText et_imageName = (EditText) viewToAdd.findViewById(R.id.et_choice_imageName);
+		
+		CheckBox cb_hasImage = (CheckBox) viewToAdd.findViewById(R.id.check_enable_image);
+		cb_hasImage.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			@Override
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				et_imageName.setEnabled(isChecked);
+				
+				if(isChecked){
+					addImageToItem(itemNumber, et_imageName);
+				}
+				else{
+					selectedImages.remove(itemNumber);
+				}
+			}
+		});
+		et_imageName.setEnabled(cb_hasImage.isChecked());
+		
+		int index = getChoiceCount();
+		ll_itemList.addView(viewToAdd, index);
+	}
+	
+	private void addImageToItem(final int itemNumber, final EditText et_imageName){
+		if(selectedImages == null){
+			selectedImages = new SparseArray<SdlImageItem>(MAX_CHOICES);
+		}
+		
+		if(imageDialog == null){
+			imageDialog = new ImageListDialog(context, allImages);
+			imageDialog.setListener(new BaseAlertDialog.Listener() {
+				@Override
+				public void onResult(Object resultData) {
+					SdlImageItem item = (SdlImageItem) resultData;
+					selectedImages.put(itemNumber, item);
+					et_imageName.setText(item.getImageName());
+				}
+			});
+		}
+		
+		imageDialog.show();
 	}
 	
 	private void adjustItemNumbers(){
@@ -113,11 +168,11 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 				final DataHolder item = itemList.get(i);
 				final String choiceName = item.choiceName;
 				final String voiceRecKeyword = item.voiceRecKeyword;
-				final Bitmap image = item.image;
+				final String imageName = item.imageName;
 				
 				// make sure the choice at least has a name to display
 				if(choiceName.length() > 0){
-					Choice choice = SdlUtils.createChoice(choiceName, voiceRecKeyword, null); // TODO implement images
+					Choice choice = SdlUtils.createChoice(choiceName, voiceRecKeyword, imageName);
 					choiceItems.add(choice);
 				}
 			}
@@ -146,28 +201,27 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 	}
 	
 	private DataHolder createChoiceSetItem(View view){
-		String choiceName, voiceKeyword;
-		Bitmap artwork; // TODO
+		String choiceName, voiceKeyword, imageName;
 		
 		choiceName = ((EditText) view.findViewById(R.id.et_choice_name)).getText().toString();
 		voiceKeyword = ((EditText) view.findViewById(R.id.et_choice_vr_text)).getText().toString();
+		imageName = ((EditText) view.findViewById(R.id.et_choice_imageName)).getText().toString();
+		if(imageName == null || imageName.length() <= 0){
+			imageName = null;
+		}
 		
-		return new DataHolder(choiceName, voiceKeyword);
+		return new DataHolder(choiceName, voiceKeyword, imageName);
 	}
 	
 	private static final class DataHolder{
 		private String choiceName;
 		private String voiceRecKeyword;
-		private Bitmap image; // TODO
+		private String imageName;
 		
-		protected DataHolder(String choiceName, String voiceRecKeyword){
+		protected DataHolder(String choiceName, String voiceRecKeyword, String imageName){
 			this.choiceName = choiceName;
 			this.voiceRecKeyword = voiceRecKeyword;
-		}
-		
-		protected DataHolder(String choiceName, String voiceRecKeyword, Bitmap image){
-			this(choiceName, voiceRecKeyword);
-			this.image = image;
+			this.imageName = imageName;
 		}
 	}
 

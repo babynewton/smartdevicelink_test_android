@@ -1,7 +1,8 @@
-package com.livio.sdl.utils;
+package com.livio.sdl;
 
 import android.util.SparseArray;
 
+import com.livio.sdl.utils.Timeout;
 import com.smartdevicelink.proxy.RPCRequest;
 
 /**
@@ -90,12 +91,12 @@ public class SdlResponseTracker {
 	 * Clears all requests being tracked and cancels their associated timeouts.
 	 */
 	public void clear(){
-		int numItems = requests.size();
-		
-		// loop through requests and remove each one
-		for(int i=0; i<numItems; i++){
-			RPCRequest request = requests.valueAt(i);
-			remove(request.getCorrelationID());
+		if(requests != null){
+			// loop through requests and remove each one
+			for(int numItems = requests.size()-1; numItems >= 0; numItems--){
+				RPCRequest request = requests.valueAt(numItems);
+				remove(request.getCorrelationID());
+			}
 		}
 	}
 	

@@ -22,7 +22,6 @@ import com.livio.sdl.menu.CommandButton.OnClickListener;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.menu.MenuManager;
 import com.livio.sdl.menu.SubmenuButton;
-import com.livio.sdl.utils.SdlResponseTracker;
 import com.livio.sdl.utils.UpCounter;
 import com.smartdevicelink.exception.SmartDeviceLinkException;
 import com.smartdevicelink.proxy.RPCMessage;
@@ -102,8 +101,8 @@ import com.smartdevicelink.transport.TCPTransportConfig;
  *
  */
 public class SdlService extends Service implements IProxyListenerALM{
-	// TODO - if a request is in the awaiting response queue for more than (5? 10?) seconds, assume the connection was lost and send DISCONNECT message.
 	// TODO - track current language registration so the dialog can be initialized with the current values
+	// TODO make this an abstract class and allow the developer to extend it for their actual service
 	
 	
 	
@@ -495,7 +494,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected SmartDeviceLinkProxyALM createSdlProxyObject(IpAddress inputIp){
 		int tcpPort = Integer.parseInt(inputIp.getTcpPort());
 		String ipAddress = inputIp.getIpAddress();
-		String appName = getResources().getString(R.string.app_name); // TODO - this should happen in the child class, not the super class.
+		String appName = getResources().getString(R.string.app_name);
 		
 		SmartDeviceLinkProxyALM result = null;
 		try {
@@ -515,15 +514,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * proxy connection to the previously connected IP address.
 	 */
 	protected void resetProxy(){
-		if(sdlProxy != null){
-			try {
-				sdlProxy.dispose();
-			} catch (SmartDeviceLinkException e) {
-				e.printStackTrace();
-			}
-			sdlProxy = null;
-		}
-		
+		stopSdlProxy();
 		startSdlProxy(currentIp);
 	}
 	
@@ -838,7 +829,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	
 	@Override 
 	public void onOnCommand(final OnCommand notification) {
-		// FIXME The developer shouldn't have to do this here.  This method should be called on the service thread.
 		runOnServiceThread(new Runnable() {
 			@Override
 			public void run() {
@@ -1043,8 +1033,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 				int correlationId = response.getCorrelationID();
 				removeFromRequestQueue(correlationId);
 				
-				int interactionId = response.getChoiceID();
-				choiceSetManager.dispatchClick(interactionId);
+				if(response.getSuccess()){
+					int interactionId = response.getChoiceID();
+					choiceSetManager.dispatchClick(interactionId);
+				}
 			}
 		});
 	}

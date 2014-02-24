@@ -625,6 +625,10 @@ public class MainActivity extends Activity{
 			availableItems = filterUnaddedItems(putFileList);
 			createShowDialog(availableItems);
 			break;
+		case ResultCodes.PutFileResult.CHOICE_INTERACTION_SET:
+			availableItems = filterUnaddedItems(putFileList);
+			createInteractionChoiceSetDialog(availableItems);
+			break;
 		default:
 			break;
 		}
@@ -836,7 +840,9 @@ public class MainActivity extends Activity{
 			sendSubmenuListRequest(ResultCodes.SubmenuResult.DELETE_SUBMENU_DIALOG);
 			break;
 		case CREATE_INTERACTION_CHOICE_SET:
-			createInteractionChoiceSetDialog();
+			// the CreateInteractionChoiceSet dialog needs a list of images that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
+			sendPutFileRequest(ResultCodes.PutFileResult.CHOICE_INTERACTION_SET);
 			break;
 		case PERFORM_INTERACTION:
 			// the perform interaction dialog needs a list of interaction sets that have been added so far, so let's request
@@ -995,8 +1001,8 @@ public class MainActivity extends Activity{
 	/**
 	 * Creates a create interaction choice set dialog, allowing the user to manually send a create interaction choice set command.
 	 */	
-	private void createInteractionChoiceSetDialog(){
-		BaseAlertDialog createInteractionChoiceSetDialog = new CreateInteractionChoiceSetDialog(this);
+	private void createInteractionChoiceSetDialog(List<SdlImageItem> addedImages){
+		BaseAlertDialog createInteractionChoiceSetDialog = new CreateInteractionChoiceSetDialog(this, addedImages);
 		createInteractionChoiceSetDialog.setListener(singleMessageListener);
 		createInteractionChoiceSetDialog.show();
 	}

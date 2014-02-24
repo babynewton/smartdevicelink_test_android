@@ -22,8 +22,6 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnSeekBarChang
 
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.ALERT;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
-
-	// TODO clean up the math surrounding the seekbar
 	
 	// a seekbar cannot do decimal points, so it currently ranges 0-50, which is then
 	// divided by 10.0f to give us a number of seconds, rounded to 1/10 of a second.

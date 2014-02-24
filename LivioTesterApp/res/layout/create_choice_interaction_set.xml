@@ -10,8 +10,6 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
         
-    <include layout="@layout/choice_set_item"/>
-        
     <Button
         android:id="@+id/but_addItem"
         android:layout_width="match_parent"

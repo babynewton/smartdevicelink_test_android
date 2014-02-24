@@ -10,8 +10,12 @@ package com.livio.sdl.menu;
  */
 public class CommandButton extends MenuItem {
 
-	// TODO comments
-	
+	/**
+	 * An interface that defines a click event listener for a command button.
+	 *
+	 * @author Mike Burke
+	 *
+	 */
 	public interface OnClickListener{
 		void onClick(CommandButton button);
 	}
@@ -73,6 +77,9 @@ public class CommandButton extends MenuItem {
 		return imageName;
 	}
 	
+	/**
+	 * Executes the code in the click listener, if it exists.
+	 */
 	public void dispatchClickEvent(){
 		if(listener != null){
 			listener.onClick(this);
