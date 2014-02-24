@@ -289,6 +289,24 @@ public class MenuManager {
 	}
 	
 	/**
+	 * Dispatches a click event to the button with the input id.  If the button with the
+	 * input id isn't found in the menu manager, this method does nothing.
+	 * 
+	 * @param buttonId The id of the button that was clicked
+	 */
+	public void dispatchClick(int buttonId){
+		MenuItem item = menuItems.get(buttonId);
+		
+		if(item == null || item.isMenu()){
+			log("Button with selected ID hasn't been added to this menu manager.");
+		}
+		else{
+			CommandButton itemCmd = (CommandButton) item;
+			itemCmd.dispatchClickEvent();
+		}
+	}
+	
+	/**
 	 * Creates a new iterator object for this MenuManager object.
 	 * 
 	 * @return The new iterator instance

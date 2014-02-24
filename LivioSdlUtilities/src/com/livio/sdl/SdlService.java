@@ -90,6 +90,7 @@ import com.smartdevicelink.proxy.rpc.UnsubscribeButton;
 import com.smartdevicelink.proxy.rpc.UnsubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.UpdateTurnListResponse;
+import com.smartdevicelink.proxy.rpc.enums.ButtonName;
 import com.smartdevicelink.proxy.rpc.enums.Language;
 import com.smartdevicelink.transport.TCPTransportConfig;
 
@@ -240,6 +241,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected SdlResponseTracker responseTracker;
 	protected List<SdlButton> buttonSubscriptions = new ArrayList<SdlButton>();
 	protected List<String> addedImageNames = new ArrayList<String>();
+	protected Handler serviceHandler = new Handler();
 	
 	protected SmartDeviceLinkProxyALM sdlProxy = null; // the proxy object which sends our requests and receives responses
 	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
@@ -606,18 +608,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 			((AddSubMenu) command).setMenuID(commandIdGenerator.next());
 			addToRequestQueue(command);
 		}
-		else if(name.equals(Names.DeleteCommand)){
-			addToRequestQueue(command);
-		}
-		else if(name.equals(Names.DeleteSubMenu)){
-			addToRequestQueue(command);
-		}
-		else if(name.equals(Names.SubscribeButton)){
-			addToRequestQueue(command);
-		}
-		else if(name.equals(Names.UnsubscribeButton)){
-			addToRequestQueue(command);
-		}
 		else if(name.equals(Names.CreateInteractionChoiceSet)){
 			CreateInteractionChoiceSet choiceSet = (CreateInteractionChoiceSet) command;
 			choiceSet.setInteractionChoiceSetID(commandIdGenerator.next());
@@ -627,16 +617,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 				choice.setChoiceID(commandIdGenerator.next());
 			}
 
-			addToRequestQueue(command);
-		}
-		else if(name.equals(Names.DeleteInteractionChoiceSet)){
-			addToRequestQueue(command);
-		}
-		else if(name.equals(Names.PutFile)){
-			// since putfile requests could take a bit longer, we'll expand the timeout a bit
-			addToRequestQueue(command);
-		}
-		else if(name.equals(Names.DeleteFile)){
 			addToRequestQueue(command);
 		}
 		else if(name.equals(Names.Alert)){
@@ -654,6 +634,11 @@ public class SdlService extends Service implements IProxyListenerALM{
 		else if(name.equals(Names.Slider)){
 			int timeout = ((Slider) command).getTimeout();
 			addToRequestQueue(command, (timeout + SdlConstants.SliderConstants.EXPECTED_REPSONSE_TIME_OFFSET));
+		}
+		else if( name.equals(Names.PutFile) || name.equals(Names.SubscribeButton) || name.equals(Names.DeleteCommand) || 
+				name.equals(Names.UnsubscribeButton) || name.equals(Names.DeleteInteractionChoiceSet) || name.equals(Names.DeleteSubMenu) ||
+				name.equals(Names.DeleteFile)){
+			addToRequestQueue(command);
 		}
 		
 	}
@@ -824,6 +809,10 @@ public class SdlService extends Service implements IProxyListenerALM{
 		
 		return new ArrayList<String>(addedImageNames);
 	}
+	
+	protected void runOnServiceThread(Runnable runnable){
+		serviceHandler.post(runnable);
+	}
 
 	/* ********** IProxyListenerALM interface methods ********** */
 	
@@ -847,8 +836,33 @@ public class SdlService extends Service implements IProxyListenerALM{
 		initialize();
 	}
 	
-	@Override public void onOnCommand(OnCommand notification) {sendMessageResponse(notification);}
-	@Override public void onOnButtonPress(OnButtonPress notification) {sendMessageResponse(notification);}
+	@Override 
+	public void onOnCommand(final OnCommand notification) {
+		// FIXME The developer shouldn't have to do this here.  This method should be called on the service thread.
+		runOnServiceThread(new Runnable() {
+			@Override
+			public void run() {
+				sendMessageResponse(notification);
+				
+				int buttonId = notification.getCmdID();
+				menuManager.dispatchClick(buttonId);
+			}
+		});
+	}
+	
+	@Override public void onOnButtonPress(final OnButtonPress notification) {
+		runOnServiceThread(new Runnable() {
+			@Override
+			public void run() {
+				sendMessageResponse(notification);
+				
+				ButtonName button = notification.getButtonName();
+				SdlButton sdlButton = SdlButton.translateFromLegacy(button);
+				String text = new StringBuilder().append(sdlButton.toString()).append(" clicked!").toString();
+				Toast.makeText(SdlService.this, text, Toast.LENGTH_LONG).show();
+			}
+		});
+	}
 	
 	/* Not very useful callbacks */
 	@Override public void onOnPermissionsChange(OnPermissionsChange notification) {sendMessageResponse(notification);}
@@ -1020,11 +1034,19 @@ public class SdlService extends Service implements IProxyListenerALM{
 	}
 	
 	@Override 
-	public void onPerformInteractionResponse(PerformInteractionResponse response) {
-		sendMessageResponse(response);
-		
-		int correlationId = response.getCorrelationID();
-		removeFromRequestQueue(correlationId);
+	public void onPerformInteractionResponse(final PerformInteractionResponse response) {
+		runOnServiceThread(new Runnable() {
+			@Override
+			public void run() {
+				sendMessageResponse(response);
+				
+				int correlationId = response.getCorrelationID();
+				removeFromRequestQueue(correlationId);
+				
+				int interactionId = response.getChoiceID();
+				choiceSetManager.dispatchClick(interactionId);
+			}
+		});
 	}
 
 	@Override 

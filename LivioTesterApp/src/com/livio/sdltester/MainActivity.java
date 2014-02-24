@@ -740,21 +740,23 @@ public class MainActivity extends Activity{
 					connectingDialog.show();
 					
 					// and start a timeout thread in case the connection isn't successful
-					connectionTimeout = new Timeout(CONNECTING_DIALOG_TIMEOUT, new Timeout.Listener() {
-						@Override public void onTimeoutCancelled() {}
-						
-						@Override
-						public void onTimeoutCompleted() {
-							if(connectingDialog != null && connectingDialog.isShowing()){
-								// if we made it here without being interrupted, the connection was unsuccessful - dismiss the dialog and enter offline mode
-								connectingDialog.dismiss();
-							}
+					if(connectionTimeout == null){
+						connectionTimeout = new Timeout(CONNECTING_DIALOG_TIMEOUT, new Timeout.Listener() {
+							@Override public void onTimeoutCancelled() {}
 							
-							Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
-							sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
-							updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
-						}
-					});
+							@Override
+							public void onTimeoutCompleted() {
+								if(connectingDialog != null && connectingDialog.isShowing()){
+									// if we made it here without being interrupted, the connection was unsuccessful - dismiss the dialog and enter offline mode
+									connectingDialog.dismiss();
+								}
+								
+								Toast.makeText(MainActivity.this, "Connection timed out", Toast.LENGTH_SHORT).show();
+								sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.OFFLINE_MODE));
+								updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
+							}
+						});
+					}
 					connectionTimeout.start();
 					
 					// message the SDL service, telling it to attempt a connection with the input IP address
@@ -784,6 +786,16 @@ public class MainActivity extends Activity{
 		}
 		
 		switch(command){
+		case PUT_FILE:
+			// the put file dialog needs a list of images that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
+			sendPutFileRequest(ResultCodes.PutFileResult.PUT_FILE);
+			break;
+		case DELETE_FILE:
+			// the delete file dialog needs a list of images that have been added so far, so let's request
+			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
+			sendPutFileRequest(ResultCodes.PutFileResult.DELETE_FILE);
+			break;
 		case ALERT:
 			createAlertDialog();
 			break;
@@ -853,16 +865,6 @@ public class MainActivity extends Activity{
 			break;
 		case SET_MEDIA_CLOCK_TIMER:
 			createSetMediaClockTimerDialog();
-			break;
-		case PUT_FILE:
-			// the put file dialog needs a list of images that have been added so far, so let's request
-			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
-			sendPutFileRequest(ResultCodes.PutFileResult.PUT_FILE);
-			break;
-		case DELETE_FILE:
-			// the delete file dialog needs a list of images that have been added so far, so let's request
-			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
-			sendPutFileRequest(ResultCodes.PutFileResult.DELETE_FILE);
 			break;
 		case LIST_FILES:
 			// list files command doesn't accept any parameters, so we can send it directly.

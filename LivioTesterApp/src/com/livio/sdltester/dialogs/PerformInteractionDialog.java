@@ -27,6 +27,7 @@ import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.enums.SdlInteractionMode;
 import com.livio.sdl.menu.MenuItem;
 import com.livio.sdl.utils.AndroidUtils;
+import com.livio.sdl.utils.MathUtils;
 import com.livio.sdl.viewhelpers.SeekBarCalculator;
 import com.livio.sdltester.R;
 import com.smartdevicelink.proxy.RPCRequest;
@@ -141,6 +142,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 				int timeout = SdlConstants.PerformInteractionConstants.INVALID_TIMEOUT;
 				if(timeoutEnabled){
 					timeout = progressCalculator.calculateProgress(seek_timeoutDuration.getProgress());
+					timeout = MathUtils.convertSecsToMillisecs(timeout);
 				}
 				
 				SdlInteractionMode sdlInteractionMode = (SdlInteractionMode) spin_interactionMode.getAdapter().getItem(spin_interactionMode.getSelectedItemPosition());

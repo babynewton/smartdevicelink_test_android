@@ -10,6 +10,8 @@ package com.livio.sdl.menu;
  */
 public class CommandButton extends MenuItem {
 
+	// TODO comments
+	
 	public interface OnClickListener{
 		void onClick(CommandButton button);
 	}
@@ -69,6 +71,12 @@ public class CommandButton extends MenuItem {
 
 	public String getImageName() {
 		return imageName;
+	}
+	
+	public void dispatchClickEvent(){
+		if(listener != null){
+			listener.onClick(this);
+		}
 	}
 
 }
