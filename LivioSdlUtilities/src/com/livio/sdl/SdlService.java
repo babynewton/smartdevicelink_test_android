@@ -224,7 +224,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	private static final boolean IS_MEDIA_APP = true;					/*		All of these variables		*/
 	private static final Language DEFAULT_LANGUAGE = Language.EN_US;	/*		are needed to start up		*/
 	private static final String APP_ID = "appId";						/*		the SDL proxy object		*/
-	private static final boolean WIFI_AUTO_RECONNECT = true;			/*									*/
+	private static final boolean WIFI_AUTO_RECONNECT = false;			/*									*/
 	
 	protected static boolean debug = false;
 	
@@ -236,7 +236,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	
 	protected MenuManager menuManager = new MenuManager();
 	protected MenuManager choiceSetManager = new MenuManager();
-//	protected SparseArray<RPCRequest> awaitingResponse = new SparseArray<RPCRequest>(1);
 	protected SdlResponseTracker responseTracker;
 	protected List<SdlButton> buttonSubscriptions = new ArrayList<SdlButton>();
 	protected List<String> addedImageNames = new ArrayList<String>();
@@ -246,6 +245,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
 	protected boolean isConnected = false;
 	protected boolean offlineMode = false;
+	
+	protected Toast toast = null;
 	
 	/* ********** Messenger methods to & from the client ********** */
 	
@@ -300,6 +301,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 					break;
 				case ServiceMessages.REQUEST_PUT_FILES:
 					putFilesRequested(msg.replyTo, msg.arg1);
+					break;
 				default:
 					break;
 			}
@@ -421,6 +423,12 @@ public class SdlService extends Service implements IProxyListenerALM{
 		sendMessageToClient(listener, msg);
 	}
 	
+	/**
+	 * Sends the list of put files to the listening messenger client.
+	 * 
+	 * @param listener The client to reply to
+	 * @param reqCode The request code sent with the initial request
+	 */
 	protected void putFilesRequested(Messenger listener, int reqCode){
 		Message msg = Message.obtain(null, ClientMessages.PUT_FILES_RECEIVED);
 		msg.obj = getPutFiles();
@@ -445,7 +453,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 				public void onRequestTimedOut() {
 					if(isConnected && !offlineMode){
 						// if any sdl request times out, we will assume we disconnected.
-						Toast.makeText(SdlService.this, "A request timed out.  You may need to re-start SDL core.", Toast.LENGTH_LONG).show();
+						showToast("A request timed out.  You may need to re-start SDL core.");
 						Message msg = Message.obtain(null, ClientMessages.SDL_DISCONNECTED);
 						sendMessageToRegisteredClients(msg);
 					}
@@ -626,7 +634,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 			int timeout = ((Slider) command).getTimeout();
 			addToRequestQueue(command, (timeout + SdlConstants.SliderConstants.EXPECTED_REPSONSE_TIME_OFFSET));
 		}
-		else if( name.equals(Names.PutFile) || name.equals(Names.SubscribeButton) || name.equals(Names.DeleteCommand) || 
+		else if( name.equals(Names.PutFile) || name.equals(Names.SubscribeButton) || name.equals(Names.SubscribeVehicleData) ||
+				name.equals(Names.UnsubscribeVehicleData) || name.equals(Names.DeleteCommand) || 
 				name.equals(Names.UnsubscribeButton) || name.equals(Names.DeleteInteractionChoiceSet) || name.equals(Names.DeleteSubMenu) ||
 				name.equals(Names.DeleteFile)){
 			addToRequestQueue(command);
@@ -683,7 +692,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		final MenuItem result = new CommandButton(name, id, parentId, new OnClickListener(){
 			@Override
 			public void onClick(CommandButton button) {
-				Toast.makeText(SdlService.this, name + " clicked!", Toast.LENGTH_SHORT).show();
+				showToast(new StringBuilder().append(name).append(" clicked!").toString());
 			}
 		});
 		
@@ -727,7 +736,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 		final MenuItem result = new CommandButton(name, id, parentId, new OnClickListener(){
 			@Override
 			public void onClick(CommandButton button) {
-				Toast.makeText(SdlService.this, name + " clicked!", Toast.LENGTH_SHORT).show();
+				showToast(new StringBuilder().append(name).append(" clicked!").toString());
 			}
 		});
 		
@@ -801,6 +810,11 @@ public class SdlService extends Service implements IProxyListenerALM{
 		return new ArrayList<String>(addedImageNames);
 	}
 	
+	/**
+	 * Posts the input runnable to the Service thread.
+	 * 
+	 * @param runnable The runnable to run
+	 */
 	protected void runOnServiceThread(Runnable runnable){
 		serviceHandler.post(runnable);
 	}
@@ -849,7 +863,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 				ButtonName button = notification.getButtonName();
 				SdlButton sdlButton = SdlButton.translateFromLegacy(button);
 				String text = new StringBuilder().append(sdlButton.toString()).append(" clicked!").toString();
-				Toast.makeText(SdlService.this, text, Toast.LENGTH_LONG).show();
+				showToast(text);
 			}
 		});
 	}
@@ -1056,15 +1070,15 @@ public class SdlService extends Service implements IProxyListenerALM{
 		int correlationId = response.getCorrelationID();
 		removeFromRequestQueue(correlationId);
 	}
-	
+
+	@Override public void onSubscribeVehicleDataResponse(SubscribeVehicleDataResponse response) {sendMessageResponse(response);}
+	@Override public void onUnsubscribeVehicleDataResponse(UnsubscribeVehicleDataResponse response) {sendMessageResponse(response);}
 	@Override public void onGenericResponse(GenericResponse response) {sendMessageResponse(response);}
 	@Override public void onResetGlobalPropertiesResponse(ResetGlobalPropertiesResponse response) {sendMessageResponse(response);}
 	@Override public void onSetGlobalPropertiesResponse(SetGlobalPropertiesResponse response) {sendMessageResponse(response);}
 	@Override public void onSetMediaClockTimerResponse(SetMediaClockTimerResponse response) {sendMessageResponse(response);}
 	@Override public void onShowResponse(ShowResponse response) {sendMessageResponse(response);}
 	@Override public void onSpeakResponse(SpeakResponse response) {sendMessageResponse(response);}
-	@Override public void onSubscribeVehicleDataResponse(SubscribeVehicleDataResponse response) {sendMessageResponse(response);}
-	@Override public void onUnsubscribeVehicleDataResponse(UnsubscribeVehicleDataResponse response) {sendMessageResponse(response);}
 	@Override public void onGetVehicleDataResponse(GetVehicleDataResponse response) {sendMessageResponse(response);}
 	@Override public void onReadDIDResponse(ReadDIDResponse response) {sendMessageResponse(response);}
 	@Override public void onGetDTCsResponse(GetDTCsResponse response) {sendMessageResponse(response);}
@@ -1079,6 +1093,15 @@ public class SdlService extends Service implements IProxyListenerALM{
 	@Override public void onUpdateTurnListResponse(UpdateTurnListResponse response) {sendMessageResponse(response);}
 	@Override public void onDialNumberResponse(DialNumberResponse response) {sendMessageResponse(response);}
 	
+	
+	private void showToast(String msg){
+		if(toast == null){
+			toast = Toast.makeText(SdlService.this, "", Toast.LENGTH_LONG);
+		}
+		
+		toast.setText(msg);
+		toast.show();
+	}
 
 	/* ********** Debug & log methods ********** */
 	/**

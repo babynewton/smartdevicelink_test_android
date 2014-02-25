@@ -13,11 +13,11 @@ import com.livio.sdl.R;
  * @author Mike Burke
  *
  */
-public class BaseTextViewDialog extends BaseAlertDialog {
+public class TextViewAlertDialog extends BaseAlertDialog {
 
 	protected TextView tv;
 	
-	public BaseTextViewDialog(Context context, String dialogTitle, String message){
+	public TextViewAlertDialog(Context context, String dialogTitle, String message){
 		super(context, dialogTitle, R.layout.textview);
 		tv.setText(message);
 		createDialog();

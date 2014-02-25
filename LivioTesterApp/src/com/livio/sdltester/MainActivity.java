@@ -360,6 +360,7 @@ public class MainActivity extends Activity{
 
             // Detach our existing connection.
             unbindService(mConnection);
+            stopService(new Intent(MainActivity.this, SdlService.class));
             isBound = false;
         }
     }
@@ -884,10 +885,6 @@ public class MainActivity extends Activity{
 			
 		case SET_GLOBAL_PROPERTIES:
 		case RESET_GLOBAL_PROPERTIES:
-			
-		case SUBSCRIBE_VEHICLE_DATA:
-		case UNSUBSCRIBE_VEHICLE_DATA:
-		case GET_VEHICLE_DATA:
 			Toast.makeText(this, getResources().getString(R.string.not_implemented), Toast.LENGTH_SHORT).show();
 			break;
 		default:

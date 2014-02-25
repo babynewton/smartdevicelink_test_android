@@ -24,8 +24,7 @@ public abstract class BaseAlertDialog {
 	 */
 	public interface Listener{
 		/**
-		 * Should be called when the "positive button" is pressed and data from
-		 * the dialog views have been collected.
+		 * Should be called when data from the dialog is ready to return.
 		 * 
 		 * @param resultData The data results for the dialog
 		 */
@@ -106,7 +105,6 @@ public abstract class BaseAlertDialog {
 	public void dismiss(){
 		if(dialog != null && dialog.isShowing()){
 			dialog.dismiss();
-			dialog = null;
 		}
 	}
 	

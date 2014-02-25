@@ -7,7 +7,7 @@ import android.view.View.OnClickListener;
 import com.livio.sdl.SdlLogMessage;
 import com.livio.sdl.utils.SdlUtils;
 
-public class JsonDialog extends BaseTextViewDialog {
+public class JsonDialog extends TextViewAlertDialog {
 	public JsonDialog(Context context, SdlLogMessage logMessage) {
 		super(context, SdlUtils.makeJsonTitle(logMessage.getCorrelationId()), logMessage.getJsonData());
 		

@@ -172,14 +172,14 @@ public enum SdlCommand{
 	 * @see UnsubscribeVehicleData
 	 * @see GetVehicleData
 	 */
-	SUBSCRIBE_VEHICLE_DATA ("Subscribe to Vehicle Data"),
+//	SUBSCRIBE_VEHICLE_DATA ("Subscribe to Vehicle Data"),
 	/**
 	 * SDL UnsubscribeVehicleData command allows the application to unsubscribe from any vehicle data that has been subscribed to through the SubscribeVehicleData command.
 	 * @see UnsubscribeVehicleData
 	 * @see SubscribeVehicleData
 	 * @see GetVehicleData
 	 */
-	UNSUBSCRIBE_VEHICLE_DATA ("Unsubscribe from Vehicle Data"),
+//	UNSUBSCRIBE_VEHICLE_DATA ("Unsubscribe from Vehicle Data"),
 	/**
 	 * SDL GetVehicleData command allows the application to retrieve vehicle data from the head-unit.  Prior to sending this command, the application must first subscribe
 	 * for vehicle data through the SubscribeVehicleData command.
@@ -187,7 +187,7 @@ public enum SdlCommand{
 	 * @see SubscribeVehicleData
 	 * @see UnsubcribeVehicleData
 	 */
-	GET_VEHICLE_DATA ("Get Vehicle Data"),
+//	GET_VEHICLE_DATA ("Get Vehicle Data"),
 	/**
 	 * SDL ReadDID command allows the application to query DIDs for a particular module.  DIDs contain useful information for each module, such as part numbers.
 	 * @see ReadDID
