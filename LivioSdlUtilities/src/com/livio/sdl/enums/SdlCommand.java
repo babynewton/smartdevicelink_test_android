@@ -76,13 +76,13 @@ public enum SdlCommand{
 	 * @see SetGlobalProperties
 	 * @see ResetGlobalProperties  
 	 */
-	SET_GLOBAL_PROPERTIES ("Set Global Properties"),
+//	SET_GLOBAL_PROPERTIES ("Set Global Properties"), // TODO add support for set global properties
 	/**
 	 * SDL ResetGlobalProperties command resets global voice properties for your application to the vehicle's default settings.
 	 * @see ResetGlobalProperties
 	 * @see SetGlobalProperties
 	 */
-	RESET_GLOBAL_PROPERTIES ("Reset Global Properties"),
+//	RESET_GLOBAL_PROPERTIES ("Reset Global Properties"), // TODO add support for reset global properties
 	/**
 	 * SDL SetMediaClockTimer command allows media applications to set a counter that automatically counts up or counts down on the head-unit.  The command
 	 * also allows the application to pause, resume or clear a previously-existing counter.

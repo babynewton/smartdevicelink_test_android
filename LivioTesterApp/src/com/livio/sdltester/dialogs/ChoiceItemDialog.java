@@ -32,6 +32,10 @@ public class ChoiceItemDialog extends BaseOkCancelDialog {
 		super(context, DIALOG_TITLE, R.layout.choice_set_item);
 		setPositiveButton(okButton);
 		this.availableImages = availableImages;
+		if(availableImages == null || availableImages.size() <= 0){
+			cb_hasImage.setVisibility(View.GONE);
+			et_imageName.setVisibility(View.GONE);
+		}
 		createDialog();
 	}
 

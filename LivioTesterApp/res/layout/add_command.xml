@@ -33,9 +33,24 @@
 			android:layout_height="wrap_content">
 		</Spinner>
 
-		<Button android:id="@+id/but_addCommand_selectImage"
-	        android:layout_width="match_parent"
-	        android:layout_height="wrap_content"
-	        android:text="@string/add_image" />
+		<LinearLayout
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:orientation="horizontal">
+		    
+		    <CheckBox
+		        android:id="@+id/check_enable_image"
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"/>
+		
+		    <EditText
+		        android:id="@+id/et_imageName"
+		        android:layout_width="0dip"
+		        android:layout_height="wrap_content"
+		        android:layout_weight="1"
+		        android:inputType="textPersonName"
+		        android:hint="@string/sdl_image_name" />
+		    
+		</LinearLayout>
 
 </LinearLayout>

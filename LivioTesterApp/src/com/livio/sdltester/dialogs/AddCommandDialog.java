@@ -6,8 +6,9 @@ import java.util.List;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -31,9 +32,10 @@ public class AddCommandDialog extends BaseOkCancelDialog{
 	
 	private EditText et_newCommand;
 	private EditText et_voiceRecKeyword;
+	private EditText et_imageName;
 	
 	private Spinner spin_addCommand_submenus;
-	private Button but_addCommand_selectImage;
+	private CheckBox cb_image;
 	
 	private SdlImageItem selectedImage;
 	
@@ -49,21 +51,32 @@ public class AddCommandDialog extends BaseOkCancelDialog{
 		submenuList.add(0, new MenuItem("Root-level menu", SdlConstants.AddCommandConstants.ROOT_PARENT_ID, true));
 		spin_addCommand_submenus.setAdapter(AndroidUtils.createSpinnerAdapter(context, submenuList));
 		
-		but_addCommand_selectImage.setOnClickListener(new OnClickListener() {
+		if(images == null || images.size() <= 0){
+			cb_image.setVisibility(View.GONE);
+			et_imageName.setVisibility(View.GONE);
+		}
+		
+		cb_image.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			@Override
-			public void onClick(View v) {
-				if(images == null || images.size() <= 0){
-					Toast.makeText(context, "No images have been added to the system yet.", Toast.LENGTH_LONG).show();
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if(isChecked){
+					if(images == null || images.size() <= 0){
+						Toast.makeText(context, "No images have been added to the system yet.", Toast.LENGTH_LONG).show();
+					}
+					else{
+						BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
+						selectImageDialog.setListener(new BaseAlertDialog.Listener() {
+							@Override
+							public void onResult(Object resultData) {
+								selectedImage = (SdlImageItem) resultData;
+								et_imageName.setText(selectedImage.getImageName());
+							}
+						});
+						selectImageDialog.show();
+					}
 				}
 				else{
-					BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
-					selectImageDialog.setListener(new BaseAlertDialog.Listener() {
-						@Override
-						public void onResult(Object resultData) {
-							selectedImage = (SdlImageItem) resultData;
-						}
-					});
-					selectImageDialog.show();
+					et_imageName.setText("");
 				}
 			}
 		});
@@ -73,8 +86,9 @@ public class AddCommandDialog extends BaseOkCancelDialog{
 	protected void findViews(View parent) {
 		et_newCommand = (EditText) parent.findViewById(R.id.et_addCommand_commandName);
 		et_voiceRecKeyword = (EditText) parent.findViewById(R.id.et_addCommand_voiceRecKeyword);
+		et_imageName = (EditText) parent.findViewById(R.id.et_imageName);
 		spin_addCommand_submenus = (Spinner) parent.findViewById(R.id.spin_addCommand_submenus);
-		but_addCommand_selectImage = (Button) parent.findViewById(R.id.but_addCommand_selectImage);
+		cb_image = (CheckBox) parent.findViewById(R.id.check_enable_image);
 	}
 	
 	//dialog button listeners

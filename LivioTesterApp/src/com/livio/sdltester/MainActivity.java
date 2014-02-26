@@ -883,10 +883,11 @@ public class MainActivity extends Activity{
 			sendPutFileRequest(ResultCodes.PutFileResult.SET_APP_ICON);
 			break;
 			
-		case SET_GLOBAL_PROPERTIES:
-		case RESET_GLOBAL_PROPERTIES:
-			Toast.makeText(this, getResources().getString(R.string.not_implemented), Toast.LENGTH_SHORT).show();
-			break;
+			// TODO these should maybe be added at some point maybe
+//		case SET_GLOBAL_PROPERTIES:
+//		case RESET_GLOBAL_PROPERTIES:
+//			Toast.makeText(this, getResources().getString(R.string.not_implemented), Toast.LENGTH_SHORT).show();
+//			break;
 		default:
 			break;
 		}

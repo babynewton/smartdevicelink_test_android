@@ -221,6 +221,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	}
 	
 	/* ********** Static variables ********** */
+	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
 	private static final boolean IS_MEDIA_APP = true;					/*		All of these variables		*/
 	private static final Language DEFAULT_LANGUAGE = Language.EN_US;	/*		are needed to start up		*/
 	private static final String APP_ID = "appId";						/*		the SDL proxy object		*/
@@ -242,7 +243,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected Handler serviceHandler = new Handler();
 	
 	protected SmartDeviceLinkProxyALM sdlProxy = null; // the proxy object which sends our requests and receives responses
-	protected IpAddress currentIp; // keeps track of the current ip address in case we need to reset
 	protected boolean isConnected = false;
 	protected boolean offlineMode = false;
 	
