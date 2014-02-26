@@ -77,6 +77,10 @@ import com.smartdevicelink.proxy.rpc.enums.FileType;
 
 
 public class MainActivity extends Activity{
+	// TODO create help activity that shows detailed explanation of each SDL command
+	// TODO add soft buttons to ScrollableMessage, Alert, Show, ShowConstantTBT, UpdateTurnList, AlertManeuver
+	// TODO implement unimplemented SDL commands (See SdlCommand.java)
+	// TODO move hard-coded strings into strings.xml file
 	
 	/**
 	 * Used when requesting information from the SDL service, these constants can be used

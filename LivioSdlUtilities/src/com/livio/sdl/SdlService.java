@@ -101,9 +101,12 @@ import com.smartdevicelink.transport.TCPTransportConfig;
  *
  */
 public class SdlService extends Service implements IProxyListenerALM{
-	// TODO - track current language registration so the dialog can be initialized with the current values
+	// TODO track current language registration so the dialog can be initialized with the current values
 	// TODO make this an abstract class and allow the developer to extend it for their actual service
-	
+	// TODO create a "properties" class or some object that contains everything SDL needs to connect.  Then, we can pass that object instead of the IP address in the CONNECT message.
+	// TODO implement an RPC message for an AddCommand with click listener.  something similar for choice objects and button subscriptions.
+	// TODO move hard-coded strings to strings.xml
+	// TODO implement unimplemented SDL commands (See SdlCommand.java)
 	
 	
 	/* ********** Nested Classes ********** */
