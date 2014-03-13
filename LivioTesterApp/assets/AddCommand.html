@@ -1,0 +1,50 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Add Command</h1>
+
+The AddCommand command allows developers to add a command object into the head-unit's main menu.  When the item on the head-unit is clicked, 
+the click event is dispatched through the onOnCommand callback in the SDLService.  From there, it can be dispatched to the appropriate click-listener 
+based on the clicked item's ID.
+
+<p>
+There are 4 available settings to create a command in the head-unit's main menu:
+
+<p>
+<h2>Command Name (required)</h2>
+<h3>Type: String</h3>
+</br>
+The command name represents the text to display within the body of this command on the head-unit's main menu.  This text should be a short description of what this button will do when clicked.
+
+<p>
+<h2>Voice Recognition Keyword(s) (optional)</h2>
+<h3>Type: Comma-separated String</h3>
+</br>
+The voice recognition keyword input tells the vehicle what keywords are linked to this particular command when spoken through the vehicle's voice system.
+
+<p>
+<h2>Parent ID (required)</h2>
+<h3>Type: ID (integer)</h3>
+</br>
+The parent id represents where this command should be added.  Commands can be added to the root-level of the head-unit's main menu, or, if a submenu has been added to the head-unit's main menu, 
+commands can be added into the submenu as well.  For more information, see <a href="AddSubmenu.html">AddSubmenu</a>.
+
+<p>
+<h2>Image (optional)</h2>
+<h3>Type: Image</h3>
+</br>
+The image for a particular command represents an image to be displayed alongside the command name within the body of this command on the head-unit's main menu.  Images must have been added 
+to the system through the <a href="PutFile.html">PutFile</a> command before they can be referenced for an AddCommand.
+
+
+
+</body>
+
+</html>

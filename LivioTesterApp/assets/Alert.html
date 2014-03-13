@@ -1,0 +1,48 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Alert</h1>
+
+<!-- TODO add hyperlinks to any other SDL related items mentioned in this article. -->
+
+The Alert command allows developers to display a pop-up alert object on the head-unit UI.  The alert command has the ability to display 3 lines of text as well as speak a message to the driver.  Alerts are also able to play an alert sound as the pop-up appears.
+
+<p>
+To create an alert on the head-unit, 6 inputs are available:
+
+<p>
+<h2>Text to Speak (optional)</h2>
+<h3">Type: String</h3>
+</br>
+The text to speak for an alert message will be spoken to the driver by the vehicle's text to speech engine.  This text should be a concise message telling the user what the alert is about. 
+
+<p>
+<h2>Alert Lines (at least 1 required)</h2>
+<h3>Type: String</h3>
+</br>
+Alert messages are permitted to have up to 3 lines of text to alert the user.  Alert messages should be concise and relevant to what the user is doing.
+
+<p>
+<h2>Alert Sound Enable (required)</h2>
+<h3>Type: Boolean</h3>
+</br>
+If your alert desires the vehicle's speakers to play an alert sound, set this value to true.  If no sound is desired, set this value to false.
+
+<p>
+<h2>Alert Duration (required)</h2>
+<h3>Type: Integer</h3>
+</br>
+This value represents how long the alert should be displayed to the user.  The duration parameter is an integer representing how many milliseconds the alert should be displayed for.
+
+
+
+</body>
+
+</html>

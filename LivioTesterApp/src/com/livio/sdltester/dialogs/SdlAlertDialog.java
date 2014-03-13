@@ -107,7 +107,7 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnSeekBarChang
 			boolean playTone = check_alert_playTone.isChecked();
 			
 			if(textToSpeak.equals("")){
-				textToSpeak = " ";
+				textToSpeak = null;
 			}
 			if(line1.equals("")){
 				line1 = " ";

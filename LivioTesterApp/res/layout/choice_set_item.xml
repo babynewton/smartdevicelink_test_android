@@ -43,6 +43,7 @@
         android:layout_below="@+id/et_choice_vr_text"
         android:layout_toRightOf="@+id/check_enable_image"
         android:ems="10"
+        android:enabled="false"
         android:inputType="textPersonName"
         android:hint="@string/sdl_image_name" />
 

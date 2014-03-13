@@ -4,5 +4,6 @@
     <item android:id="@+id/menu_disconnect" android:title="@string/menu_disconnect"></item>
     <item android:id="@+id/menu_reset" android:title="@string/menu_reset"></item>
     <item android:id="@+id/menu_clear_list" android:title="@string/menu_clear_list"></item>
+    <item android:id="@+id/menu_help" android:title="@string/menu_help"></item>
 
 </menu>

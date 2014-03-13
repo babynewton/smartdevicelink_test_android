@@ -1182,6 +1182,10 @@ public class MainActivity extends Activity{
 		case R.id.menu_clear_list:
 			clearSdlLog();
 			return true;
+		case R.id.menu_help:
+			Intent helpIntent = new Intent(MainActivity.this, HelpActivity.class);
+			startActivity(helpIntent);
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}

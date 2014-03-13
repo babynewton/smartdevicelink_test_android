@@ -1,0 +1,45 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="style.css">
+
+</head>
+
+<body>
+
+<h1>Create Interaction Choice Set</h1>
+
+<!-- TODO add hyperlinks to any other SDL related items mentioned in this article. -->
+
+The Create Interaction Choice Set command allows developers to display a pop-up list of options for the user to select from on the head-unit.  Interaction choice 
+sets are created by creating the list of choices for the user to select from.  To display the interaction choice set, developers can utilize the <a href="PerformInteraction.html">Perform Interaction</a>
+ command.
+
+<p>
+A choice can contain 3 parameters:
+
+<p>
+<h2>Choice Name (required)</h2>
+<h3">Type: String</h3>
+</br>
+The choice name represents the text to display within the body of this choice on the pop-up list.  This text should be a short description of what this button will do when clicked. 
+
+<p>
+<h2>Voice Recognition Keyword(s) (required)</h2>
+<h3>Type: Comma-separated String</h3>
+</br>
+The voice recognition keyword input tells the vehicle what keywords are linked to this particular choice when spoken through the vehicle's voice system.
+
+<p>
+<h2>Image (optional)</h2>
+<h3>Type: Image</h3>
+</br>
+The image for a particular choice represents an image to be displayed alongside the choice name within the body of this choice on the pop-up menu.  Images must have been added to the system 
+through the <a href="PutFile.html">PutFile</a> command before they can be referenced for a choice.
+
+
+
+</body>
+
+</html>

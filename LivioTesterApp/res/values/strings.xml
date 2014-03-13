@@ -1,36 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-<!--     General Strings -->
+    <!-- General Strings -->
     <string name="app_name">Livio SDL Tester</string>
     <string name="no_selection">No selection</string>
     <string name="not_implemented">This feature is not yet implemented.</string>
     <string name="not_an_sdl_command">The input argument is not an SDL command.</string>
-    
-<!--     Menu Strings -->
+
+    <!-- Menu Strings -->
     <string name="menu_connect">Connect to SDL</string>
     <string name="menu_disconnect">Disconnect from SDL</string>
     <string name="menu_reset">Reset SDL Connection</string>
     <string name="menu_clear_list">Clear ListView</string>
-    
-<!--     Dialog Strings -->
+    <string name="menu_help">Help</string>
+
+    <!-- Dialog Strings -->
     <string name="sdl_command_dialog_title">Select an SDL Command:</string>
-    
-<!--     SDL Connection -->
+
+    <!-- SDL Connection -->
     <string name="connection_status_format">Connection Status:</string>
     <string name="ip_address">IP Address</string>
     <string name="ip_port">IP Port</string>
-    
-<!--     Offline Mode -->
+
+    <!-- Offline Mode -->
     <string name="offline_mode_text">Would you like to enter offline mode?</string>
-    
-<!--     Function Banks -->
+
+    <!-- Function Banks -->
     <string name="function_bank_root_name">Root-level Menu</string>
-    
-<!--     Button Subscriptions -->
+
+    <!-- Button Subscriptions -->
     <string name="button_subscriptions_already_subscribed">Already subscribed to all buttons!</string>
     <string name="button_subscriptions_none_subscribed">App hasn\'t subscribed to buttons yet!</string>
-    
-<!--     Perform Interaction -->
+
+    <!-- Perform Interaction -->
     <string name="perform_interaction_title">Interaction Title</string>
     <string name="perform_interaction_voice_prompt">Interaction Voice Prompt</string>
     <string name="perform_interaction_select_choice_set">Select Choice Sets</string>
@@ -38,9 +40,13 @@
     <string name="perform_interaction_timeout">Interaction Timeout (in seconds)</string>
     <string name="perform_interaction_timeout_enabled">Interaction Timeout Enabled</string>
     <string name="interaction_list_none_added">No choice interaction sets have been added yet!</string>
-    
-<!--     Put File -->
+
+    <!-- Put File -->
     <string name="put_file_persistent_file">Persistent File</string>
     <string name="sdl_image_name">SDL Image Name</string>
     <string name="add_image">Add Image</string>
+    <string name="title_activity_help">HelpActivity</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+
 </resources>

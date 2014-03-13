@@ -48,8 +48,6 @@ public class ChoiceItemDialog extends BaseOkCancelDialog {
 		cb_hasImage.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			@Override
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				et_imageName.setEnabled(isChecked);
-				
 				if(isChecked){
 					showImagesDialog();
 				}
@@ -58,8 +56,6 @@ public class ChoiceItemDialog extends BaseOkCancelDialog {
 				}
 			}
 		});
-		
-		et_imageName.setEnabled(cb_hasImage.isChecked());
 	}
 	
 	private void showImagesDialog(){
