@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.graphics.Bitmap;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.AdapterView;
@@ -99,10 +100,19 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 	private void addChoiceToList(Choice choice){
 		choiceItemList.add(choice);
 		
-		int imageIndex = Collections.binarySearch(allImages, new SdlImageItem(null, choice.getImage().getValue(), null), new SdlImageItemComparator());
-		if(imageIndex >= 0 && imageIndex < allImages.size()){
-			SdlImageItem item = allImages.get(imageIndex);
-			adapter.add(new SdlImageItem(item.getBitmap(), choice.getMenuName(), FileType.GRAPHIC_JPEG));
+		if(choice.getImage() != null){
+			// if user selected an image, figure out which one they selected
+			int imageIndex = Collections.binarySearch(allImages, new SdlImageItem(null, choice.getImage().getValue(), null), new SdlImageItemComparator());
+			if(imageIndex >= 0 && imageIndex < allImages.size()){
+				SdlImageItem item = allImages.get(imageIndex);
+				adapter.add(new SdlImageItem(item.getBitmap(), choice.getMenuName(), FileType.GRAPHIC_JPEG));
+				adapter.notifyDataSetChanged();
+			}
+		}
+		else{
+			// if the user didn't select an image, we'll create an empty one to display in the adapter
+			Bitmap image = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+			adapter.add(new SdlImageItem(image, choice.getMenuName(), FileType.GRAPHIC_JPEG));
 			adapter.notifyDataSetChanged();
 		}
 	}

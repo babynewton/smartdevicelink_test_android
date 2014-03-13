@@ -15,7 +15,7 @@ import com.livio.sdl.utils.ApplicationPreferences;
  * @author Mike Burke
  *
  */
-public class MyApplicationPreferences {
+public final class MyApplicationPreferences {
 
 	private MyApplicationPreferences(){}
 	
