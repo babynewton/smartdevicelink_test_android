@@ -15,9 +15,9 @@ import com.livio.sdl.utils.ApplicationPreferences;
  * @author Mike Burke
  *
  */
-public final class MyApplicationPreferences {
+public final class LivioSdlTesterPreferences {
 
-	private MyApplicationPreferences(){}
+	private LivioSdlTesterPreferences(){}
 	
 	private static final String FILENAME = "com.livio.sdltester";
 	

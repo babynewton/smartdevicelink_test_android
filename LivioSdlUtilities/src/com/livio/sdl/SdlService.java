@@ -105,8 +105,6 @@ public class SdlService extends Service implements IProxyListenerALM{
 	// TODO make this an abstract class and allow the developer to extend it for their actual service
 	// TODO create a "properties" class or some object that contains everything SDL needs to connect.  Then, we can pass that object instead of the IP address in the CONNECT message.
 	// TODO implement an RPC message for an AddCommand with click listener.  something similar for choice objects and button subscriptions.
-	// TODO move hard-coded strings to strings.xml
-	// TODO implement unimplemented SDL commands (See SdlCommand.java)
 	
 	
 	/* ********** Nested Classes ********** */
@@ -228,7 +226,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	private static final boolean IS_MEDIA_APP = true;					/*		All of these variables		*/
 	private static final Language DEFAULT_LANGUAGE = Language.EN_US;	/*		are needed to start up		*/
 	private static final String APP_ID = "appId";						/*		the SDL proxy object		*/
-	private static final boolean WIFI_AUTO_RECONNECT = false;			/*									*/
+	private static final boolean WIFI_AUTO_RECONNECT = true;			/*									*/
 	
 	protected static boolean debug = false;
 	

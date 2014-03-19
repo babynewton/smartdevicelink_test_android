@@ -1,0 +1,43 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Scrollable Message</h1>
+
+The ScrollableMessage command allows developers to display a large portion of text to the user.
+
+<p>
+The following parameters are available to display a long, scrollable message to the user.
+
+<p>
+<h2>Message Body (required)</h2>
+<h3>Type: String</h3>
+</br>
+The body of the message to display.  The message can contain line breaks and tab characters, but must be no more than 500 characters in length.
+
+<p>
+<h2>Timeout (required)</h2>
+<h3>Type: Integer</h3>
+</br>
+This parameter represents the timeout for the scrollable message in milliseconds.  When the timeout expires, the scrollable message will be dismissed.  
+Timeout can be anywhere from 1 to 65535 milliseconds.
+
+<p>
+<h2>Soft Buttons (optional)</h2>
+<h3>Type: Vector&#60;SoftButton&#62;</h3>
+</br>
+This parameter allows your application to add custom soft buttons to the scrollable message interface.  Soft buttons represent additional user actions
+that are available for the scrollable message.  Depending on the HMI, soft buttons could be along-side the scrollable message or in a separate menu available
+to the user.
+
+
+
+</body>
+
+</html>

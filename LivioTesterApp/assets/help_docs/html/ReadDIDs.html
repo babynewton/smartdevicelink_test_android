@@ -1,0 +1,35 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Read DIDs</h1>
+
+The ReadDIDs command allows developers to read specific data (DIDs) from various modules in the vehicle.
+
+<p>
+In order to retrieve DTCs from a particular module, the application must know the module's specific CAN bus ID and the ID of the DID to
+retrieve.
+
+<p>
+<h2>ECU ID (required)</h2>
+<h3>Type: ID (integer)</h3>
+</br>
+The CAN bus ID of the module to read DIDs from.  Valid ECU IDs range from 0 to 65535.
+
+<p>
+<h2>DID ID (required)</h2>
+<h3>Type: ID (integer)</h3>
+</br>
+The DID ID for the module to read DIDs from.  Valid DID IDs range from 0 to 65535.
+
+
+
+</body>
+
+</html>

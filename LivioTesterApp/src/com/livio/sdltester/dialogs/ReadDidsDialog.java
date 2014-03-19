@@ -17,6 +17,8 @@ import com.smartdevicelink.proxy.RPCRequest;
 
 public class ReadDidsDialog extends BaseOkCancelDialog {
 
+	// TODO didLocation should be comma-separated.
+	
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.READ_DIDS;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	

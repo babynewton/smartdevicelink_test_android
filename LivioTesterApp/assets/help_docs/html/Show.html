@@ -1,0 +1,71 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Show</h1>
+
+The Show command allows developers to set lines of text on the main HMI display.  For non-media applications, 4 lines of text are available.  For media applications,
+the 4th line of text is replaced with a media clock that can be manipulated through the <a href="SetMediaClockTimer.html">SetMediaClockTimer</a> command.  In addition,
+an image can also be displayed on the main HMI display.
+
+<p>
+The Show command useful for all applications to keep users informed as to what is happening inside the application.  For example, when a music player application
+starts to play a new song, the first line of text could display the song name, the second line could display the artist name, the third line could display
+which album the song is from while the last line would show the current clock timer for the song in progress.  The album art for the playing song could be 
+displayed as the main artwork.
+
+<p>
+In order to make a change to the main HMI display through the show command, the following parameters are available:
+
+<p>
+<h2>Lines of Text (optional)</h2>
+<h3>Type: String</h3>
+</br>
+Each line of metadata can be represented as its own string object.
+
+<p>
+<h2>Text Alignment (optional)</h2>
+<h3>Type: Enumerated Value</h3>
+</br>
+The text alignment input tells the head-unit how the lines of text should be aligned.
+
+<h3>Available Text Alignment Options</h3>
+<table>
+<tr>
+<th>Enumerated Value</th>
+<th>Text Alignment</th>
+</tr>
+
+<tr>
+<td>ALIGN_LEFT</td>
+<td>All lines of text should be left-aligned.</td>
+</tr>
+
+<tr>
+<td>ALIGN_RIGHT</td>
+<td>All lines of text should be right-aligned.</td>
+</tr>
+
+<tr>
+<td>ALIGN_CENTER</td>
+<td>All lines of text should be centered.</td>
+</tr>
+
+</table>
+
+<p>
+<h2>Image (optional)</h2>
+<h3>Type: Image</h3>
+</br>
+The image object represents an image to be displayed on the head-unit's main HMI display.  Images must have been added 
+to the system through the <a href="PutFile.html">PutFile</a> command before they can be referenced for a Show command.
+
+</body>
+
+</html>

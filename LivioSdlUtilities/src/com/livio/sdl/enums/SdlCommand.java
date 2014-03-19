@@ -76,13 +76,13 @@ public enum SdlCommand{
 	 * @see SetGlobalProperties
 	 * @see ResetGlobalProperties  
 	 */
-//	SET_GLOBAL_PROPERTIES ("Set Global Properties"), // TODO add support for set global properties
+//	SET_GLOBAL_PROPERTIES ("Set Global Properties"),
 	/**
 	 * SDL ResetGlobalProperties command resets global voice properties for your application to the vehicle's default settings.
 	 * @see ResetGlobalProperties
 	 * @see SetGlobalProperties
 	 */
-//	RESET_GLOBAL_PROPERTIES ("Reset Global Properties"), // TODO add support for reset global properties
+//	RESET_GLOBAL_PROPERTIES ("Reset Global Properties"),
 	/**
 	 * SDL SetMediaClockTimer command allows media applications to set a counter that automatically counts up or counts down on the head-unit.  The command
 	 * also allows the application to pause, resume or clear a previously-existing counter.
@@ -160,11 +160,11 @@ public enum SdlCommand{
 	 * @see PerformAudioPassThru
 	 * @see EndAudioPassThru
 	 */
-	//PERFORM_AUDIO_PASSTHRU ("Perform Audio Pass-through"), // TODO - removing these commands because they don't make sense and I need clarification for what they actually do.
+	//PERFORM_AUDIO_PASSTHRU ("Perform Audio Pass-through"),
 	/**
 	 * SDL EndAudioPassThru command ends a voice-input session previously started through the PerformAudioPassThru command.
 	 */
-	//END_AUDIO_PASSTHRU ("End Audio Pass-through"), // TODO - removing these commands because they don't make sense and I need clarification for what they actually do.
+	//END_AUDIO_PASSTHRU ("End Audio Pass-through"),
 	/**
 	 * SDL SubscribeVehicleData command allows the application to subscribe for updates about various vehicle data.  For example, fuel state, tire pressure, airbag status and much
 	 * more information can be retrieved from the vehicle head-unit and used in the application.

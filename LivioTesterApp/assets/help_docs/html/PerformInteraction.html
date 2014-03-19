@@ -1,0 +1,85 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Perform Interaction</h1>
+
+The PerformInteraction command allows developers to show a pop-up list dialog that has been added through the <a href="CreateInteractionChoiceSet.html">CreateInteractionChoiceSet</a> command.
+If the user selects one of the items in the interaction choice set, the result will be returned to the onPerformInteractionResponse method in the SDL Service.  From there, the click can be
+dispatched to the appropriate click-listener based on the id that was selected.  The user also has the option to back out of the menu, in which case the response will show an ABORTED message.
+
+<p>
+The PerformInteraction command has capabilities for the following parameters:
+
+<p>
+<h2>Interaction Title (required)</h2>
+<h3>Type: String</h3>
+</br>
+The interaction title will show above the choices in the pop-up dialog.  This should be a concise description of what the pop-up is asking for.
+
+<p>
+<h2>Interaction Voice Prompt (optional)</h2>
+<h3>Type: Comma-separated string</h3>
+</br>
+The interaction voice prompt parameter will speak the input text to the user when the pop-up dialog shows.
+
+<p>
+<h2>Choice Set Ids (required)</h2>
+<h3>Type: Vector of IDs (integers)</h3>
+</br>
+In order to perform an interaction with the user, the developer must select a set of choice set IDs that have been added to the system using the 
+<a href="CreateInteractionChoiceSet.html">CreateInteractionChoiceSet</a> command.
+
+<p>
+<h2>Interaction Mode (required)</h2>
+<h3>Type: Enumerated Value</h3>
+</br>
+The interaction mode parameter specifies how the user can perform the interaction.
+
+<h3>Available Interaction Mode Options</h3>
+<table>
+<tr>
+<th>Enumerated Value</th>
+<th>Interaction Mode</th>
+</tr>
+
+<tr>
+<td>MANUAL_ONLY</td>
+<td>Only click events are permitted</td>
+</tr>
+
+<tr>
+<td>VOICE_REC_ONLY</td>
+<td>Only voice events are permitted</td>
+</tr>
+
+<tr>
+<td>BOTH</td>
+<td>Both click & voice events are permitted</td>
+</tr>
+
+</table>
+
+<p>
+<h2>Interaction Timeout Enable (required)</h2>
+<h3>Type: Boolean</h3>
+</br>
+Specifies whether or not the pop-up dialog should time-out after a certain number of time or not.  If this value is set to false, the pop-up will remain on the screen
+indefinitely - until the app is disconnected or until the user navigates away from it.
+
+<p>
+<h2>Interaction Timeout (optional)</h2>
+<h3>Type: Integer</h3>
+</br>
+This value represents how long the pop-up should be displayed to the user.  The duration parameter is an integer representing how many milliseconds the pop-up should be displayed for.
+
+
+</body>
+
+</html>

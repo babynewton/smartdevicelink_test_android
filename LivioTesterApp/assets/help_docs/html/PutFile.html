@@ -1,0 +1,80 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Put File</h1>
+
+The PutFile command allows developers to send various types of files that can be dynamically stored on the head-unit.  Any files that are added through this command
+can be referenced by the associated filename.
+
+<p>
+In order to add a file to the head-unit system, your application needs to specify the following parameters:
+
+<p>
+<h2>SDL File Name (required)</h2>
+<h3>Type: String</h3>
+</br>
+This is the filename that the file will be stored as on the head-unit.  This name must be unique and must be between 1-500 characters in length.
+
+<p>
+<h2>SDL File Type (required)</h2>
+<h3>Type: Enumerated Value</h3>
+</br>
+This parameter represents what type of file is being sent to the head-unit system through SDL.
+
+<h3>Available File Type Options</h3>
+<table>
+<tr>
+<th>Enumerated Value</th>
+<th>File Type</th>
+</tr>
+
+<tr>
+<td>GRAPHIC_BMP</td>
+<td>A bitmap image</td>
+</tr>
+
+<tr>
+<td>GRAPHIC_JPEG</td>
+<td>A JPEG image</td>
+</tr>
+
+<tr>
+<td>GRAPHIC_PNG</td>
+<td>A PNG image</td>
+</tr>
+
+<tr>
+<td>AUDIO_WAVE</td>
+<td>A WAVE audio file</td>
+</tr>
+
+<tr>
+<td>AUDIO_MP3</td>
+<td>An MP3 audio file</td>
+</tr>
+
+</table>
+
+<p>
+<h2>Persistent (optional)</h2>
+<h3>Type: Boolean</h3>
+</br>
+If this parameter is set to true, the head-unit system will attempt to save the file across ignition cycles.  If the system requires storage for higher priority files, this file may be deleted.
+When this parameter is false (or null), the application will need to send the files each session.
+
+<p>
+<h2>Bulk Data (required)</h2>
+<h3>Type: byte[]</h3>
+</br>
+The final, and most important parameter for the PutFile command is the raw byte array of the file to be sent to the system.
+
+</body>
+
+</html>

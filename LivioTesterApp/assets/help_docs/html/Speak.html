@@ -1,0 +1,66 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Speak</h1>
+
+The Speak command allows developers to prompt the vehicle's text-to-speech engine to speak text or phonemes to the head-unit.
+
+<p>
+In order to speak to the driver from your application, the following parameters are needed:
+
+<p>
+<h2>Text to Speak (required)</h2>
+<h3>Type: String</h3>
+</br>
+This string represents the text (or phonemes) that should be spoken to the driver.
+
+<p>
+<h2>Speech Capability (required)</h2>
+<h3>Type: Enumerated Value</h3>
+</br>
+This string represents the text (or phonemes) that should be spoken to the driver.
+
+<h3>Available Speech Capability Options</h3>
+<table>
+<tr>
+<th>Enumerated Value</th>
+<th>Speech Capability</th>
+</tr>
+
+<tr>
+<td>TEXT</td>
+<td>The input string should be interpreted as raw text.</td>
+</tr>
+
+<tr>
+<td>SAPI_PHONEMES</td>
+<td>The input string should be interpreted as phonemes from Microsoft's Speech API.</td>
+</tr>
+
+<tr>
+<td>LHPLUS_PHONEMES</td>
+<td>The input string should be interpreted as phonemes from Nuance's API.</td>
+</tr>
+
+<tr>
+<td>PRE_RECORDED</td>
+<td>The input string should be interpreted as a reference to a pre-recorded message that is supported by the head-unit.  This option will vary per vehicle.</td>
+</tr>
+
+<tr>
+<td>SILENCE</td>
+<td>The input text will be ignored and any speech that is in progress will be suspended.</td>
+</tr>
+
+</table>
+
+</body>
+
+</html>

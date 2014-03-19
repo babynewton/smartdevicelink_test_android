@@ -1,0 +1,54 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Slider</h1>
+
+The Slider command allows developers to display a slider widget on the head-unit's display.  This could be useful for various tasks, such as
+changing the phone's ringer volume through SDL.
+
+<p>
+In order to show a slider for your application, the following parameters are available:
+
+<p>
+<h2>Slider Header (required)</h2>
+<h3>Type: String</h3>
+</br>
+This text will be displayed above the slider widget and should be a concise description of what the slider input will change in the application.
+
+<p>
+<h2>Slider Footer (optional)</h2>
+<h3>Type: String</h3>
+</br>
+This text will be displayed below the slider widget.
+
+<p>
+<h2>Number of Ticks (required)</h2>
+<h3>Type: Integer</h3>
+</br>
+This represents the maximum number of selections that will be available on the slider widget.  This number must be at least 2 and cannot be greater than 26.
+
+<p>
+<h2>Start Position (required)</h2>
+<h3>Type: Integer</h3>
+</br>
+This represents the initial selection on the slider widget.  This number must be at least 1 and cannot be greater than the number of ticks.
+
+<p>
+<h2>Timeout (required)</h2>
+<h3>Type: Integer</h3>
+</br>
+This represents the number of milliseconds to display the widget before it times out.  The current selection of the widget will be returned through the response 
+message when the timeout occurs or when the user exits the slider widget.  This number must be between 0 and 65535 milliseconds.
+
+
+
+</body>
+
+</html>

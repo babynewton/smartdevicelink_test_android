@@ -1,0 +1,71 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Set Media Clock Timer</h1>
+
+The SetMediaClockTimer command allows developers to manage a clock timer on the head-unit.  This command is only applicable for media applications,
+such as music players or radio applications.  If the connected application is not a media application, the line of text that contains the timer text
+will be replaced with the 4th line of text in the <a href="Show.html">Show</a> command.  Therefore, if the connected application is a media application,
+the 4th line of text in the <a href="Show.html">Show</a> command will be inaccessible and replaced with the clock timer.
+
+<p>
+In order for a media application to manage the clock timer, 2 parameters are needed:
+
+<p>
+<h2>Timer Mode (required)</h2>
+<h3>Type: Enumerated Value</h3>
+</br>
+The timer mode represents what the timer should do when this command is received.
+
+<h3>Available Timer Mode Options</h3>
+<table>
+<tr>
+<th>Enumerated Value</th>
+<th>Timer Mode</th>
+</tr>
+
+<tr>
+<td>COUNT_UP</td>
+<td>The timer should count-up from the input start time.</td>
+</tr>
+
+<tr>
+<td>COUNT_DOWN</td>
+<td>The timer should count-down from the input start time.</td>
+</tr>
+
+<tr>
+<td>PAUSE</td>
+<td>The timer should pause.  Input start time will be ignored.</td>
+</tr>
+
+<tr>
+<td>RESUME</td>
+<td>The timer should resume.  Input start time will be ignored.</td>
+</tr>
+
+<tr>
+<td>CLEAR</td>
+<td>The timer should pause and reset to 00:00:00.  Input start time will be ignored.</td>
+</tr>
+
+</table>
+
+<p>
+<h2>Start Time (optional)</h2>
+<h3>Type: StartTime</h3>
+</br>
+This object represents a start time with hours, minutes and seconds as parameters.  The start time is mandatory for
+COUNT_UP and COUNT_DOWN timer modes, but optional for other timer modes.
+
+
+</body>
+
+</html>

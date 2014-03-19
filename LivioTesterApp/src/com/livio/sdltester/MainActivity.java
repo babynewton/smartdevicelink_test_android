@@ -77,11 +77,6 @@ import com.smartdevicelink.proxy.rpc.enums.FileType;
 
 
 public class MainActivity extends Activity{
-	// TODO create help activity that shows detailed explanation of each SDL command
-	// TODO add soft buttons to ScrollableMessage, Alert, Show, ShowConstantTBT, UpdateTurnList, AlertManeuver
-	// TODO implement unimplemented SDL commands (See SdlCommand.java)
-	// TODO move hard-coded strings into strings.xml file
-	
 	/**
 	 * Used when requesting information from the SDL service, these constants can be used
 	 * to perform different tasks when the information is asynchronously returned by the service.
@@ -162,6 +157,8 @@ public class MainActivity extends Activity{
 		@SuppressWarnings("unchecked")
 		@Override
 		public void handleMessage(Message msg) {
+			// see SdlService.java in the com.livio.sdl package for details on these incoming messages
+			
 			switch(msg.what){
 			case SdlService.ClientMessages.SDL_CONNECTED:
 				updateConnectionStatus(ConnectionStatus.CONNECTED);
@@ -382,38 +379,52 @@ public class MainActivity extends Activity{
 		doBindService();
 		showSdlConnectionDialog();
 	}
-	
+
+	// create an image cache for the images that are available to send to the head-unit.  this allows easy image look-up
+	// based on the filename of the image.  We'll do this on a thread since processing images can be CPU intensive.
 	private void createImageCache(){
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
+				// grab information from the image resources enum
 				SdlTesterImageResource[] values = SdlTesterImageResource.values();
 				imageCache = new HashMap<String, SdlImageItem>(values.length);
+				
 				for(SdlTesterImageResource img : values){
+					// create an SdlImageItem object for each image
 					Bitmap bitmap = BitmapFactory.decodeResource(getResources(), img.getImageId());
 					String imageName = img.toString();
 					FileType imageType = img.getFileType();
 					SdlImageItem item = new SdlImageItem(bitmap, imageName, imageType);
+					
+					// map the image name to its associated SdlImageItem object
 					imageCache.put(imageName, item);
 				}
 			}
 		}).start();
 	}
 
-	private void init(){		
+	// initializes views in the main activity
+	private void init(){
+		// set up the "Send Message" button
 		findViewById(R.id.btn_main_sendMessage).setOnClickListener(
 			new View.OnClickListener() {
 				@Override
 				public void onClick(View v) {
 					Context context = MainActivity.this;
 					String dialogTitle = context.getResources().getString(R.string.sdl_command_dialog_title);
+					
+					// grab the command list and sort the commands by name
+					// TODO make this lazily instantiated so we don't have to sort every time the button is clicked
 					List<SdlCommand> commandList = Arrays.asList(SdlCommand.values());
 					Collections.sort(commandList, new EnumComparator<SdlCommand>());
 					
+					// show the dialog with the commandList we created above
 					BaseAlertDialog commandDialog = new ListViewDialog<SdlCommand>(context, dialogTitle, commandList);
 					commandDialog.setListener(new BaseAlertDialog.Listener() {
 						@Override
 						public void onResult(Object resultData) {
+							// when a list item is clicked, dispatch the click to the showCommandDialog method
 							showCommandDialog((SdlCommand) resultData);
 						}
 					});
@@ -421,12 +432,14 @@ public class MainActivity extends Activity{
 			}
 		});
 		
+		// set up the command log
 		commandList = (ListView) findViewById(R.id.list_main_commandList);
 		listViewAdapter = new SdlMessageAdapter(this);
 		commandList.setAdapter(listViewAdapter);
 		commandList.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				// when an item is clicked, show it's associated JSON dialog
 				SdlLogMessage logMessage = listViewAdapter.getItem(position);
 				BaseAlertDialog jsonDialog = new JsonDialog(MainActivity.this, logMessage);
 				jsonDialog.show();
@@ -436,6 +449,7 @@ public class MainActivity extends Activity{
 		tv_connectionStatus = (TextView) findViewById(R.id.tv_connectionStatus);
 	}
 	
+	// updates the connection status TextView
 	private void updateConnectionStatus(ConnectionStatus status){
 		if(connectionStatusFormat == null){
 			connectionStatusFormat = getResources().getString(R.string.connection_status_format);
@@ -710,8 +724,8 @@ public class MainActivity extends Activity{
 	 */
 	private void showSdlConnectionDialog(){
 		// restore any old IP address from preferences
-		String savedIpAddress = MyApplicationPreferences.restoreIpAddress(MainActivity.this);
-		String savedTcpPort = MyApplicationPreferences.restoreTcpPort(MainActivity.this);
+		String savedIpAddress = LivioSdlTesterPreferences.restoreIpAddress(MainActivity.this);
+		String savedTcpPort = LivioSdlTesterPreferences.restoreTcpPort(MainActivity.this);
 		
 		if(savedIpAddress != null && savedTcpPort != null){
 			// if there was an old IP stored in preferences, initialize the dialog with those values
@@ -741,8 +755,8 @@ public class MainActivity extends Activity{
 				
 				if(ipAddressValid && ipPortValid){
 					// if the user entered valid IP settings, save them to preferences so they don't have to re-enter them next time
-					MyApplicationPreferences.saveIpAddress(MainActivity.this, addressString);
-					MyApplicationPreferences.saveTcpPort(MainActivity.this, portString);
+					LivioSdlTesterPreferences.saveIpAddress(MainActivity.this, addressString);
+					LivioSdlTesterPreferences.saveTcpPort(MainActivity.this, portString);
 					
 					// show an indeterminate connecting dialog
 					connectingDialog = new IndeterminateProgressDialog(MainActivity.this, "Connecting");

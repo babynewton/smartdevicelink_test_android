@@ -1,0 +1,72 @@
+<html>
+
+<head>
+
+<link rel="stylesheet" type="text/css" href="../css/style.css">
+
+</head>
+
+<body>
+
+<h1>Unsubscribe from Buttons</h1>
+
+The ButtonUnsubscribe command allows the developer to unsubscribe from hardware buttons that have been subscribed to through the
+<a href="SubscribeToButtons.html">ButtonSubscribe</a> command.
+
+<p>
+Button unsubscriptions are currently handled one at a time, so if the application would like to unsubscribe from multiple buttons, a separate message must be
+sent for each button.
+
+<p>
+In order to unsubscribe the application from hardware buttons, only one parameter is required:
+
+<p>
+<h2>ButtonName (required)</h2>
+<h3>Type: Enumerated Value</h3>
+</br>
+Represents the button to subscribe to.
+
+<h3>Available Button Name Options</h3>
+<table>
+<tr>
+<th>Enumerated Value</th>
+<th>Button Name</th>
+</tr>
+
+<tr>
+<td>OK</td>
+<td>Represents the OK and PLAY buttons.</td>
+</tr>
+
+<tr>
+<td>PRESET0 - PRESET9</td>
+<td>Represents the preset buttons.</td>
+</tr>
+
+<tr>
+<td>SEEK_LEFT</td>
+<td>Represents the left seek button.</td>
+</tr>
+
+<tr>
+<td>SEEK_RIGHT</td>
+<td>Represents the right seek button.</td>
+</tr>
+
+<tr>
+<td>TUNE_UP</td>
+<td>Represents the up tune button.</td>
+</tr>
+
+<tr>
+<td>TUNE_DOWN</td>
+<td>Represents the down tune button.</td>
+</tr>
+
+</table>
+
+
+
+</body>
+
+</html>
