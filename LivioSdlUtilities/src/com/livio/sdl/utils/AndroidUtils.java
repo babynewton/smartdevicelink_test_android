@@ -4,13 +4,13 @@ import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import android.app.Activity;
-import android.app.Service;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.WifiManager;
 import android.widget.ArrayAdapter;
 
 /**
@@ -28,23 +28,11 @@ public final class AndroidUtils {
 	/**
 	 * Determines if the network is currently available or not.
 	 * 
-	 * @param service The service with which to access the system connectivity service
+	 * @param context The context with which to access the system connectivity service
 	 * @return True if the network is available, false if not
 	 */
-	public static boolean isNetworkAvailable(Service service){
-		ConnectivityManager cm = (ConnectivityManager) service.getSystemService(Context.CONNECTIVITY_SERVICE);
-		NetworkInfo network = cm.getActiveNetworkInfo();
-		return ( (network != null) && (network.isConnected()) );
-	}
-
-	/**
-	 * Determines if the network is currently available or not.
-	 * 
-	 * @param activity The activity with which to access the system connectivity service
-	 * @return True if the network is available, false if not
-	 */
-	public static boolean isNetworkAvailable(Activity activity){
-		ConnectivityManager cm = (ConnectivityManager) activity.getSystemService(Context.CONNECTIVITY_SERVICE);
+	public static boolean isNetworkAvailable(ContextWrapper context){
+		ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		NetworkInfo network = cm.getActiveNetworkInfo();
 		return ( (network != null) && (network.isConnected()) );
 	}
@@ -142,6 +130,29 @@ public final class AndroidUtils {
 		bitmap.compress(format, 100, baos);
 		byte[] result = baos.toByteArray();
 		return result;
+	}
+	
+	/**
+	 * Enables or disables wifi.  Requires CHANGE_WIFI_STATE permission.
+	 * 
+	 * @param context A context with which to access wifi system service
+	 * @param enable True if wifi should be enabled, false if it should be disabled
+	 */
+	public static void enableWifi(ContextWrapper context, boolean enable){
+		WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+		wifiManager.setWifiEnabled(enable);
+	}
+	
+	/**
+	 * Determines if the device's wifi is currently enabled or not.
+	 * 
+	 * @param context A context with which to access wifi system service
+	 * @return True if wifi is enabled or enabling, false otherwise
+	 */
+	public static boolean wifiIsEnabled(ContextWrapper context){
+		WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+		int wifiState = wifiManager.getWifiState();
+		return (wifiState == WifiManager.WIFI_STATE_ENABLED || wifiState == WifiManager.WIFI_STATE_ENABLING);
 	}
 	
 }

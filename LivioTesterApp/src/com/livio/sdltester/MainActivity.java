@@ -46,6 +46,7 @@ import com.livio.sdl.enums.EnumComparator;
 import com.livio.sdl.enums.SdlButton;
 import com.livio.sdl.enums.SdlCommand;
 import com.livio.sdl.menu.MenuItem;
+import com.livio.sdl.utils.AndroidUtils;
 import com.livio.sdl.utils.Timeout;
 import com.livio.sdl.utils.WifiUtils;
 import com.livio.sdltester.dialogs.AddCommandDialog;
@@ -373,7 +374,7 @@ public class MainActivity extends Activity{
 		setContentView(R.layout.main);
 
 		SdlService.setDebug(true);
-
+		
 		createImageCache();
 		init();
 		doBindService();
@@ -461,6 +462,17 @@ public class MainActivity extends Activity{
 		
 		String text = new StringBuilder().append(connectionStatusFormat).append(" ").append(status.toString()).toString();
 		tv_connectionStatus.setText(text);
+	}
+
+	@Override
+	protected void onResume() {
+		// enable wifi if it isn't already enabled.
+		if(!AndroidUtils.wifiIsEnabled(this)){
+			Toast.makeText(this, "Enabling wifi", Toast.LENGTH_LONG).show();
+			AndroidUtils.enableWifi(this, true);
+		}
+		
+		super.onResume();
 	}
 
 	@Override
