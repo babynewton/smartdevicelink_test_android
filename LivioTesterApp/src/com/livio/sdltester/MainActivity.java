@@ -40,7 +40,7 @@ import com.livio.sdl.SdlService;
 import com.livio.sdl.adapters.SdlMessageAdapter;
 import com.livio.sdl.dialogs.BaseAlertDialog;
 import com.livio.sdl.dialogs.IndeterminateProgressDialog;
-import com.livio.sdl.dialogs.JsonDialog;
+import com.livio.sdl.dialogs.JsonFlipperDialog;
 import com.livio.sdl.dialogs.ListViewDialog;
 import com.livio.sdl.enums.EnumComparator;
 import com.livio.sdl.enums.SdlButton;
@@ -441,8 +441,17 @@ public class MainActivity extends Activity{
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				// when an item is clicked, show it's associated JSON dialog
-				SdlLogMessage logMessage = listViewAdapter.getItem(position);
-				BaseAlertDialog jsonDialog = new JsonDialog(MainActivity.this, logMessage);
+//				SdlLogMessage logMessage = listViewAdapter.getItem(position);
+//				BaseAlertDialog jsonDialog = new SingleJsonDialog(MainActivity.this, logMessage);
+//				jsonDialog.show();
+				
+				int size = listViewAdapter.getCount();
+				List<SdlLogMessage> allLogs = new ArrayList<SdlLogMessage>(size);
+				for(int i=0; i<size; i++){
+					allLogs.add(listViewAdapter.getItem(i));
+				}
+				
+				BaseAlertDialog jsonDialog = new JsonFlipperDialog(MainActivity.this, allLogs, position);
 				jsonDialog.show();
 			}
 		});
