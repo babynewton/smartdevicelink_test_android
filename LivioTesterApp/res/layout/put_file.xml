@@ -25,6 +25,7 @@
             android:layout_height="wrap_content"
             android:freezesText="true"
             android:inputType="textCapSentences"
+            android:enabled="false"
         android:hint="@string/sdl_image_name">
 
         <requestFocus />

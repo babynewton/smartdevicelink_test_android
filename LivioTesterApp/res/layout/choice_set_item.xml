@@ -25,7 +25,7 @@
         android:layout_alignParentRight="true"
         android:layout_below="@+id/et_choice_name"
         android:ems="10"
-        android:inputType="textPersonName"
+        android:inputType="textCapWords"
         android:hint="@string/voice_keyword" />
 
     <CheckBox

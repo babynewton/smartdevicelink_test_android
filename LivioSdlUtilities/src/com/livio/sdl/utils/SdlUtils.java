@@ -144,6 +144,10 @@ public final class SdlUtils {
 	 * @return A vector of voice-rec strings
 	 */
 	public static Vector<String> voiceRecognitionVector(String input){
+		if(input.trim().equals("")){
+			return null;
+		}
+		
 		return StringUtils.toVector(input);
 	}
 	

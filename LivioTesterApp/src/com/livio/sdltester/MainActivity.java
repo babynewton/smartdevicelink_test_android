@@ -36,6 +36,7 @@ import com.livio.sdl.IpAddress;
 import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlImageItem.SdlImageItemComparator;
 import com.livio.sdl.SdlLogMessage;
+import com.livio.sdl.SdlRequestFactory;
 import com.livio.sdl.SdlService;
 import com.livio.sdl.adapters.SdlMessageAdapter;
 import com.livio.sdl.dialogs.BaseAlertDialog;
@@ -75,6 +76,8 @@ import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
 import com.smartdevicelink.proxy.rpc.ListFiles;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
+import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
+import com.smartdevicelink.proxy.rpc.enums.UpdateMode;
 
 
 public class MainActivity extends Activity{
@@ -131,7 +134,7 @@ public class MainActivity extends Activity{
 	
 	private String connectionStatusFormat;
 	
-	private ListView commandList;
+	private ListView lv_messageLog;
 	private TextView tv_connectionStatus;
 	private SdlMessageAdapter listViewAdapter;
 	
@@ -147,6 +150,8 @@ public class MainActivity extends Activity{
 	// cache for all images available to send to SDL service
 	private HashMap<String, SdlImageItem> imageCache;
 	private List<MenuItem> submenuCache = null;
+	
+	private List<SdlCommand> commandList = null;
 	
     /*
      * Target we publish for clients to send messages to IncomingHandler.
@@ -174,11 +179,17 @@ public class MainActivity extends Activity{
 				if(connectionTimeout != null){
 					connectionTimeout.cancel();
 				}
+				
+				// set up the app icon once we're connected
+				setAppIcon();
 				break;
 			case SdlService.ClientMessages.SDL_DISCONNECTED:
 				resetService();
 				updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
 				clearSdlLog();
+				break;
+			case SdlService.ClientMessages.SDL_HMI_FIRST_DISPLAYED:
+				setInitialHmi();
 				break;
 			case SdlService.ClientMessages.ON_MESSAGE_RESULT:
 				onMessageResponseReceived((RPCMessage) msg.obj);
@@ -313,12 +324,55 @@ public class MainActivity extends Activity{
 		listViewAdapter.notifyDataSetChanged();
 		
 		// after adding a new item, auto-scroll to the bottom of the list
-		commandList.setSelection(listViewAdapter.getCount() - 1);
+		lv_messageLog.setSelection(listViewAdapter.getCount() - 1);
 	}
 	
 	private void clearSdlLog(){
 		listViewAdapter.clear();
 		listViewAdapter.notifyDataSetChanged();
+	}
+	
+	/*
+	 * Sets up the App's icon using PutFile & SetAppIcon commands
+	 */
+	private void setAppIcon(){
+		// first, let's send our app icon image through the PutFile command
+		SdlTesterImageResource appIcon = SdlTesterImageResource.IC_APP_ICON;
+		String appIconName = appIcon.toString();
+		FileType appIconFileType = appIcon.getFileType();
+		Bitmap appIconBitmap = imageCache.get(appIconName).getBitmap();
+		// create the image as raw bytes to send over
+		byte[] appIconBytes = AndroidUtils.bitmapToRawBytes(appIconBitmap, Bitmap.CompressFormat.PNG);
+		
+		// create & send the PutFile command
+		RPCRequest putFileMsg = SdlRequestFactory.putFile(appIconName, appIconFileType, false, appIconBytes);
+		sendSdlMessageToService(putFileMsg);
+		
+		// create & send the SetAppIcon command
+		RPCRequest setAppIconMsg = SdlRequestFactory.setAppIcon(appIconName);
+		sendSdlMessageToService(setAppIconMsg);
+	}
+	
+	/*
+	 * Sets up the initial HMI through the Show command.
+	 */
+	private void setInitialHmi(){
+		// set up the main lines of text
+		String showText1 = "Livio SDL Tester";
+		String showText2 = "Send SDL Commands";
+		String showText3 = " ";
+		// showText4 is not applicable since this is set up as a media application
+		
+		// set up the image to show
+		String appIconName = SdlTesterImageResource.IC_APP_ICON.toString();
+		
+		// create & send the Show command
+		RPCRequest showMsg = SdlRequestFactory.show(showText1, showText2, showText3, null, null, TextAlignment.LEFT_ALIGNED, appIconName);
+		sendSdlMessageToService(showMsg);
+		
+		// since this is a media app, we have to clear out the 4th line of text through the SetMediaClockTimer command
+		RPCRequest clockMsg = SdlRequestFactory.setMediaClockTimer(UpdateMode.CLEAR);
+		sendSdlMessageToService(clockMsg);
 	}
     
     /*
@@ -415,10 +469,12 @@ public class MainActivity extends Activity{
 					Context context = MainActivity.this;
 					String dialogTitle = context.getResources().getString(R.string.sdl_command_dialog_title);
 					
-					// grab the command list and sort the commands by name
-					// TODO make this lazily instantiated so we don't have to sort every time the button is clicked
-					List<SdlCommand> commandList = Arrays.asList(SdlCommand.values());
-					Collections.sort(commandList, new EnumComparator<SdlCommand>());
+					// lazily instantiate the list of commands in alphabetical order
+					if(commandList == null){
+						// grab the command list and sort the commands by name
+						commandList = Arrays.asList(SdlCommand.values());
+						Collections.sort(commandList, new EnumComparator<SdlCommand>());
+					}
 					
 					// show the dialog with the commandList we created above
 					BaseAlertDialog commandDialog = new ListViewDialog<SdlCommand>(context, dialogTitle, commandList);
@@ -434,17 +490,14 @@ public class MainActivity extends Activity{
 		});
 		
 		// set up the command log
-		commandList = (ListView) findViewById(R.id.list_main_commandList);
+		lv_messageLog = (ListView) findViewById(R.id.list_main_commandList);
 		listViewAdapter = new SdlMessageAdapter(this);
-		commandList.setAdapter(listViewAdapter);
-		commandList.setOnItemClickListener(new OnItemClickListener() {
+		lv_messageLog.setAdapter(listViewAdapter);
+		lv_messageLog.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-				// when an item is clicked, show it's associated JSON dialog
-//				SdlLogMessage logMessage = listViewAdapter.getItem(position);
-//				BaseAlertDialog jsonDialog = new SingleJsonDialog(MainActivity.this, logMessage);
-//				jsonDialog.show();
-				
+				// when an item is clicked, show it in the JSON flipper dialog.
+				// first, we must copy over all the messages that have been created so far.
 				int size = listViewAdapter.getCount();
 				List<SdlLogMessage> allLogs = new ArrayList<SdlLogMessage>(size);
 				for(int i=0; i<size; i++){
@@ -754,7 +807,7 @@ public class MainActivity extends Activity{
 		}
 		else{
 			// if no IP address was in preferences, initialize the dialog with no input strings
-			connectionDialog = new SdlConnectionDialog(this);
+			connectionDialog = new SdlConnectionDialog(this, "", "12345");
 		}
 		
 		// set us up the dialog
@@ -921,12 +974,6 @@ public class MainActivity extends Activity{
 			// that list here and we'll actually show the dialog when it gets returned by the service.  See onPutFileListReceived().
 			sendPutFileRequest(ResultCodes.PutFileResult.SET_APP_ICON);
 			break;
-			
-			// TODO these should maybe be added at some point maybe
-//		case SET_GLOBAL_PROPERTIES:
-//		case RESET_GLOBAL_PROPERTIES:
-//			Toast.makeText(this, getResources().getString(R.string.not_implemented), Toast.LENGTH_SHORT).show();
-//			break;
 		default:
 			break;
 		}

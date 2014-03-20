@@ -143,12 +143,24 @@
             android:inputType="textCapWords"
             android:visibility="gone" />
         
-        <Button
-            android:id="@+id/but_showImage"
-            android:layout_width="fill_parent"
+        <CheckBox
+            android:id="@+id/check_enable_image"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@+id/spin_textAlignment"
-            android:text="@string/add_image" />
+            android:layout_alignParentLeft="true"/>
+        
+        <EditText
+            android:id="@+id/et_show_image"
+            android:layout_below="@+id/spin_textAlignment"
+            android:layout_toRightOf="@+id/check_enable_image"
+            android:layout_alignParentRight="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:freezesText="true"
+            android:inputType="textCapSentences"
+            android:enabled="false"
+            android:hint="@string/sdl_image_name" />
         
     </RelativeLayout>
 

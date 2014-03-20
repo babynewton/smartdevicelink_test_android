@@ -5,14 +5,12 @@ import java.util.List;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.livio.sdl.SdlImageItem;
 import com.livio.sdl.SdlRequestFactory;
@@ -31,30 +29,41 @@ public class ShowDialog extends BaseOkCancelDialog{
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.SHOW;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 
-	private CheckBox check_show1, check_show2, check_show3, check_show4, check_statusBar;
-	private EditText et_show1, et_show2, et_show3, et_show4, et_statusBar;
-	private Button but_addImage;
+	private CheckBox check_show1, check_show2, check_show3, check_show4, check_statusBar, check_imageName;
+	private EditText et_show1, et_show2, et_show3, et_show4, et_statusBar, et_imageName;
 	private Spinner spin_textAlignment;
 	private SdlImageItem selectedImage;
 	
 	public ShowDialog(final Context context, final List<SdlImageItem> images){
 		super(context, DIALOG_TITLE, R.layout.show);
 		setPositiveButton(okButtonListener);
-		but_addImage.setOnClickListener(new OnClickListener() {
+		
+		if(images == null || images.size() <= 0){
+			check_imageName.setVisibility(View.GONE);
+			et_imageName.setVisibility(View.GONE);
+		}
+		
+		check_imageName.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			@Override
-			public void onClick(View v) {
-				if(images == null || images.size() <= 0){
-					Toast.makeText(context, "No images have been added to the system yet.", Toast.LENGTH_LONG).show();
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if(isChecked){
+					if(images == null || images.size() <= 0){
+						Toast.makeText(context, "No images have been added to the system yet.", Toast.LENGTH_LONG).show();
+					}
+					else{
+						BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
+						selectImageDialog.setListener(new BaseAlertDialog.Listener() {
+							@Override
+							public void onResult(Object resultData) {
+								selectedImage = (SdlImageItem) resultData;
+								et_imageName.setText(selectedImage.getImageName());
+							}
+						});
+						selectImageDialog.show();
+					}
 				}
 				else{
-					BaseAlertDialog selectImageDialog = new ImageListDialog(context, images);
-					selectImageDialog.setListener(new BaseAlertDialog.Listener() {
-						@Override
-						public void onResult(Object resultData) {
-							selectedImage = (SdlImageItem) resultData;
-						}
-					});
-					selectImageDialog.show();
+					et_imageName.setText("");
 				}
 			}
 		});
@@ -98,6 +107,7 @@ public class ShowDialog extends BaseOkCancelDialog{
 				et_statusBar.setEnabled(isChecked);
 			}
 		});
+		check_imageName = (CheckBox) view.findViewById(R.id.check_enable_image);
 		
 		et_show1 = (EditText) view.findViewById(R.id.et_show1);
 		et_show1.setEnabled(check_show1.isChecked());
@@ -109,11 +119,11 @@ public class ShowDialog extends BaseOkCancelDialog{
 		et_show4.setEnabled(check_show4.isChecked());
 		et_statusBar = (EditText) view.findViewById(R.id.et_statusBar);
 		et_statusBar.setEnabled(check_statusBar.isChecked());
+		et_imageName = (EditText) view.findViewById(R.id.et_show_image);
+		
 		
 		spin_textAlignment = (Spinner) view.findViewById(R.id.spin_textAlignment);
 		spin_textAlignment.setAdapter(AndroidUtils.createSpinnerAdapter(context, SdlTextAlignment.values()));
-		
-		but_addImage = (Button) view.findViewById(R.id.but_showImage);
 	}
 	
 	//dialog button listeners

@@ -87,8 +87,14 @@ public class ChoiceItemDialog extends BaseOkCancelDialog {
 					imageName = null;
 				}
 				
-				Choice choice = SdlUtils.createChoice(choiceName, choiceVr, imageName);
-				notifyListener(choice);
+				if(choiceVr.length() > 0){
+					Choice choice = SdlUtils.createChoice(choiceName, choiceVr, imageName);
+					notifyListener(choice);					
+				}
+				else{
+					Toast.makeText(context, "Choice must have a voice-rec keyword.", Toast.LENGTH_LONG).show();
+				}
+				
 			}
 			else{
 				Toast.makeText(context, "Choice must have a name.", Toast.LENGTH_LONG).show();

@@ -90,6 +90,7 @@ import com.smartdevicelink.proxy.rpc.UnsubscribeButtonResponse;
 import com.smartdevicelink.proxy.rpc.UnsubscribeVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.UpdateTurnListResponse;
 import com.smartdevicelink.proxy.rpc.enums.ButtonName;
+import com.smartdevicelink.proxy.rpc.enums.HMILevel;
 import com.smartdevicelink.proxy.rpc.enums.Language;
 import com.smartdevicelink.transport.TCPTransportConfig;
 
@@ -125,29 +126,33 @@ public class SdlService extends Service implements IProxyListenerALM{
 		 */
 		public static final int SDL_DISCONNECTED = 1;
 		/**
+		 * Message.what integer called when the main HMI is first displayed.
+		 */
+		public static final int SDL_HMI_FIRST_DISPLAYED = 2;
+		/**
 		 * Message.what integer called when a RPCResponse result has been received.
 		 */
-		public static final int ON_MESSAGE_RESULT = 2;
+		public static final int ON_MESSAGE_RESULT = 3;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_SUBMENU_LIST message has been received.
 		 */
-		public static final int SUBMENU_LIST_RECEIVED = 3;
+		public static final int SUBMENU_LIST_RECEIVED = 4;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_COMMAND_LIST message has been received.
 		 */
-		public static final int COMMAND_LIST_RECEIVED = 4;
+		public static final int COMMAND_LIST_RECEIVED = 5;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_BUTTON_SUBSCRIPTIONS message has been received.
 		 */
-		public static final int BUTTON_SUBSCRIPTIONS_RECEIVED = 5;
+		public static final int BUTTON_SUBSCRIPTIONS_RECEIVED = 6;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_INTERACTION_SETS message has been received.
 		 */
-		public static final int INTERACTION_SETS_RECEIVED = 6;
+		public static final int INTERACTION_SETS_RECEIVED = 7;
 		/**
 		 * Message.what integer called when a ServiceMessages.REQUEST_PUT_FILES message has been received.
 		 */
-		public static final int PUT_FILES_RECEIVED = 7;
+		public static final int PUT_FILES_RECEIVED = 8;
 	}
 	
 	/**
@@ -246,6 +251,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	protected SmartDeviceLinkProxyALM sdlProxy = null; // the proxy object which sends our requests and receives responses
 	protected boolean isConnected = false;
 	protected boolean offlineMode = false;
+	protected boolean alreadyDisplayed = false;
 	
 	protected Toast toast = null;
 	
@@ -447,6 +453,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 	
 	private void initialize(){
 		isConnected = false;
+		alreadyDisplayed = false;
 		
 		if(responseTracker == null){
 			responseTracker = new SdlResponseTracker(new SdlResponseTracker.Listener() {
@@ -829,6 +836,12 @@ public class SdlService extends Service implements IProxyListenerALM{
 			Message msg = Message.obtain(null, ClientMessages.SDL_CONNECTED);
 			sendMessageToRegisteredClients(msg);
 			isConnected = true;
+		}
+		
+		if(newStatus.getHmiLevel() == HMILevel.HMI_FULL && !alreadyDisplayed){
+			Message msg = Message.obtain(null, ClientMessages.SDL_HMI_FIRST_DISPLAYED);
+			sendMessageToRegisteredClients(msg);
+			alreadyDisplayed = true;
 		}
 		
 		sendMessageResponse(newStatus);
