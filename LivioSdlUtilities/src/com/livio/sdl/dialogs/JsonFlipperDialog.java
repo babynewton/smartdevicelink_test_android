@@ -12,9 +12,16 @@ import com.livio.sdl.R;
 import com.livio.sdl.SdlLogMessage;
 import com.livio.sdl.utils.SdlUtils;
 
+/**
+ * This dialog shows a single JSON message, but allows the ability to flip back and forth between
+ * all available messages via the arrow buttons at the bottom of the dialog.  This dialog will not
+ * be updated when new messages are sent with this dialog open.  The dialog must be closed and re-opened
+ * in order to refresh with new values.
+ *
+ * @author Mike Burke
+ *
+ */
 public class JsonFlipperDialog extends BaseAlertDialog {
-
-	// TODO comments
 	
 	private List<SdlLogMessage> jsonMessages;
 	private int currentPosition;
@@ -27,6 +34,8 @@ public class JsonFlipperDialog extends BaseAlertDialog {
 		this.jsonMessages = jsonMessages;
 		this.currentPosition = startPosition;
 		createDialog();
+		
+		// since refresh updates the dialog's title, this must be after createDialog() so the dialog isn't null
 		refresh();
 	}
 
@@ -34,10 +43,12 @@ public class JsonFlipperDialog extends BaseAlertDialog {
 	protected void findViews(View parent) {
 		text = (TextView) parent.findViewById(R.id.textview);
 		
+		// set up left button
 		leftButton = (ImageButton) parent.findViewById(R.id.ib_moveLeft);
 		leftButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				// if we can move left, do it.  if not, do nothing
 				if(currentPosition > 0){
 					currentPosition--;
 					refresh();
@@ -45,10 +56,12 @@ public class JsonFlipperDialog extends BaseAlertDialog {
 			}
 		});
 		
+		// set up right button
 		rightButton = (ImageButton) parent.findViewById(R.id.ib_moveRight);
 		rightButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				// if we can move right, do it.  if not, do nothing
 				if(currentPosition < (jsonMessages.size()-1) ){
 					currentPosition++;
 					refresh();
@@ -57,11 +70,13 @@ public class JsonFlipperDialog extends BaseAlertDialog {
 		});
 	}
 	
+	// refresh the buttons & the text for this dialog
 	private void refresh(){
 		refreshButtons();
 		refreshText();
 	}
 	
+	// refreshes the buttons with new position.  disables the buttons when we're at the edges of the list.
 	private void refreshButtons(){
 		boolean atStart = (currentPosition == 0);
 		boolean atEnd = (currentPosition == jsonMessages.size()-1);
@@ -70,6 +85,7 @@ public class JsonFlipperDialog extends BaseAlertDialog {
 		rightButton.setEnabled(!atEnd);
 	}
 	
+	// refreshes the text of the dialog - both the title and the main text.
 	private void refreshText(){
 		SdlLogMessage currentMessage = jsonMessages.get(currentPosition);
 		dialog.setTitle(SdlUtils.makeJsonTitle(currentMessage.getCorrelationId()));

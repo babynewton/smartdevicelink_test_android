@@ -56,7 +56,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 	
 	private List<MenuItem> selectedChoiceSets;
 	
-	//TODO - leaving these out for now because I don't know what they do yet... - MRB
+	//TODO - leaving these out for now - MRB
 	//private CheckBox check_alert_includeSoftButtons;
 	//private Button but_alert_includeSoftButtons;
 	

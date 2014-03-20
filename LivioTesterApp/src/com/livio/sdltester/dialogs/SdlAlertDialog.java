@@ -48,7 +48,7 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnSeekBarChang
 	
 	private String secondsStr;
 	
-	//TODO - leaving these out for now because I don't know what they do yet... - MRB
+	//TODO - leaving these out for now - MRB
 	//private CheckBox check_alert_includeSoftButtons;
 	//private Button but_alert_includeSoftButtons;
 	
@@ -80,7 +80,7 @@ public class SdlAlertDialog extends BaseOkCancelDialog implements OnSeekBarChang
 		//make initial updates to the UI using default values
 		updateProgressText(DEFAULT_TONE_DURATION);
 		
-		//TODO - leaving these out for now because I don't know what they do yet... - MRB
+		//TODO - leaving these out for now - MRB
 		//check_alert_includeSoftButtons = (CheckBox) view.findViewById(R.id.check_alert_includeSoftButtons);
 		//
 		//but_alert_includeSoftButtons = (Button) view.findViewById(R.id.but_alert_includeSoftButtons);

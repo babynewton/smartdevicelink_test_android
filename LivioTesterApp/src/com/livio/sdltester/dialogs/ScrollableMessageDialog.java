@@ -22,8 +22,6 @@ import com.smartdevicelink.proxy.RPCRequest;
 
 public class ScrollableMessageDialog extends BaseOkCancelDialog {
 
-	// TODO - implement soft buttons.
-	
 	private static final SdlCommand SYNC_COMMAND = SdlCommand.SCROLLABLE_MESSAGE;
 	private static final String DIALOG_TITLE = SYNC_COMMAND.toString();
 	

@@ -11,7 +11,7 @@ public final class SdlConstants {
 		public static final int ROOT_PARENT_ID = 0;
 		public static final int DEFAULT_POSITION = 0;
 		public static final int MINIMUM_COMMAND_ID = 0x00;
-		public static final int MAXIMUM_COMMAND_ID = 0xFFFF; // TODO - is this true or is there another limit?
+		public static final int MAXIMUM_COMMAND_ID = 2000000000;
 	}
 	
 	public static final class AddSubmenuConstants{
@@ -24,7 +24,7 @@ public final class SdlConstants {
 		private InteractionChoiceSetConstants(){}
 		
 		public static final int MINIMUM_CHOICE_SET_ID = 0x00;
-		public static final int MAXIMUM_CHOICE_SET_ID = 0xFFFF; // TODO - is this true or is there another limit?
+		public static final int MAXIMUM_CHOICE_SET_ID = 2000000000;
 	}
 	
 	public static final class GetDtcsConstants{
