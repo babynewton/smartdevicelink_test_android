@@ -495,6 +495,12 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * Starts up SDL if it isn't already started.  If SDL is already started, this method does nothing.
 	 * To reset the proxy, use the resetProxy method.
 	 * 
+	 * <b>IMPORTANT NOTE</b>
+	 * <p>
+	 * WiFi connections are for testing purposes only and will not be available in production environments.  WiFi can be used to test
+	 * your application on a virtual machine running Ubuntu 12.04, but WiFi should not be used for production testing.  Production-level
+	 * testing should be performed on a TDK utilizing a Bluetooth connection.
+	 * 
 	 * @param inputIp The IP address to attempt a connection on
 	 */
 	protected void startSdlProxy(final IpAddress inputIp){
@@ -506,6 +512,12 @@ public class SdlService extends Service implements IProxyListenerALM{
 	/**
 	 * Creates a SmartDeviceLinkProxyALM object and automatically attempts a connection
 	 * to the input IP address.
+	 * 
+	 * <b>IMPORTANT NOTE</b>
+	 * <p>
+	 * WiFi connections are for testing purposes only and will not be available in production environments.  WiFi can be used to test
+	 * your application on a virtual machine running Ubuntu 12.04, but WiFi should not be used for production testing.  Production-level
+	 * testing should be performed on a TDK utilizing a Bluetooth connection.
 	 * 
 	 * @param inputIp The IP address to attempt a connection on
 	 * @return The created SmartDeviceLinkProxyALM object

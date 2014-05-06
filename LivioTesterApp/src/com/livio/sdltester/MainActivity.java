@@ -797,6 +797,12 @@ public class MainActivity extends Activity{
 	
 	/**
 	 * Shows the SDL connection dialog, which allows the user to enter the IP address for the core component they would like to connect to.
+	 * 
+	 * <b>IMPORTANT NOTE</b>
+	 * <p>
+	 * WiFi connections are for testing purposes only and will not be available in production environments.  WiFi can be used to test
+	 * your application on a virtual machine running Ubuntu 12.04, but WiFi should not be used for production testing.  Production-level
+	 * testing should be performed on a TDK utilizing a Bluetooth connection.
 	 */
 	private void showSdlConnectionDialog(){
 		// restore any old IP address from preferences
