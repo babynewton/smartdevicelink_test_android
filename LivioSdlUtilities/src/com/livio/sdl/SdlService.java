@@ -268,8 +268,16 @@ public class SdlService extends Service implements IProxyListenerALM{
 				case ServiceMessages.CONNECT:
 					offlineMode = false;
 					initialize();
-					IpAddress inputIp = (IpAddress) msg.obj;
-					startSdlProxy(inputIp);
+					
+					// WIFI mode
+					if(msg.obj != null){
+						IpAddress inputIp = (IpAddress) msg.obj;
+						startSdlProxy(inputIp);
+					}
+					// BT mode
+					else{
+						startSdlProxy(null);
+					}
 					break;
 				case ServiceMessages.DISCONNECT:
 					offlineMode = true;
@@ -503,15 +511,20 @@ public class SdlService extends Service implements IProxyListenerALM{
 	 * @return The created SmartDeviceLinkProxyALM object
 	 */
 	protected SmartDeviceLinkProxyALM createSdlProxyObject(IpAddress inputIp){
-		int tcpPort = Integer.parseInt(inputIp.getTcpPort());
-		String ipAddress = inputIp.getIpAddress();
 		String appName = getResources().getString(R.string.app_name);
 		
 		SmartDeviceLinkProxyALM result = null;
 		try {
-			result = new SmartDeviceLinkProxyALM((IProxyListenerALM)this, null, appName, null, null,
-					null, IS_MEDIA_APP, null, DEFAULT_LANGUAGE, DEFAULT_LANGUAGE, APP_ID,
-					null, false, false, new TCPTransportConfig(tcpPort, ipAddress, WIFI_AUTO_RECONNECT));
+			if(inputIp != null){
+				result = new SmartDeviceLinkProxyALM((IProxyListenerALM)this, null, appName, null, null,
+						null, IS_MEDIA_APP, null, DEFAULT_LANGUAGE, DEFAULT_LANGUAGE, APP_ID,
+						null, false, false, new TCPTransportConfig(Integer.parseInt(inputIp.getTcpPort()), inputIp.getIpAddress(), WIFI_AUTO_RECONNECT));
+			}
+			else{
+				result = new SmartDeviceLinkProxyALM((IProxyListenerALM)this, null, appName, null, null,
+						null, IS_MEDIA_APP, null, DEFAULT_LANGUAGE, DEFAULT_LANGUAGE, APP_ID,
+						null, false, false);
+			}
 			currentIp = inputIp;
 		} catch (SmartDeviceLinkException e) {
 			e.printStackTrace();
@@ -831,6 +844,7 @@ public class SdlService extends Service implements IProxyListenerALM{
 			Message msg = Message.obtain(null, ClientMessages.SDL_CONNECTED);
 			sendMessageToRegisteredClients(msg);
 			isConnected = true;
+			offlineMode = false;
 		}
 		
 		if(newStatus.getHmiLevel() == HMILevel.HMI_FULL && !alreadyDisplayed){
@@ -863,7 +877,8 @@ public class SdlService extends Service implements IProxyListenerALM{
 		});
 	}
 	
-	@Override public void onOnButtonPress(final OnButtonPress notification) {
+	@Override
+	public void onOnButtonPress(final OnButtonPress notification) {
 		runOnServiceThread(new Runnable() {
 			@Override
 			public void run() {
@@ -1057,8 +1072,11 @@ public class SdlService extends Service implements IProxyListenerALM{
 				removeFromRequestQueue(correlationId);
 				
 				if(response.getSuccess()){
-					int interactionId = response.getChoiceID();
-					choiceSetManager.dispatchClick(interactionId);
+					Integer choiceId = response.getChoiceID();
+					if(choiceId != null){
+						int interactionId = choiceId; // auto-unbox the Integer object if it's not null
+						choiceSetManager.dispatchClick(interactionId);
+					}
 				}
 			}
 		});

@@ -130,7 +130,7 @@ public class MainActivity extends Activity{
 		}
 	}
 	
-	private static final int CONNECTING_DIALOG_TIMEOUT = 10000; // duration to attempt a connection (10s)
+	private static final int CONNECTING_DIALOG_TIMEOUT = 30000; // duration to attempt a connection (30s)
 	
 	private String connectionStatusFormat;
 	
@@ -385,6 +385,8 @@ public class MainActivity extends Activity{
             Message msg = Message.obtain(null, SdlService.ServiceMessages.REGISTER_CLIENT);
             msg.replyTo = mMessenger;
             sendMessageToService(msg);
+            
+            showSdlConnectionDialog();
         }
 
         public void onServiceDisconnected(ComponentName className) {
@@ -432,7 +434,7 @@ public class MainActivity extends Activity{
 		createImageCache();
 		init();
 		doBindService();
-		showSdlConnectionDialog();
+//		showSdlConnectionDialog();
 	}
 
 	// create an image cache for the images that are available to send to the head-unit.  this allows easy image look-up
@@ -529,10 +531,10 @@ public class MainActivity extends Activity{
 	@Override
 	protected void onResume() {
 		// enable wifi if it isn't already enabled.
-		if(!AndroidUtils.wifiIsEnabled(this)){
-			Toast.makeText(this, "Enabling wifi", Toast.LENGTH_LONG).show();
-			AndroidUtils.enableWifi(this, true);
-		}
+//		if(!AndroidUtils.wifiIsEnabled(this)){
+//			Toast.makeText(this, "Enabling wifi", Toast.LENGTH_LONG).show();
+//			AndroidUtils.enableWifi(this, true);
+//		}
 		
 		super.onResume();
 	}
@@ -800,14 +802,15 @@ public class MainActivity extends Activity{
 		// restore any old IP address from preferences
 		String savedIpAddress = LivioSdlTesterPreferences.restoreIpAddress(MainActivity.this);
 		String savedTcpPort = LivioSdlTesterPreferences.restoreTcpPort(MainActivity.this);
+		int transportType = LivioSdlTesterPreferences.restoreTransportChoice(MainActivity.this);
 		
 		if(savedIpAddress != null && savedTcpPort != null){
 			// if there was an old IP stored in preferences, initialize the dialog with those values
-			connectionDialog = new SdlConnectionDialog(this, savedIpAddress, savedTcpPort);
+			connectionDialog = new SdlConnectionDialog(this, transportType, savedIpAddress, savedTcpPort);
 		}
 		else{
 			// if no IP address was in preferences, initialize the dialog with no input strings
-			connectionDialog = new SdlConnectionDialog(this, "", "12345");
+			connectionDialog = new SdlConnectionDialog(this, transportType, "", "12345");
 		}
 		
 		// set us up the dialog
@@ -815,22 +818,41 @@ public class MainActivity extends Activity{
 		connectionDialog.setListener(new BaseAlertDialog.Listener() {
 			@Override
 			public void onResult(Object resultData) {
-				IpAddress result = (IpAddress) resultData;
-				if(result == null){
+				if(resultData == null){
+					// dialog cancelled
 					updateConnectionStatus(ConnectionStatus.OFFLINE_MODE);
 					return;
 				}
+
+				IpAddress result = (IpAddress) resultData;
 				
 				String addressString = result.getIpAddress();
 				String portString = result.getTcpPort();
 				
-				boolean ipAddressValid = WifiUtils.validateIpAddress(addressString);
-				boolean ipPortValid = WifiUtils.validateTcpPort(portString);
+				boolean ipAddressValid = false, ipPortValid = false;
 				
-				if(ipAddressValid && ipPortValid){
+				if(addressString == null && portString == null){ // bluetooth
+					result = null;
+					// TODO: enable bluetooth if not enabled
+				}
+				else{ // wifi
+					ipAddressValid = WifiUtils.validateIpAddress(addressString);
+					ipPortValid = WifiUtils.validateTcpPort(portString);
+					// TODO: enable wifi if not enabled
+				}
+				
+				// if user selected bluetooth mode or if they selected wifi mode with valid address & port - attempt a connection
+				if(result == null || (ipAddressValid && ipPortValid)){
 					// if the user entered valid IP settings, save them to preferences so they don't have to re-enter them next time
-					LivioSdlTesterPreferences.saveIpAddress(MainActivity.this, addressString);
-					LivioSdlTesterPreferences.saveTcpPort(MainActivity.this, portString);
+					if(ipAddressValid){
+						LivioSdlTesterPreferences.saveIpAddress(MainActivity.this, addressString);
+					}
+					if(ipPortValid){
+						LivioSdlTesterPreferences.saveTcpPort(MainActivity.this, portString);
+					}
+					
+					LivioSdlTesterPreferences.saveTransportChoice(MainActivity.this, 
+							(result == null) ? LivioSdlTesterPreferences.PREF_TRANSPORT_BLUETOOTH : LivioSdlTesterPreferences.PREF_TRANSPORT_WIFI);
 					
 					// show an indeterminate connecting dialog
 					connectingDialog = new IndeterminateProgressDialog(MainActivity.this, "Connecting");
@@ -858,9 +880,10 @@ public class MainActivity extends Activity{
 					
 					// message the SDL service, telling it to attempt a connection with the input IP address
 					Message msg = Message.obtain(null, SdlService.ServiceMessages.CONNECT);
-                    msg.obj = resultData;
+                    msg.obj = result;
                 	sendMessageToService(msg);
 				}
+				// wifi address or port was invalid - re-show the dialog until user enters a valid value
 				else{
 					// user input was invalid
 					Toast.makeText(MainActivity.this, "Input was invalid - please try again", Toast.LENGTH_SHORT).show();

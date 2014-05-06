@@ -3,6 +3,7 @@
 	<name>LivioSdlUtilities</name>
 	<comment></comment>
 	<projects>
+		<project>SmartDeviceLinkProxyAndroidOLD</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
