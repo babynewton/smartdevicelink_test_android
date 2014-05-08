@@ -74,6 +74,7 @@ import com.livio.sdltester.dialogs.SliderDialog;
 import com.livio.sdltester.dialogs.SpeakDialog;
 import com.smartdevicelink.proxy.RPCMessage;
 import com.smartdevicelink.proxy.RPCRequest;
+import com.smartdevicelink.proxy.constants.Names;
 import com.smartdevicelink.proxy.rpc.ListFiles;
 import com.smartdevicelink.proxy.rpc.enums.FileType;
 import com.smartdevicelink.proxy.rpc.enums.TextAlignment;
@@ -146,6 +147,8 @@ public class MainActivity extends Activity{
     private BaseAlertDialog connectionDialog;
 	private IndeterminateProgressDialog connectingDialog;
 	private Timeout connectionTimeout;
+	
+	private boolean artworkSet = false;
 	
 	// cache for all images available to send to SDL service
 	private HashMap<String, SdlImageItem> imageCache;
@@ -309,6 +312,7 @@ public class MainActivity extends Activity{
 	 * Resets the SDL service.
 	 */
 	private void resetService(){
+		artworkSet = false;
 		Intent sdlService = new Intent(MainActivity.this, SdlService.class);
 		stopService(sdlService);
 		startService(sdlService);
@@ -347,10 +351,6 @@ public class MainActivity extends Activity{
 		// create & send the PutFile command
 		RPCRequest putFileMsg = SdlRequestFactory.putFile(appIconName, appIconFileType, false, appIconBytes);
 		sendSdlMessageToService(putFileMsg);
-		
-		// create & send the SetAppIcon command
-		RPCRequest setAppIconMsg = SdlRequestFactory.setAppIcon(appIconName);
-		sendSdlMessageToService(setAppIconMsg);
 	}
 	
 	/*
@@ -434,7 +434,6 @@ public class MainActivity extends Activity{
 		createImageCache();
 		init();
 		doBindService();
-//		showSdlConnectionDialog();
 	}
 
 	// create an image cache for the images that are available to send to the head-unit.  this allows easy image look-up
@@ -529,17 +528,6 @@ public class MainActivity extends Activity{
 	}
 
 	@Override
-	protected void onResume() {
-		// enable wifi if it isn't already enabled.
-//		if(!AndroidUtils.wifiIsEnabled(this)){
-//			Toast.makeText(this, "Enabling wifi", Toast.LENGTH_LONG).show();
-//			AndroidUtils.enableWifi(this, true);
-//		}
-		
-		super.onResume();
-	}
-
-	@Override
 	protected void onDestroy() {
 		sendMessageToService(Message.obtain(null, SdlService.ServiceMessages.DISCONNECT));
 		doUnbindService();
@@ -553,6 +541,14 @@ public class MainActivity extends Activity{
 	 */
 	private void onMessageResponseReceived(RPCMessage response){
 		logSdlMessage(response);
+		
+		if(!artworkSet && response.getMessageType().equals(Names.response) && response.getFunctionName().equals(Names.PutFile)){
+			artworkSet = true;
+
+			// create & send the SetAppIcon command
+			RPCRequest setAppIconMsg = SdlRequestFactory.setAppIcon(SdlTesterImageResource.IC_APP_ICON.toString());
+			sendSdlMessageToService(setAppIconMsg);
+		}
 	}
 	
 	/**
