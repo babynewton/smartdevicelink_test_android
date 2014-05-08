@@ -26,6 +26,8 @@ This string represents the text (or phonemes) that should be spoken to the drive
 <h3>Type: Enumerated Value</h3>
 </br>
 This string represents the text (or phonemes) that should be spoken to the driver.
+<p>
+<b>IMPORTANT NOTE:</b> If the speech capability is SILENCE, the input text will represent the number of milliseconds the TTS engine should remain silent.
 
 <h3>Available Speech Capability Options</h3>
 <table>
@@ -56,7 +58,7 @@ This string represents the text (or phonemes) that should be spoken to the drive
 
 <tr>
 <td>SILENCE</td>
-<td>The input text will be ignored and any speech that is in progress will be suspended.</td>
+<td>The input text should contain the number of milliseconds of silence to play.  Any speech that is in progress will be suspended for that amount of time.</td>
 </tr>
 
 </table>
