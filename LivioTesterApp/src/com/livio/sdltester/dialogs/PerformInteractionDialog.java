@@ -72,7 +72,7 @@ public class PerformInteractionDialog extends BaseOkCancelDialog implements OnCh
 		but_choiceSet.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				MultipleListViewDialog<MenuItem> dialog = new MultipleListViewDialog<MenuItem>(context, "Select Choice Sets to show", interactionSets);
+				MultipleListViewDialog<MenuItem> dialog = new MultipleListViewDialog<MenuItem>(context, "Select Choice Sets to show", interactionSets, selectedChoiceSets);
 				dialog.setListener(new BaseAlertDialog.Listener() {
 					@SuppressWarnings("unchecked")
 					@Override
