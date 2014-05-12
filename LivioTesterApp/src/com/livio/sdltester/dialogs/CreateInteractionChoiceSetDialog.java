@@ -68,6 +68,7 @@ public class CreateInteractionChoiceSetDialog extends BaseOkCancelDialog{
 					public void onResult(Object resultData) {
 						boolean delete = (Boolean) resultData;
 						if(delete){
+							choiceItemList.remove(position);
 							adapterList.remove(position);
 							adapter.notifyDataSetChanged();
 						}
