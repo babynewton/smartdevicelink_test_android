@@ -562,12 +562,11 @@ public class SdlService extends Service implements IProxyListenerALM{
 		if(sdlProxy != null && sdlProxy.getIsConnected() && sdlProxy.getAppInterfaceRegistered()){
 			try {
 				sdlProxy.dispose();
+				sdlProxy = null;
 			} catch (SmartDeviceLinkException e) {
 				e.printStackTrace();
 			}
 		}
-		
-		sdlProxy = null;
 	}
 	
 	/* ********** Proxy communication methods ********** */
